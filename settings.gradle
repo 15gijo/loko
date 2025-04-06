@@ -1,1 +1,6 @@
 rootProject.name = 'loko'
+
+include("eureka")
+
+include("common")
+include("user")
