@@ -1,10 +1,9 @@
-package com._gijo.loko;
+package com.team15gijo.common;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class LokoApplicationTests {
+class CommonApplicationTests {
 
 	@Test
 	void contextLoads() {

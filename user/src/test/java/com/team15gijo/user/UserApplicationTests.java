@@ -1,4 +1,4 @@
-package com._gijo.user;
+package com.team15gijo.user;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
