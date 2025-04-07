@@ -5,3 +5,5 @@ include("eureka")
 include("common")
 include("user")
 include("post")
+
+include("search")

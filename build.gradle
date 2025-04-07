@@ -72,3 +72,14 @@ project(':user') {
         enabled = true
     }
 }
+
+
+
+project(':search') {
+    dependencies {
+        implementation project(':common')
+    }
+    tasks.named('bootJar') {
+        enabled = true
+    }
+}
