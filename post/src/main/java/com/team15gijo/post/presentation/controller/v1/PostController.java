@@ -2,8 +2,10 @@ package com.team15gijo.post.presentation.controller.v1;
 
 import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.post.application.service.v1.PostService;
+
 import com.team15gijo.post.domain.model.Post;
 import com.team15gijo.post.presentation.dto.v1.PostRequestDto;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,7 +19,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/posts")
+@RequestMapping("/api/v1/posts")
 public class PostController {
 
     private final PostService postService;
@@ -77,5 +79,17 @@ public class PostController {
     public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable UUID postId) {
         postService.deletePost(postId);
         return ResponseEntity.ok(ApiResponse.success("게시글 삭제 성공", null));
+    }
+
+    /**
+     * 게시글에 해시태그 추가 엔드포인트
+     * 클라이언트는 request body로 추가할 해시태그 리스트(List<String>)를 전송합니다.
+     * 예: ["#Spring", "#Java"]
+     */
+    @PutMapping("/{postId}/hashtags")
+    public ResponseEntity<ApiResponse<Post>> addHashtags(@PathVariable UUID postId,
+            @RequestBody List<String> hashtags) {
+        Post updatedPost = postService.addHashtags(postId, hashtags);
+        return ResponseEntity.ok(ApiResponse.success("해시태그 추가 성공", updatedPost));
     }
 }
