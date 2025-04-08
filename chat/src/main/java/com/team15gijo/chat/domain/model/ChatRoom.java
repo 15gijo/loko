@@ -1,5 +1,6 @@
 package com.team15gijo.chat.domain.model;
 
+import com.team15gijo.chat.application.dto.v1.ChatRoomResponseDto;
 import com.team15gijo.common.base.BaseEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -33,17 +34,10 @@ public class ChatRoom extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private ChatRoomType chatRoomType;
 
-//    public ChatRoomResponseDto toResponse() {
-//        return ChatRoomResponseDto.builder()
-//            .chatRoomId(chatRoomId)
-//            .chatRoomType(chatRoomType)
-//            .build();
-//    }
-//
-//    public static ChatRoom create(ChatRoomType chatRoomType) {
-//        ChatRoom chatRoom = ChatRoom.builder()
-//            .chatRoomType(chatRoomType)
-//            .build();
-//        return chatRoom;
-//    }
+    public ChatRoomResponseDto toResponse() {
+        return ChatRoomResponseDto.builder()
+            .chatRoomId(chatRoomId)
+            .chatRoomType(chatRoomType)
+            .build();
+    }
 }
