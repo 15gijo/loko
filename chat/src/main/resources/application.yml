@@ -5,8 +5,7 @@ spring:
     config:
       enabled: false
   config:
-    import:
-      - optional:file:./chat/.env[.properties]
+    import: optional:classpath:.env[.properties]
   datasource:
     driver-class-name: org.postgresql.Driver
     url: ${DB_URL}
