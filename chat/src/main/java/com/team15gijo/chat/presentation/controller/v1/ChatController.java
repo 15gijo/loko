@@ -26,7 +26,7 @@ public class ChatController {
     private final ChatRoomService chatRoomService;
 
     /**
-     * 채팅방 생성(chatRoomType, receiver)에 따른 채티방 참여자 생성
+     * 채팅방 생성(chatRoomType, receiver)에 따른 채팅방 참여자 생성
      * TODO: userId, nickname 추후 구현
      */
     @PostMapping("/rooms")
