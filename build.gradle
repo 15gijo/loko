@@ -93,3 +93,12 @@ project(':search') {
         enabled = true
     }
 }
+
+project(':notification') {
+    dependencies {
+        implementation project(':common')
+    }
+    tasks.named('bootJar') {
+        enabled = true
+    }
+}
