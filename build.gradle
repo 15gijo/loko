@@ -64,6 +64,15 @@ project(':eureka') {
     }
 }
 
+project(':gateway') {
+    dependencies {
+        implementation project(':common')
+    }
+    tasks.named('bootJar') {
+        enabled = true
+    }
+}
+
 project(':user') {
     dependencies {
         implementation project(':common')
@@ -86,6 +95,24 @@ project(':chat') {
 
 
 project(':search') {
+    dependencies {
+        implementation project(':common')
+    }
+    tasks.named('bootJar') {
+        enabled = true
+    }
+}
+
+project(':notification') {
+    dependencies {
+        implementation project(':common')
+    }
+    tasks.named('bootJar') {
+        enabled = true
+    }
+}
+
+project(':feed') {
     dependencies {
         implementation project(':common')
     }
