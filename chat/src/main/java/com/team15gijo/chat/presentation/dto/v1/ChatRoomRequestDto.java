@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ChatRoomRequest {
+public class ChatRoomRequestDto {
     private ChatRoomType chatRoomType;
     //TODO: 1:1 수신자(닉네임)으로 유효성 검사
     // 단체채팅 시, List<String> 변경
