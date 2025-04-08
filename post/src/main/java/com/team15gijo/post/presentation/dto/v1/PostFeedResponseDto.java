@@ -34,7 +34,7 @@ public class PostFeedResponseDto {
                 .userId(post.getUserId())
                 .username(post.getUsername())
                 .region(post.getRegion())
-                .content(post.getContent())
+                .content(post.getPostContent())
                 .hashtags(post.getHashtags())
                 .views(post.getViews())
                 .commentCount(post.getCommentCount())
