@@ -35,10 +35,11 @@ public class PostService {
                 .commentCount(0)      // 기본 댓글 수 0
                 .likeCount(0)         // 기본 좋아요 수 0
                 .popularityScore(0.0) // 기본 popularity_score 0.0
-                // 지금은 파라미터로 받은 userId를 createdBy로, 현재 시간을 createdAt으로 직접 할당합니다.
-                .createdBy(userId)
-                .createdAt(LocalDateTime.now())
                 .build();
+        // 빌더 체인에서 상속된 createdBy, createdAt 필드를 설정할 수 없으므로,
+        // 빌드 후 setter를 호출하여 값을 할당합니다.
+        post.setCreatedBy(userId);
+        post.setCreatedAt(LocalDateTime.now());
         return postRepository.save(post);
     }
 
@@ -64,7 +65,7 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
         post.setContent(request.getContent());
-        // JPA Auditing 또는 수동 업데이트에 의해 updatedAt, updatedBy가 기록됩니다.
+        // JPA Auditing 에 의해 updatedAt, updatedBy가 추후 기록예정
         return postRepository.save(post);
     }
 
@@ -74,7 +75,7 @@ public class PostService {
     public void deletePost(UUID postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
-        // JPA Auditing에 의해 deletedAt, deletedBy가 기록되거나, 직접 delete()를 호출합니다.
+        // JPA Auditing에 의해 deletedAt, deletedBy가 추후 기록예정.
         postRepository.delete(post);
     }
 }
