@@ -1,7 +1,8 @@
 package com.team15gijo.feed.presentation.controller.v1;
 
+import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.feed.application.service.v1.FeedService;
-import com.team15gijo.feed.presentation.dto.v1.FeedResponseDto;
+import com.team15gijo.feed.infrastructure.client.post.dto.PostFeedPageResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,12 +25,12 @@ public class FeedController {
      * GET /api/v1/feeds/recent/base?cursor=2024-04-07T10:00:00Z&pageSize=10
      */
     @GetMapping("/recent/base")
-    public ResponseEntity<List<FeedResponseDto>> getRecentFeedBase(
+    public ResponseEntity<ApiResponse<PostFeedPageResponseDto>> getRecentFeedBase(
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime cursor,
             @RequestParam(defaultValue = "10") int pageSize
     ) {
-        List<FeedResponseDto> response = feedService.getRecentFeedBase(cursor, pageSize);
+        ApiResponse<PostFeedPageResponseDto> response = feedService.getRecentFeedBase(cursor, pageSize);
         return ResponseEntity.ok().body(response);
     }
 

@@ -23,6 +23,9 @@ public class PostFeedResponseDto {
     private String content;
     private List<String> hashtags;
     private int views;
+    private int commentCount;
+    private int likeCount;
+    private double popularityScore;
     private LocalDateTime createdAt;
 
     public static PostFeedResponseDto from(Post post) {
@@ -34,6 +37,9 @@ public class PostFeedResponseDto {
                 .content(post.getContent())
                 .hashtags(post.getHashtags())
                 .views(post.getViews())
+                .commentCount(post.getCommentCount())
+                .likeCount(post.getLikeCount())
+                .popularityScore(post.getPopularityScore())
                 .createdAt(post.getCreatedAt())
                 .build();
     }
