@@ -19,6 +19,9 @@ public class PostResponse {
     private String content;
     private List<String> hashtags;
     private int views;
+    private int commentCount;      // 댓글 수
+    private int likeCount;         // 좋아요 수
+    private double popularityScore; // popularity_score
 
     public PostResponse(Post post) {
         this.postId = post.getPostId();
@@ -28,5 +31,8 @@ public class PostResponse {
         this.content = post.getContent();
         this.hashtags = post.getHashtags();
         this.views = post.getViews();
+        this.commentCount = post.getCommentCount();
+        this.likeCount = post.getLikeCount();
+        this.popularityScore = post.getPopularityScore();
     }
 }
