@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: gateway-service
+  config:
+    import: optional:file:./gateway/.env[.properties]
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+
+server:
+  port: 19091
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:19090/eureka/  # Eureka ?? URL
+
+jwt:
+  secret:
+    key: ${JWT_SECRET_KEY}
