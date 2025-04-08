@@ -1,5 +1,6 @@
 package com.team15gijo.common.exception;
 
+import com.team15gijo.common.dto.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;

@@ -73,6 +73,16 @@ project(':user') {
     }
 }
 
+project(':chat') {
+    dependencies {
+        implementation project(':common')
+    }
+    tasks.named('bootJar') {
+        enabled = true
+    }
+}
+
+
 
 
 project(':search') {
