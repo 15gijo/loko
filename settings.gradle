@@ -8,6 +8,6 @@ include("post")
 include("feed")
 
 include("search")
-
+include("notification")
 
 include("chat")
