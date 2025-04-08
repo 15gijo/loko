@@ -2,6 +2,7 @@ package com.team15gijo.post.presentation.controller.v1;
 
 import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.post.application.service.v1.PostService;
+
 import com.team15gijo.post.domain.model.Post;
 import com.team15gijo.post.presentation.dto.v1.PostRequestDto;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/posts")
+@RequestMapping("/api/v1/posts")
 public class PostController {
 
     private final PostService postService;

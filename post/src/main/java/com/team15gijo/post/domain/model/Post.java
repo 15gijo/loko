@@ -7,9 +7,13 @@ import org.hibernate.annotations.GenericGenerator;
 
 import java.util.List;
 import java.util.UUID;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "p_posts")
+@SQLRestriction("deleted_at IS NULL")
+@SQLDelete(sql = "UPDATE p_posts SET is_deleted = true WHERE post_id = ?")
 @Getter
 @Setter
 @NoArgsConstructor
