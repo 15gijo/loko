@@ -1,6 +1,6 @@
 spring:
   application:
-    name: feed
+    name: feed-service
 
 server:
   port: 19100
