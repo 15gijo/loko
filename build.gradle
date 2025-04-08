@@ -102,3 +102,12 @@ project(':notification') {
         enabled = true
     }
 }
+
+project(':feed') {
+    dependencies {
+        implementation project(':common')
+    }
+    tasks.named('bootJar') {
+        enabled = true
+    }
+}
