@@ -1,6 +1,22 @@
 spring:
+  cloud:
+    config:
+      enabled: false
+  config:
+    import:
+      - optional:file:./feed/.env[.properties]
   application:
     name: feed-service
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
 
 server:
   port: 19100
