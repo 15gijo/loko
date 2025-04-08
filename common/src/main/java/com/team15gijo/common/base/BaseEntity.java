@@ -55,9 +55,9 @@ public abstract class BaseEntity {
     private void softDelete() {
         if (deletedAt == null) {
             deletedAt = LocalDateTime.now();
-        }
-        if (deletedBy == null) {
-            deletedBy = updatedBy;
+            if (deletedBy == null) {
+                deletedBy = updatedBy;
+            }
         }
     }
 
