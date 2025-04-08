@@ -8,3 +8,5 @@ include("post")
 
 include("search")
 
+
+include("chat")
