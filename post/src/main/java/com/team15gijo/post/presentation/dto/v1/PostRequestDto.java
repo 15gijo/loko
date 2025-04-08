@@ -10,5 +10,5 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class PostRequestDto {
-    private String content;
+    private String postContent;
 }

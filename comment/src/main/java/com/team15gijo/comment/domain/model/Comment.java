@@ -10,9 +10,9 @@ import org.hibernate.annotations.SQLRestriction;
 import java.util.UUID;
 
 @Entity
-@Table(name = "comments")
+@Table(name = "p_comments")
 @SQLRestriction("deleted_at IS NULL")
-@SQLDelete(sql = "UPDATE comments SET is_deleted = true WHERE comment_id = ?")
+@SQLDelete(sql = "UPDATE p_comments SET is_deleted = true WHERE comment_id = ?")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -36,8 +36,8 @@ public class Comment extends BaseEntity {
     @Column(name = "username", nullable = false, length = 50)
     private String username;
 
-    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
-    private String content;
+    @Column(name = "comment_content", nullable = false, columnDefinition = "TEXT")
+    private String commentContent;
 
     // 대댓글인 경우 상위 댓글 ID, 최상위 댓글은 null
     @Column(name = "parent_comment_id")

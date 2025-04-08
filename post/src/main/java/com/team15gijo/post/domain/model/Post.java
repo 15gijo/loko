@@ -37,8 +37,8 @@ public class Post extends BaseEntity {
     @Column(name = "region", nullable = false, length = 50)
     private String region;
 
-    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
-    private String content;
+    @Column(name = "post_content", nullable = false, columnDefinition = "TEXT")
+    private String postContent;
 
     // 해시태그 (추후 자동 생성 로직 추가 예정)
     @ElementCollection

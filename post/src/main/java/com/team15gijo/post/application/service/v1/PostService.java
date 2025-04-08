@@ -29,7 +29,7 @@ public class PostService {
                 .userId(userId)
                 .username(username)
                 .region(region)
-                .content(request.getContent())
+                .postContent(request.getPostContent())
                 .hashtags(Collections.emptyList()) // 해시태그 자동 생성 로직 추후 추가 예정
                 .views(0)
                 .commentCount(0)      // 기본 댓글 수 0
@@ -64,7 +64,7 @@ public class PostService {
     public Post updatePost(UUID postId, PostRequestDto request) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
-        post.setContent(request.getContent());
+        post.setPostContent(request.getPostContent());
         // JPA Auditing 에 의해 updatedAt, updatedBy가 추후 기록예정
         return postRepository.save(post);
     }

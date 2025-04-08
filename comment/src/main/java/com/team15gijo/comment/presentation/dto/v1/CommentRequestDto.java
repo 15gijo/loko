@@ -10,7 +10,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class CommentRequestDto {
-    private String content;
+    private String commentContent;
     // 대댓글인 경우 상위 댓글 ID (최상위 댓글은 null)
     private UUID parentCommentId;
 }

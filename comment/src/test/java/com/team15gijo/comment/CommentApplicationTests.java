@@ -1,4 +1,4 @@
-package com.team15gijo.post;
+package com.team15gijo.comment;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
