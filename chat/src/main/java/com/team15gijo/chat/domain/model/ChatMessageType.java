@@ -1,6 +1,6 @@
 package com.team15gijo.chat.domain.model;
 
-public enum MessageType {
+public enum ChatMessageType {
     TEXT("TEXT"),
     IMAGE("IMAGE"),
     VIDEO("VIDEO"),
@@ -8,7 +8,7 @@ public enum MessageType {
 
     private final String type;
 
-    MessageType(String type) {
+    ChatMessageType(String type) {
         this.type = type;
     }
 }
