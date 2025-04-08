@@ -2,12 +2,16 @@ package com.team15gijo.post.presentation.dto.v1;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
+@Getter
 public class PostFeedPageResponseDto {
     private List<PostFeedResponseDto> posts;
     private LocalDateTime nextCursor;

@@ -1,5 +1,6 @@
 package com.team15gijo.post.presentation.controller.v1;
 
+import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.post.application.service.v1.InternalPostService;
 import com.team15gijo.post.presentation.dto.v1.PostFeedPageResponseDto;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("internal/api/v1/posts")
+@RequestMapping("/internal/api/v1/posts")
 public class InternalPostController {
 
     private final InternalPostService internalPostService;
@@ -23,13 +24,13 @@ public class InternalPostController {
      * 지역별 최신글 조회 (피드)
      */
     @GetMapping("/recent")
-    public ResponseEntity<PostFeedPageResponseDto> getRecentPostsByRegion(
+    public ResponseEntity<ApiResponse<PostFeedPageResponseDto>> getRecentPostsByRegion(
             @RequestParam String region,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime cursor,
             @RequestParam(defaultValue = "10") int pageSize
     ) {
         PostFeedPageResponseDto response = internalPostService.getPostsByRegion(region, cursor, pageSize);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success("지역별 최신 피드 조회 성공", response));
     }
 
 }
