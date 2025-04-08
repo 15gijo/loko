@@ -6,3 +6,8 @@ include("common")
 include("user")
 include("post")
 include("feed")
+
+include("search")
+
+
+include("chat")
