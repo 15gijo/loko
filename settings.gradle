@@ -7,6 +7,6 @@ include("user")
 include("post")
 
 include("search")
-
+include("notification")
 
 include("chat")
