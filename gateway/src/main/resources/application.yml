@@ -7,7 +7,15 @@ spring:
     gateway:
       discovery:
         locator:
-          enabled: true
+          enabled: false
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+          - Path=/api/v1/users/**
+          filters:
+          - StripPrefix=0
+
 
 server:
   port: 19091

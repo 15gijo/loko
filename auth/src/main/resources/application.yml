@@ -1,11 +1,11 @@
 spring:
   application:
-    name: user-service
+    name: auth-service
   cloud:
     config:
-      enabled: false #일단 config server 비활성화
+      enabled: false #?? config server ????
   config:
-    import: optional:file:./user/.env[.properties] # 모듈 내부 env
+    import: optional:file:./auth/.env[.properties] # ?? ?? env
 
   datasource:
     url: ${SPRING_DATASOURCE_URL}
@@ -19,9 +19,9 @@ spring:
 
 
 server:
-  port: 19093
+  port: 19092
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:19090/eureka/  # Eureka 서버 URL
+      defaultZone: http://localhost:19090/eureka/  # Eureka ?? URL
