@@ -55,7 +55,7 @@ public class PostController {
     }
 
     /**
-     * 게시글 상세 조회
+     * 게시글 상세 조회 시 조회수 증가 (views 증가)
      */
     @GetMapping("/{postId}")
     public ResponseEntity<ApiResponse<PostResponseDto>> getPostById(@PathVariable UUID postId) {
@@ -93,8 +93,10 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success("해시태그 추가 성공", PostResponseDto.from(updatedPost)));
     }
 
-    // 게시글 존재 여부 확인 엔드포인트 (Feign Client에서 호출할 API)
-    @GetMapping("/internal/{postId}/exists")
+    /**
+     * 게시글 존재 여부 확인 엔드포인트 (Feign Client에서 호출할 API)
+     */
+    @GetMapping("/{postId}/exists")
     public ResponseEntity<ApiResponse<Boolean>> exists(@PathVariable UUID postId) {
         boolean exists = postService.exists(postId);
         return ResponseEntity.ok(ApiResponse.success("게시글 존재 여부 확인", exists));

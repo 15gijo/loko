@@ -10,6 +10,6 @@ import java.util.UUID;
 @FeignClient(name = "post-service", contextId = "postClient")
 public interface PostClient {
 
-    @GetMapping("/api/v1/posts/internal/{postId}/exists")
+    @GetMapping("/api/v1/posts/{postId}/exists")
     ApiResponse<Boolean> exists(@PathVariable("postId") UUID postId);
 }

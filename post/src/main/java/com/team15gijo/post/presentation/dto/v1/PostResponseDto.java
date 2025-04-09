@@ -1,6 +1,5 @@
 package com.team15gijo.post.presentation.dto.v1;
 
-
 import com.team15gijo.post.domain.model.Post;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,13 +29,9 @@ public class PostResponseDto {
 
     public static PostResponseDto from(Post post) {
 
-        /*
-         *Hashtag 엔티티의 hashtagName 필드를 추출하여 List<String>으로 변환
-         */
         List<String> hashtagNames = post.getHashtags().stream()
                 .map(hashtag -> hashtag.getHashtagName())
                 .collect(Collectors.toList());
-
 
         return PostResponseDto.builder()
                 .postId(post.getPostId())

@@ -5,6 +5,7 @@ import com.team15gijo.post.domain.model.Hashtag;
 import com.team15gijo.post.domain.repository.PostRepository;
 import com.team15gijo.post.domain.repository.HashtagRepository;
 import com.team15gijo.post.presentation.dto.v1.PostRequestDto;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -57,11 +58,17 @@ public class PostService {
     }
 
     /**
-     * 게시글 상세 조회
+     * 게시글 상세 조회 및 조회수(views) 증가 처리
      */
+    @Transactional
     public Post getPostById(UUID postId) {
-        return postRepository.findById(postId)
+        // 게시글 조회 (없으면 예외 발생)
+        Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
+        // 조회수 증가
+        post.setViews(post.getViews() + 1);
+        // 변경된 게시글을 저장(변경 감지가 활성화되어 있으면 save() 없이도 커밋 시 자동 반영될 수 있음)
+        return postRepository.save(post);
     }
 
     /**
