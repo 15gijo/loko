@@ -9,6 +9,7 @@ import com.team15gijo.chat.presentation.dto.v1.ChatRoomParticipantRequestDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatRoomParticipantResponseDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatRoomRequestDto;
 import com.team15gijo.common.dto.ApiResponse;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -104,6 +107,31 @@ public class ChatMessageController {
     }
 
     /**
+     * 소켓 연결 시 사용되는 엔드포인트
+     * 채팅방 ID 유효성 검증 API
+     */
+    @GetMapping("/validate/{chatRoomId}")
+    public ResponseEntity<ApiResponse<Map<String, Boolean>>> validateChatRoomId(
+        @PathVariable("chatRoomId") UUID chatRoomId
+    ) {
+        Map<String, Boolean> response = chatMessageService.validateChatRoomId(chatRoomId);
+        return ResponseEntity.ok(ApiResponse.success("chatRoomId 유효성 검증 성고하였습니다.", response));
+    }
+
+    /**
+     * 소켓 연결 시 사용되는 엔드포인트
+     * 채팅방 ID에 해당하는 senderId 유효성 검증 API
+     */
+    @GetMapping("/validate/{chatRoomId}/{senderId}")
+    public ResponseEntity<ApiResponse<Map<String, Boolean>>> validateSenderId(
+        @PathVariable("chatRoomId") UUID chatRoomId,
+        @PathVariable("senderId") Long senderId
+    ) {
+        Map<String, Boolean> response = chatMessageService.validateSenderId(chatRoomId, senderId);
+        return ResponseEntity.ok(ApiResponse.success("senderId 유효성 검증 성공하였습니다.", response));
+    }
+
+    /**
      * "/ws-stomp" 경로로 소켓 연결하여
      * "/topic"을 구독하는 서버에서 실시간 메시지 송수신 가능
      * "/app" 시작하는 경로 stomp 메시지 전송하면 @MessageMapping 으로 연결
@@ -112,8 +140,18 @@ public class ChatMessageController {
      */
     @MessageMapping("/chat/{chatRoomId}")
     @SendTo("/topic/chat/{chatRoomId}")
-    public ChatMessageResponseDto sendMessage(@RequestBody ChatMessageRequestDto requestDto) {
+    public ChatMessageResponseDto sendMessage(
+        @RequestBody ChatMessageRequestDto requestDto,
+        SimpMessageHeaderAccessor headerAccessor
+    ) {
         log.info("Sending message: {}", requestDto.toString());
-        return chatMessageService.sendMessage(requestDto);
+        try {
+            return chatMessageService.sendMessage(requestDto);
+        } catch (Exception e) {
+            headerAccessor.setMessageTypeIfNotSet(SimpMessageType.MESSAGE);
+            headerAccessor.setLeaveMutable(true);
+            headerAccessor.setHeader("error", e.getMessage()); // 오류 메시지 헤더에 추가
+            throw e;
+        }
     }
 }
