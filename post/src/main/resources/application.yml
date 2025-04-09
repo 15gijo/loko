@@ -29,3 +29,10 @@ eureka:
     fetch-registry: true         # 다른 서비스 정보(Eureka 레지스트리)도 가져옴
 
 
+management:
+  zipkin:
+    tracing:
+      endpoint: "http://localhost:9411/api/v2/spans"
+  tracing:
+    sampling:
+      probability: 1.0
