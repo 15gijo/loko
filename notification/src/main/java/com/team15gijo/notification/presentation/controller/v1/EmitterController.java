@@ -25,6 +25,7 @@ public class EmitterController {
     @GetMapping(value = "/subscribe", produces = "text/event-stream")
     public SseEmitter subscribe(HttpServletRequest request) {
 //        Long userId = extractUserIdFromRequest(request);
+//        Long userId = 2L;  // test시 receiverId가 1L인 알람은 못 받음
         Long userId = 1L;
         System.out.println("🔥 SSE 연결 요청 받음! userId = " + userId);
         return emitterService.subscribe(userId);
