@@ -17,6 +17,11 @@ spring:
       ddl-auto: create
     show-sql: true
     database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ${REDIS_PASSWORD}
 
 server:
   port: 19100
