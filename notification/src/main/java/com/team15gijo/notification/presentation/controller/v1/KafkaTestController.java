@@ -1,7 +1,7 @@
 package com.team15gijo.notification.presentation.controller.v1;
 
 
-import com.team15gijo.notification.application.dto.v1.CommentNotificationEvent;
+import com.team15gijo.notification.application.dto.v1.message.CommentNotificationEventDto;
 import com.team15gijo.notification.application.message.KafkaTestProducer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,7 +17,7 @@ public class KafkaTestController {
 
     @GetMapping
     public void sendKafkaMessage() {
-        producer.sendCommentCreate(new CommentNotificationEvent(1L, "정영", "잘 읽었습니다!"));
+        producer.sendCommentCreate(new CommentNotificationEventDto(1L, "정영", "잘 읽었습니다!"));
     }
 
 }

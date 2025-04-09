@@ -1,6 +1,5 @@
 package com.team15gijo.notification;
 
-import com.team15gijo.notification.application.dto.v1.CommentNotificationEvent;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -23,6 +22,10 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 @Configuration
 public class NotificationApplicationKafkaConfig {
 
+    /**
+     *  Kafka Producer Config
+     *
+     */
     @Bean
     public KafkaTemplate<String, String> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
@@ -37,6 +40,11 @@ public class NotificationApplicationKafkaConfig {
         return new DefaultKafkaProducerFactory<>(configProps);
     }
 
+
+    /**
+     *  Kafka Consumer Config
+     *
+     */
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
         Map<String, Object> configProps = new HashMap<>();                                     // 컨슈머 팩토리 설정을 위한 맵을 생성.
@@ -44,7 +52,7 @@ public class NotificationApplicationKafkaConfig {
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "notification-service");
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);     // 메시지 키의 디시리얼라이저 클래스를 설정.
         configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);      // 메시지 값의 디시리얼라이저 클래스를 설정.
-        configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+        configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "*");                   // 역직렬화할 때 data 신뢰성 모두 허용
         return new DefaultKafkaConsumerFactory<>(configProps);                                     // 설정된 프로퍼티로 DefaultKafkaConsumerFactory를 생성하여 반환.
     }
 

@@ -1,6 +1,6 @@
 package com.team15gijo.notification.application.message;
 
-import com.team15gijo.notification.application.dto.v1.CommentNotificationEvent;
+import com.team15gijo.notification.application.dto.v1.message.CommentNotificationEventDto;
 import com.team15gijo.notification.application.service.v1.EmitterService;
 import com.team15gijo.notification.domain.model.Notification;
 import com.team15gijo.notification.domain.model.NotificationType;
@@ -21,7 +21,7 @@ public class CommentNotificationConsumer {
 
     @KafkaListener(topics = "COMMENT", groupId = "notification-service", containerFactory = "kafkaListenerContainerFactory")
     @Transactional
-    public void commentConsumer(CommentNotificationEvent event) {
+    public void commentConsumer(CommentNotificationEventDto event) {
         System.out.println("📩 받은 Kafka 메시지: " + event);
         log.info("📨 Kafka COMMENT 메시지 수신: {}", event);
         Long receiverId = event.getReceiverId();
