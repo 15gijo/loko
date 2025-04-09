@@ -29,7 +29,7 @@ import org.hibernate.annotations.SQLRestriction;
 public class Notification extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     @Column(name = "notification_id")
     private UUID notificationId;
 

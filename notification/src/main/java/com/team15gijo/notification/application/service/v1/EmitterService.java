@@ -8,11 +8,13 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmitterService {
 
     private static final Long TIMEOUT = 60L * 1000 * 60; // 60분
@@ -42,6 +44,7 @@ public class EmitterService {
     }
 
     public void send(Long receiverId, NotificationType type, String content, String eventId, UUID notificationId) {
+        log.info("📡 SSE 전송 대상 receiverId = {}, eventId = {}", receiverId, eventId);
         NotificationResponseDto response = NotificationResponseDto.builder()
                 .notificationId(notificationId)
                 .notificationType(type)

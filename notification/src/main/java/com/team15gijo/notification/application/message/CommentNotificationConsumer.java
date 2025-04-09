@@ -1,15 +1,15 @@
-package com.team15gijo.notification.application.consumer;
+package com.team15gijo.notification.application.message;
 
 import com.team15gijo.notification.application.dto.v1.CommentNotificationEvent;
 import com.team15gijo.notification.application.service.v1.EmitterService;
 import com.team15gijo.notification.domain.model.Notification;
 import com.team15gijo.notification.domain.model.NotificationType;
 import com.team15gijo.notification.domain.repository.NotificationRepository;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -19,9 +19,11 @@ public class CommentNotificationConsumer {
     private final NotificationRepository notificationRepository;
     private final EmitterService emitterService;
 
-    @KafkaListener(topics = "COMMENT", groupId = "notification-service")
+    @KafkaListener(topics = "COMMENT", groupId = "notification-service", containerFactory = "kafkaListenerContainerFactory")
+    @Transactional
     public void commentConsumer(CommentNotificationEvent event) {
-
+        System.out.println("📩 받은 Kafka 메시지: " + event);
+        log.info("📨 Kafka COMMENT 메시지 수신: {}", event);
         Long receiverId = event.getReceiverId();
         String nickname = event.getNickname();
         String comment = event.getCommentContent();
