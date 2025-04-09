@@ -1,5 +1,8 @@
 package com.team15gijo.notification;
 
+import com.team15gijo.notification.application.dto.v1.message.ChatNotificationEventDto;
+import com.team15gijo.notification.application.dto.v1.message.CommentNotificationEventDto;
+import com.team15gijo.notification.application.dto.v1.message.FollowNotificationEventDto;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -26,18 +29,63 @@ public class NotificationApplicationKafkaConfig {
      *  Kafka Producer Config
      *
      */
-    @Bean
-    public KafkaTemplate<String, String> kafkaTemplate() {
-        return new KafkaTemplate<>(producerFactory());
-    }
+//    @Bean
+//    public KafkaTemplate<String, String> kafkaTemplate() {
+//        return new KafkaTemplate<>(producerFactory());
+//    }
+//
+//    @Bean
+//    public ProducerFactory<String, String> producerFactory() {
+//        Map<String, Object> configProps = new HashMap<>();
+//        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+//        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+//        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+//        return new DefaultKafkaProducerFactory<>(configProps);
+//    }
 
+    // 댓글 이벤트용 KafkaTemplate(테스트 용으로 나눈 코드, 각자 서버에서는 위의 코드를 참고)
     @Bean
-    public ProducerFactory<String, String> producerFactory() {
+    public ProducerFactory<String, CommentNotificationEventDto> commentProducerFactory() {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         return new DefaultKafkaProducerFactory<>(configProps);
+    }
+
+    @Bean
+    public KafkaTemplate<String, CommentNotificationEventDto> commentKafkaTemplate() {
+        return new KafkaTemplate<>(commentProducerFactory());
+    }
+
+    // 팔로우 이벤트용 KafkaTemplate(테스트 용으로 나눈 코드, 각자 서버에서는 위의 코드를 참고)
+    @Bean
+    public ProducerFactory<String, FollowNotificationEventDto> followProducerFactory() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        return new DefaultKafkaProducerFactory<>(configProps);
+    }
+
+    @Bean
+    public KafkaTemplate<String, FollowNotificationEventDto> followKafkaTemplate() {
+        return new KafkaTemplate<>(followProducerFactory());
+    }
+
+    // 채팅 이벤트용 KafkaTemplate(테스트 용으로 나눈 코드, 각자 서버에서는 위의 코드를 참고)
+    @Bean
+    public ProducerFactory<String, ChatNotificationEventDto> chatProducerFactory() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        return new DefaultKafkaProducerFactory<>(configProps);
+    }
+
+    @Bean
+    public KafkaTemplate<String, ChatNotificationEventDto> chatKafkaTemplate() {
+        return new KafkaTemplate<>(chatProducerFactory());
     }
 
 
