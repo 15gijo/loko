@@ -84,7 +84,6 @@ public class PostController {
 
     /**
      * 게시글에 해시태그 추가 엔드포인트
-     * 예: request body로 ["#Spring", "#Java"] 같은 문자열 배열을 받음
      */
     @PutMapping("/{postId}/hashtags")
     public ResponseEntity<ApiResponse<PostResponseDto>> addHashtags(@PathVariable UUID postId,
@@ -94,11 +93,20 @@ public class PostController {
     }
 
     /**
-     * 게시글 존재 여부 확인 엔드포인트 (Feign Client에서 호출할 API)
+     * 게시글 존재 여부 확인 엔드포인트 (Feign Client 호출용)
      */
     @GetMapping("/{postId}/exists")
     public ResponseEntity<ApiResponse<Boolean>> exists(@PathVariable UUID postId) {
         boolean exists = postService.exists(postId);
         return ResponseEntity.ok(ApiResponse.success("게시글 존재 여부 확인", exists));
+    }
+
+    /**
+     * 게시글 댓글 수 증가 엔드포인트 (댓글 서비스 등에서 호출)
+     */
+    @PostMapping("/{postId}/increment-comment")
+    public ResponseEntity<ApiResponse<Void>> AddCommentCount(@PathVariable UUID postId) {
+        postService.addCommentCount(postId);
+        return ResponseEntity.ok(ApiResponse.success("댓글 수 증가 성공", null));
     }
 }
