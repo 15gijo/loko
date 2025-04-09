@@ -92,4 +92,11 @@ public class PostController {
         Post updatedPost = postService.addHashtags(postId, hashtags);
         return ResponseEntity.ok(ApiResponse.success("해시태그 추가 성공", PostResponseDto.from(updatedPost)));
     }
+
+    // 게시글 존재 여부 확인 엔드포인트 (Feign Client에서 호출할 API)
+    @GetMapping("/internal/{postId}/exists")
+    public ResponseEntity<ApiResponse<Boolean>> exists(@PathVariable UUID postId) {
+        boolean exists = postService.exists(postId);
+        return ResponseEntity.ok(ApiResponse.success("게시글 존재 여부 확인", exists));
+    }
 }

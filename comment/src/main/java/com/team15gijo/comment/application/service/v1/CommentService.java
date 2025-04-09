@@ -2,7 +2,9 @@ package com.team15gijo.comment.application.service.v1;
 
 import com.team15gijo.comment.domain.model.Comment;
 import com.team15gijo.comment.domain.repository.CommentRepository;
+import com.team15gijo.comment.infrastructure.client.PostClient;
 import com.team15gijo.comment.presentation.dto.v1.CommentRequestDto;
+import com.team15gijo.common.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,12 +20,18 @@ import java.util.UUID;
 public class CommentService {
 
     private final CommentRepository commentRepository;
+    private final PostClient postClient;  // Feign Client 주입
 
     /**
-     * 댓글 생성
-     * (작성자 정보는 파라미터로 전달하며, BaseEntity의 createdBy, createdAt 은 빌드 후 설정)
+     * 댓글 생성: 게시글 존재 여부를 검증한 후 댓글을 생성
      */
     public Comment createComment(long userId, String username, UUID postId, CommentRequestDto request) {
+        // Feign Client 호출로 게시글 존재 여부 확인
+        ApiResponse<Boolean> existsResponse = postClient.exists(postId);
+        if (existsResponse.getData() == null || !existsResponse.getData()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "존재하지 않는 게시글입니다.");
+        }
+
         Comment comment = Comment.builder()
                 .postId(postId)
                 .userId(userId)
@@ -49,7 +57,6 @@ public class CommentService {
     public Comment updateComment(UUID commentId, CommentRequestDto request) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."));
-        // 엔티티 내부의 메서드 호출로 업데이트 처리
         comment.updateContent(request.getCommentContent());
         return commentRepository.save(comment);
     }
@@ -60,7 +67,6 @@ public class CommentService {
     public void deleteComment(UUID commentId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."));
-        // JPA Auditing에 의해 deletedAt, deletedBy가 추후 기록될 예정
         commentRepository.delete(comment);
     }
 }

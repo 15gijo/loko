@@ -111,4 +111,11 @@ public class PostService {
 
         return postRepository.save(post);
     }
+
+    /**
+     * 게시글 존재 여부 확인
+     */
+    public boolean exists(UUID postId) {
+        return postRepository.existsById(postId);
+    }
 }
