@@ -13,7 +13,8 @@ public class ChatMessageDocument {
     @Id
     private String _id;
     private UUID chatRoomId;
-    private String senderId;
+    private Long senderId;
+    private String senderNickname;
     private ConnectionType connectionType;
     private String messageContent;
     private ChatMessageType chatMessageType;
@@ -22,7 +23,9 @@ public class ChatMessageDocument {
 
     public ChatMessageResponseDto toResponse() {
         return ChatMessageResponseDto.builder()
+            .id(_id)
             .senderId(senderId)
+            .senderNickname(senderNickname)
             .message(messageContent)
             .sentAt(sentAt)
             .readStatus(readStatus).build();
