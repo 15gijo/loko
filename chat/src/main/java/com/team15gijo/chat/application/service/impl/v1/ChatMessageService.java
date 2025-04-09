@@ -14,8 +14,10 @@ import com.team15gijo.chat.presentation.dto.v1.ChatRoomParticipantRequestDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatRoomParticipantResponseDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatRoomRequestDto;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -43,21 +45,26 @@ public class ChatMessageService {
     public ChatRoomResponseDto createChatRoom(ChatRoomRequestDto requestDto) {
         // TODO: User feign client 유효성 검사
         // 현재 상대방 닉네임을 받아 오기 때문에 사용자 feign client로 존재하는지 확인 필요
-
-        // 채팅방 생성 및 저장
-        ChatRoom chatRoom = ChatRoom.builder()
-            .chatRoomType(requestDto.getChatRoomType())
-            .build();
-        ChatRoom savedChatRoom = chatRoomRepository.save(chatRoom);
+        String receiverNickname = requestDto.getReceiverNickname();
 
         // 채팅방 참여자 생성 및 저장
-        ChatRoomParticipant participant = ChatRoomParticipant.builder()
-            .chatRoom(savedChatRoom)
+        ChatRoomParticipant addParticipants = ChatRoomParticipant.builder()
             // TODO: 인증에서 x-user-id 추출. 현재 임시 값 사용
             .userId(1L)
             .activation(Boolean.TRUE)
             .build();
-        chatRoomParticipantRepository.save(participant);
+        ChatRoomParticipant savedParticipant = chatRoomParticipantRepository.save(addParticipants);
+        log.info("Created savedParticipant {}", savedParticipant);
+
+        Set<ChatRoomParticipant> participantsSet = new HashSet<>();
+        participantsSet.add(addParticipants);
+
+        // 채팅방 생성 및 저장
+        ChatRoom chatRoom = ChatRoom.builder()
+            .chatRoomType(requestDto.getChatRoomType())
+            .chatRoomParticipants(participantsSet)
+            .build();
+        ChatRoom savedChatRoom = chatRoomRepository.save(chatRoom);
 
         return savedChatRoom.toResponse();
     }
@@ -94,37 +101,51 @@ public class ChatMessageService {
         ChatRoom chatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
             .orElseThrow(() -> new IllegalArgumentException("Chat room not found"));
 
-        ChatRoomParticipant participant = chatRoomParticipantRepository.findByUserIdAndChatRoom_ChatRoomId(userId, chatRoomId)
-            .orElseThrow(() -> new IllegalArgumentException("Participant not found"));
+        Set<ChatRoomParticipant> updatedParticipant = chatRoom.getChatRoomParticipants().stream()
+            .map(participant -> {
+                if(participant.getUserId().equals(userId)) {
+                    // 기존 participant 제거 후
+                    chatRoom.getChatRoomParticipants().remove(participant);
+                    // 채팅방 및 채팅 메시지 볼 수 없는 비활성화 상태로 변경 및 저장
+                    participant.nonActivate();
+                    chatRoomParticipantRepository.save(participant);
+                    // 변경된 participant Set 추가
+                    chatRoom.getChatRoomParticipants().add(participant);
+                }
+                return participant;
+            })
+            .collect(Collectors.toSet());
 
-        // 채팅방 및 채팅 메시지 볼 수 없는 비활성화 상태로 변경
-        participant.nonActivate();
-        chatRoomParticipantRepository.save(participant);
+        chatRoomRepository.save(chatRoom);
     }
 
     /**
      * 채팅방에 상대방 참여자 입장(접속)
-     * @param request
+     * @param request(userId, chatRoomId)
      * @return
      */
     public ChatRoomParticipantResponseDto addChatParticipant(ChatRoomParticipantRequestDto request) {
-        List<ChatRoom> chatRooms = chatRoomParticipantRepository.findChatRoomsByUserId(request.getUserId());
-        for(ChatRoom chatRoom : chatRooms) {
-            UUID roomId = chatRoom.getChatRoomId();
-            boolean participantExists = chatRoomParticipantRepository.findByUserIdAndChatRoom_ChatRoomId(request.getUserId(), roomId)
-                .isPresent();
-            // 채팅방 참여자 목록에 없으므로 생성
-            if(!participantExists) {
-                ChatRoomParticipant addParticipant = ChatRoomParticipant.builder()
-                    .chatRoom(chatRoom)
-                    .userId(request.getUserId())
-                    .activation(true)
-                    .build();
-                chatRoomParticipantRepository.save(addParticipant);
-                return addParticipant.toResponse();
-            }
-        }
-        return null;
+        ChatRoom findChatRoom = chatRoomRepository.findByChatRoomId(request.getChatRoomId())
+            .orElseThrow(() -> new IllegalArgumentException("Chat room not found"));
+
+        ChatRoomParticipant participant = ChatRoomParticipant.builder()
+            .userId(request.getUserId())
+            .activation(Boolean.TRUE)
+            .build();
+        ChatRoomParticipant savedParticipant = chatRoomParticipantRepository.save(participant);
+
+        Set<ChatRoomParticipant> participantSet = findChatRoom.getChatRoomParticipants();
+        participantSet.add(participant);
+
+        // 채팅방 생성 및 저장
+        ChatRoom chatRoom = ChatRoom.builder()
+            .chatRoomId(request.getChatRoomId())
+            .chatRoomType(findChatRoom.getChatRoomType())
+            .chatRoomParticipants(participantSet)
+            .build();
+        chatRoomRepository.save(chatRoom);
+
+        return savedParticipant.toResponse();
     }
 
     /**

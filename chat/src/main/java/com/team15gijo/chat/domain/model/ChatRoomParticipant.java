@@ -32,17 +32,13 @@ public class ChatRoomParticipant extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "chat_room_id")
-    private ChatRoom chatRoom;
-
     private Long userId;
 
     private Boolean activation; // 활성화 상태(True: 참여, False: 퇴장)
 
     public ChatRoomParticipantResponseDto toResponse() {
         return ChatRoomParticipantResponseDto.builder()
-            .chatRoomId(chatRoom.getChatRoomId())
+            .id(id)
             .userId(userId)
             .activation(activation)
             .build();
