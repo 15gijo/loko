@@ -61,11 +61,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(ApiResponse.exception(errorMessage, CommonExceptionCode.VALIDATION_FAILED));
     }
 
-    @ExceptionHandler(AsyncRequestTimeoutException.class)
-    public Mono<ResponseEntity<ApiResponse<?>>> handleAsyncTimeoutException(AsyncRequestTimeoutException e) {
-        log.warn("AsyncRequestTimeoutException : ", e);
-        return Mono.just(handleExceptionInternal(CommonExceptionCode.REQUEST_TIMEOUT));
-    }
+//    @ExceptionHandler(AsyncRequestTimeoutException.class)
+//    public Mono<ResponseEntity<ApiResponse<?>>> handleAsyncTimeoutException(AsyncRequestTimeoutException e) {
+//        log.warn("AsyncRequestTimeoutException : ", e);
+//        return Mono.just(handleExceptionInternal(CommonExceptionCode.REQUEST_TIMEOUT));
+//    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<?>> handleException(Exception e) {
