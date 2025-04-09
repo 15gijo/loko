@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat</title>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <script>
+    let stompClient = null;
+    let chatRoomId = null;
+
+    function connect() {
+      chatRoomId = document.getElementById('chatRoomId').value;
+      const socket = new SockJS('/ws-stomp');
+      stompClient = Stomp.over(socket);
+      stompClient.connect({}, function (frame) {
+        console.log('Connected: ' + frame);
+        stompClient.subscribe('/topic/chat/' + chatRoomId, function (message) {
+          showMessage(JSON.parse(message.body));
+        });
+      });
+    }
+
+    function disconnect() {
+      if (stompClient !== null) {
+        stompClient.disconnect();
+      }
+      console.log("Disconnected");
+    }
+
+    function sendMessage() {
+      const senderId = document.getElementById('senderId').value;
+      const message = document.getElementById('message').value;
+      stompClient.send("/app/chat/" + chatRoomId, {}, JSON.stringify({
+        'chatRoomId': chatRoomId,
+        'senderId': senderId,
+        'message': message
+      }));
+    }
+
+    function showMessage(message) {
+      console.log("showMessage 함수 내 message=" + message);
+      for (const key in message) {
+        console.log(key + ": " + message[key]);
+      }
+      const messages = document.getElementById('messages');
+      const p = document.createElement('p');
+      p.textContent = message.senderId + ': ' + message.message
+          + ' - ' + message.sentAt;
+      messages.appendChild(p);
+    }
+  </script>
+</head>
+<body>
+<div>
+  <label>Chatroom ID:</label>
+  <input type="text" id="chatRoomId" value="1f46fcd1-e676-402e-8703-2183be76b021" />
+</div>
+<div>
+  <label>Sender:</label>
+  <input type="text" id="senderId" value="1L" />
+</div>
+<div>
+  <label>Message:</label>
+  <input type="text" id="message" />
+</div>
+<button onclick="connect()">Connect</button>
+<button onclick="disconnect()">Disconnect</button>
+<button onclick="sendMessage()">Send</button>
+<div id="messages"></div>
+</body>
+</html>
