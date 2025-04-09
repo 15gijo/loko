@@ -39,6 +39,11 @@ public class Post extends BaseEntity {
     @Column(name = "post_content", nullable = false, columnDefinition = "TEXT")
     private String postContent;
 
+    /**
+     * 다대다 관계 설정.
+     * 연결 테이블(p_post_hashtag_map)을 직접 지정하고,
+     * joinColumns, inverseJoinColumns를 통해 post_id, hashtag_id를 매핑합니다.
+     */
     @ManyToMany
     @JoinTable(
             name = "p_post_hashtag_map",
@@ -61,7 +66,7 @@ public class Post extends BaseEntity {
     private int likeCount = 0;
 
     @Builder.Default
-    @Column(name = "popularity_score", nullable = false, columnDefinition = "double default 0.0")
+    @Column(name = "popularity_score", nullable = false, columnDefinition = "double precision default 0.0")
     private double popularityScore = 0.0;
 
     public void updateContent(String newContent) {
