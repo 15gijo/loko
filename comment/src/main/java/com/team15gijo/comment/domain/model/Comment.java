@@ -14,7 +14,6 @@ import java.util.UUID;
 @SQLRestriction("deleted_at IS NULL")
 @SQLDelete(sql = "UPDATE p_comments SET deleted_at = now() WHERE comment_id = ?")
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -42,4 +41,11 @@ public class Comment extends BaseEntity {
     // 대댓글인 경우 상위 댓글 ID, 최상위 댓글은 null
     @Column(name = "parent_comment_id")
     private UUID parentCommentId;
+
+    public void updateContent(String newContent) {
+        if(newContent == null || newContent.trim().isEmpty()){
+            throw new IllegalArgumentException("댓글 내용은 비어있을 수 없습니다.");
+        }
+        this.commentContent = newContent;
+    }
 }
