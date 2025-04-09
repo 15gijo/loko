@@ -6,7 +6,6 @@ import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -40,37 +39,35 @@ public class Post extends BaseEntity {
     @Column(name = "post_content", nullable = false, columnDefinition = "TEXT")
     private String postContent;
 
-    /**
-     * 다대다 관계 설정.
-     * 연결 테이블(p_post_hashtag_map)을 직접 지정하고,
-     * joinColumns, inverseJoinColumns를 통해 post_id, hashtag_id를 매핑합니다.
-     */
     @ManyToMany
     @JoinTable(
             name = "p_post_hashtag_map",
             joinColumns = @JoinColumn(name = "post_id"),
             inverseJoinColumns = @JoinColumn(name = "hashtag_id")
     )
-    @Builder.Default // 기본값 설정을 명시해줌.
+    @Builder.Default
     private Set<Hashtag> hashtags = new HashSet<>();
 
-    @Column(name = "views")
-    private int views;
+    @Builder.Default
+    @Column(name = "views", nullable = false, columnDefinition = "int default 0")
+    private int views = 0;
 
-    @Column(name = "comment_count")
-    private int commentCount;
+    @Builder.Default
+    @Column(name = "comment_count", nullable = false, columnDefinition = "int default 0")
+    private int commentCount = 0;
 
-    @Column(name = "like_count")
-    private int likeCount;
+    @Builder.Default
+    @Column(name = "like_count", nullable = false, columnDefinition = "int default 0")
+    private int likeCount = 0;
 
-    @Column(name = "popularity_score")
-    private double popularityScore;
+    @Builder.Default
+    @Column(name = "popularity_score", nullable = false, columnDefinition = "double default 0.0")
+    private double popularityScore = 0.0;
 
     public void updateContent(String newContent) {
-        if(newContent == null || newContent.trim().isEmpty()){
+        if (newContent == null || newContent.trim().isEmpty()) {
             throw new IllegalArgumentException("게시글 내용은 비어있을 수 없습니다.");
         }
         this.postContent = newContent;
-
     }
 }

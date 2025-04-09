@@ -12,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -34,15 +33,9 @@ public class PostService {
                 .region(region)
                 .postContent(request.getPostContent())
                 .build();
-
-        // 기본값 세팅
-        post.setViews(0);
-        post.setCommentCount(0);
-        post.setLikeCount(0);
-        post.setPopularityScore(0.0);
+        // 기본 생성 시 views, commentCount, likeCount, popularityScore는 엔티티 기본값(0 또는 a 0.0)으로 설정.
         post.setCreatedBy(userId);
         post.setCreatedAt(LocalDateTime.now());
-
         return postRepository.save(post);
     }
 
@@ -89,7 +82,6 @@ public class PostService {
     public Post addHashtags(UUID postId, List<String> hashtags) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
-
         for (String hashtagName : hashtags) {
             Hashtag hashtag = hashtagRepository.findByHashtagName(hashtagName)
                     .orElseGet(() -> {
@@ -100,7 +92,6 @@ public class PostService {
                     });
             post.getHashtags().add(hashtag);
         }
-
         return postRepository.save(post);
     }
 
