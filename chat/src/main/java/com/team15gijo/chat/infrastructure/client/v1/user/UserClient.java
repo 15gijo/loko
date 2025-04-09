@@ -1,5 +1,6 @@
 package com.team15gijo.chat.infrastructure.client.v1.user;
 
+import java.util.UUID;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,5 +13,5 @@ public interface UserClient {
      * 채팅방 생성 시, 상대방 계정 조회하는지 nickname 으로 판단
      */
     @GetMapping("/{nickname}")
-    Boolean nicknameExists(@PathVariable("nickname") String nickname);
+    Long getUserIdByNickname(@PathVariable("nickname") String nickname);
 }
