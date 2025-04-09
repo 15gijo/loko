@@ -8,6 +8,7 @@ import com.team15gijo.chat.domain.model.ChatRoomParticipant;
 import com.team15gijo.chat.domain.repository.ChatMessageRepository;
 import com.team15gijo.chat.domain.repository.ChatRoomParticipantRepository;
 import com.team15gijo.chat.domain.repository.ChatRoomRepository;
+import com.team15gijo.chat.infrastructure.client.v1.FeignClientService;
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageRequestDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageResponseDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatRoomParticipantRequestDto;
@@ -35,6 +36,8 @@ public class ChatMessageService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
 
+    private final FeignClientService feignClientService;
+
     /**
      * 채팅방 생성(chatRoomType, receiver)에 따른 채팅방 참여자 생성
      * @param requestDto
@@ -43,9 +46,13 @@ public class ChatMessageService {
      * TODO: userId, nickname 추후 구현
      */
     public ChatRoomResponseDto createChatRoom(ChatRoomRequestDto requestDto) {
-        // TODO: User feign client 유효성 검사
-        // 현재 상대방 닉네임을 받아 오기 때문에 사용자 feign client로 존재하는지 확인 필요
+        // TODO: User feign client 유효성 검사 구현 후, 연결 확인
+        // 채팅방 생성 시, 상대방 계정 조회하는지 nickname 으로 판단
         String receiverNickname = requestDto.getReceiverNickname();
+//        Boolean nicknameExists = feignClientService.fetchNicknameExists(receiverNickname);
+//        if(!nicknameExists) {
+//            throw new NullPointerException("Nickname " + receiverNickname + " does not exist");
+//        }
 
         // 채팅방 참여자 생성 및 저장
         ChatRoomParticipant addParticipants = ChatRoomParticipant.builder()
