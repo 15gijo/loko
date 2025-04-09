@@ -70,10 +70,11 @@ public class PostService {
     public Post updatePost(UUID postId, PostRequestDto request) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
-        post.setPostContent(request.getPostContent());
-        // JPA Auditing 등에 의해 updatedAt, updatedBy는 자동 처리 가능
+        // 엔티티 내부의 메서드로 업데이트 로직 위임
+        post.updateContent(request.getPostContent());
         return postRepository.save(post);
     }
+
 
     /**
      * 게시글 삭제 (Soft Delete)

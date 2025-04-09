@@ -65,4 +65,12 @@ public class Post extends BaseEntity {
 
     @Column(name = "popularity_score")
     private double popularityScore;
+
+    public void updateContent(String newContent) {
+        if(newContent == null || newContent.trim().isEmpty()){
+            throw new IllegalArgumentException("게시글 내용은 비어있을 수 없습니다.");
+        }
+        this.postContent = newContent;
+
+    }
 }

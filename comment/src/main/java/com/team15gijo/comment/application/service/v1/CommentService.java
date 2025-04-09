@@ -49,8 +49,8 @@ public class CommentService {
     public Comment updateComment(UUID commentId, CommentRequestDto request) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."));
-        comment.setCommentContent(request.getCommentContent());
-        // JPA Auditing에 의해 updatedAt, updatedBy가 추후 기록될 예정
+        // 엔티티 내부의 메서드 호출로 업데이트 처리
+        comment.updateContent(request.getCommentContent());
         return commentRepository.save(comment);
     }
 
