@@ -20,7 +20,7 @@ public class PostFeedResponseDto {
     private long userId;
     private String username;
     private String region;
-    private String content;
+    private String postContent;
     private List<String> hashtags;
     private int views;
     private int commentCount;
@@ -34,7 +34,7 @@ public class PostFeedResponseDto {
                 .userId(post.getUserId())
                 .username(post.getUsername())
                 .region(post.getRegion())
-                .content(post.getContent())
+                .postContent(post.getPostContent())
                 .hashtags(post.getHashtags())
                 .views(post.getViews())
                 .commentCount(post.getCommentCount())

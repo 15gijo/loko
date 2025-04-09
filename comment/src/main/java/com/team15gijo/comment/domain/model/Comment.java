@@ -14,7 +14,6 @@ import java.util.UUID;
 @SQLRestriction("deleted_at IS NULL")
 @SQLDelete(sql = "UPDATE p_comments SET deleted_at = now() WHERE comment_id = ?")
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

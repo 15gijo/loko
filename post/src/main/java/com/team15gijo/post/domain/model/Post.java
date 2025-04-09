@@ -15,7 +15,6 @@ import org.hibernate.annotations.SQLRestriction;
 @SQLRestriction("deleted_at IS NULL")
 @SQLDelete(sql = "UPDATE p_posts SET deleted_at = now() WHERE post_id = ?")
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
