@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -32,24 +33,33 @@ public class ProducerTestController {
                               @RequestParam(value = "key", required = false) String key,
                               @RequestParam(value = "message", required = false, defaultValue = "테스트용 글입니다.") String message,
                               @RequestParam(value = "eventType", required = false, defaultValue = "post_created") String eventType,
-                              @RequestParam(value = "postId", required = false) UUID postId) {
+                              @RequestParam(value = "postId", required = false) UUID postId,
+                              @RequestParam(value = "region", required = false, defaultValue = "송파구") String region) {
         if (postId == null) postId = UUID.randomUUID();
-        FeedEventDto feedEventDto = createEventMessageByType(eventType, message, postId);
+        FeedEventDto feedEventDto = createEventMessageByType(eventType, message, postId, region);
         producerService.sendMessage(topic, key, feedEventDto);
         return "Message sent to Kafka topic";
     }
 
-    private PostCreatedEventDto getPostCreatedEventDto(String message, UUID postId) {
+    private PostCreatedEventDto getPostCreatedEventDto(String message, UUID postId, String region) {
         return PostCreatedEventDto.builder()
-                .postId(UUID.randomUUID())
+                .postId(postId)
+                .userId(12L)
+                .username("nickname")
+                .region(region)
                 .postContent(message)
+                .hashtags(List.of("일상", "테스트", "봄날"))
                 .build();
     }
 
-    private PostUpdatedEventDto getPostUpdatedEventDto(String message, UUID postId) {
+    private PostUpdatedEventDto getPostUpdatedEventDto(String message, UUID postId, String region) {
         return PostUpdatedEventDto.builder()
                 .postId(postId)
+                .userId(12L)
+                .username("nickname")
+                .region(region)
                 .postContent(message)
+                .hashtags(List.of("일상", "테스트", "봄날", "벚꽃"))
                 .build();
     }
 
@@ -59,12 +69,12 @@ public class ProducerTestController {
                 .build();
     }
 
-    private FeedEventDto createEventMessageByType(String eventType, String message, UUID postId) {
+    private FeedEventDto createEventMessageByType(String eventType, String message, UUID postId, String region) {
         if (eventType == null || message == null) return null;
 
         return switch (eventType) {
-            case "post_created" -> getPostCreatedEventDto(message, postId);
-            case "post_updated" -> getPostUpdatedEventDto(message, postId);
+            case "post_created" -> getPostCreatedEventDto(message, postId, region);
+            case "post_updated" -> getPostUpdatedEventDto(message, postId, region);
             case "post_deleted" -> getPostDeletedEventDto(postId);
             default -> null;
         };

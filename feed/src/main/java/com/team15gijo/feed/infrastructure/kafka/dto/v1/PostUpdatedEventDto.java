@@ -32,19 +32,19 @@ public class PostUpdatedEventDto implements FeedEventDto {
     private LocalDateTime deletedAt;
 
     public Feed toEntity() {
-        return new Feed(
-                postId,
-                userId,
-                username,
-                region,
-                postContent,
-                hashtags != null ? new ArrayList<>(hashtags) : new ArrayList<>(),
-                views,
-                commentCount,
-                likeCount,
-                popularityScore,
-                createdAt,
-                deletedAt
-        );
+        return Feed.builder()
+                .postId(postId)
+                .userId(userId)
+                .username(username)
+                .region(region)
+                .postContent(postContent)
+                .hashtags(hashtags != null ? new ArrayList<>(hashtags) : new ArrayList<>())
+                .views(views)
+                .commentCount(commentCount)
+                .likeCount(likeCount)
+                .popularityScore(popularityScore)
+                .createdAtOrigin(createdAt)
+                .deletedAtOrigin(deletedAt)
+                .build();
     }
 }

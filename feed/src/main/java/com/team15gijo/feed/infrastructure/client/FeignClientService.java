@@ -2,7 +2,7 @@ package com.team15gijo.feed.infrastructure.client;
 
 import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.feed.infrastructure.client.post.PostClient;
-import com.team15gijo.feed.infrastructure.client.post.dto.PostFeedPageResponseDto;
+import com.team15gijo.feed.presentation.dto.v1.PostFeedPageResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

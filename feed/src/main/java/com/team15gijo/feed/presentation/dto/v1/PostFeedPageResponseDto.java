@@ -1,4 +1,4 @@
-package com.team15gijo.feed.infrastructure.client.post.dto;
+package com.team15gijo.feed.presentation.dto.v1;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

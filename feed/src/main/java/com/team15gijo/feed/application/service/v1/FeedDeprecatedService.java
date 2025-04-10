@@ -3,59 +3,45 @@ package com.team15gijo.feed.application.service.v1;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team15gijo.common.dto.ApiResponse;
-import com.team15gijo.feed.domain.model.Feed;
-import com.team15gijo.feed.domain.repository.FeedRepository;
+import com.team15gijo.feed.infrastructure.client.FeignClientService;
 import com.team15gijo.feed.presentation.dto.v1.PostFeedPageResponseDto;
-import com.team15gijo.feed.presentation.dto.v1.PostFeedResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Objects;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class FeedService {
+public class FeedDeprecatedService {
     private static final String redisKeyPrefix = "feed:recent:region:";
 
+    private final FeignClientService feignClientService;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
-    private final FeedRepository feedRepository;
 
     /**
      * 동일 지역 정보를 가진 피드 최신순 조회 (DB)
      */
-    public ApiResponse<PostFeedPageResponseDto> getRecentFeedsByRegion(LocalDateTime cursor, int pageSize, String region) {
+    public ApiResponse<PostFeedPageResponseDto> getRecentFeedBase(LocalDateTime cursor, int pageSize, String region) {
 
         // TODO: 요청한 유저의 지역 가져오기 (token or user-service 요청)
 //        String token = "";
 //        String region = getRegionFromToken(token); //임시 지역
 
-        if (cursor == null) {
-            cursor = LocalDateTime.now();
-        }
-
-        List<Feed> feeds = feedRepository
-                .findByRegionAndCreatedAtBeforeOrderByCreatedAtDesc(region, cursor, PageRequest.of(0, pageSize));
-
-        List<PostFeedResponseDto> postFeedResponsDtos = feeds.stream()
-                .map(PostFeedResponseDto::from)
-                .toList();
-
-        return ApiResponse.success("피드 조회 성공", PostFeedPageResponseDto.of(postFeedResponsDtos));
+        ApiResponse<PostFeedPageResponseDto> response = feignClientService.fetchRecentPostsByRegion(region, cursor, pageSize);
+        return response;
 
     }
 
     /**
      * 동일 지역 정보를 가진 피드 최신순 조회 (cache)
      */
-    public ApiResponse<PostFeedPageResponseDto> getRecentCachedFeedByRegion(LocalDateTime cursor, int pageSize, String region) throws JsonProcessingException {
+    public ApiResponse<PostFeedPageResponseDto> getRecentFeedCache(LocalDateTime cursor, int pageSize, String region) throws JsonProcessingException {
         // TODO: 요청한 유저의 지역 가져오기 (token or user-service 요청)
 //        String token = "";
 //        String region = getRegionFromToken(token); //임시 지역
@@ -75,14 +61,14 @@ public class FeedService {
 
             // 캐시 hit x
             log.info("Recent feed cache miss");
-            ApiResponse<PostFeedPageResponseDto> response = getRecentFeedsByRegion(cursor, pageSize, region);
+            ApiResponse<PostFeedPageResponseDto> response = feignClientService.fetchRecentPostsByRegion(region, cursor, pageSize);
             if (Objects.equals(response.getStatus(), "SUCCESS")) {
                 String value = objectMapper.writeValueAsString(response.getData());
                 redisTemplate.opsForValue().set(cacheKey, value, Duration.ofSeconds(60));
             }
             return response;
         } else {
-            ApiResponse<PostFeedPageResponseDto> response = getRecentFeedsByRegion(cursor, pageSize, region);
+            ApiResponse<PostFeedPageResponseDto> response = feignClientService.fetchRecentPostsByRegion(region, cursor, pageSize);
             return response;
         }
 

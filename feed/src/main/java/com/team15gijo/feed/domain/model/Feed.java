@@ -4,10 +4,7 @@ import com.team15gijo.common.base.BaseEntity;
 import com.team15gijo.feed.infrastructure.converter.StringListConverter;
 import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostUpdatedEventDto;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -21,6 +18,7 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Getter
+@Builder
 @SQLRestriction("deleted_at IS NULL")
 @SQLDelete(sql = "UPDATE p_feeds SET deleted_at = now(), deleted_by = updated_by WHERE post_id = ?")
 public class Feed extends BaseEntity {
