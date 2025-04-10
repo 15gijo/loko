@@ -1,8 +1,10 @@
 package com.team15gijo.search.infrastructure.client.user;
 
 import com.team15gijo.common.dto.ApiResponse;
+import java.util.List;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -10,5 +12,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface UserClient {
 
     @GetMapping("/api/v1/users/search")
-    ApiResponse<Page<UserSearchResponseDto>> searchUsers(@RequestParam String keyword);
+    ApiResponse<List<UserSearchResponseDto>> searchUsers(
+            @RequestParam String keyword,
+            @RequestParam String region,
+            @RequestParam Long lastUserId,
+            @RequestParam int size);
 }
