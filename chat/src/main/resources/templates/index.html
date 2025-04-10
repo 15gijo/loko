@@ -7,6 +7,7 @@
   <script>
     let stompClient = null;
     let chatRoomId = null;
+    let isConnected = false;
 
     function connect() {
       chatRoomId = document.getElementById('chatRoomId').value;
@@ -39,10 +40,33 @@
             console.log("채팅방 ID에 해당하는 senderId 유효성 검증 성공");
 
             // 채팅방 id과 userId가 유효성 검증 성공하면 webSocket 연결
-            const socket = new SockJS('/ws-stomp');
+            document.cookie = "senderId=" + senderId;
+            // 소켓 연결 시, 쿼리 파리미터로 senderId 전달
+            const socket = new SockJS('/ws-stomp?senderId=' + senderId);
             stompClient = Stomp.over(socket);
             stompClient.connect({}, function (frame) {
+              isConnected = true;
               console.log('소켓 Connected: ' + frame);
+
+              // connect 엔드포인트로 메시지 전송하여 Redis 저장
+              stompClient.send("/app/chat/connect/" + chatRoomId + "/" + senderId, {}, JSON.stringify({
+                "message" : senderId + "님이 입장하였습니다."
+              }));
+
+              // connect 에서 오류 메시지 구독
+              stompClient.subscribe('/topic/chat/errors/' + senderId, function (message) {
+                alert(message.body);
+                isConnected = false;
+                console.log("소켓 Disconnected");
+                stompClient.disconnect();
+              });
+
+              // 처음 채팅방 입장 메시지 구독
+              stompClient.subscribe('/topic/chat/enter/' + chatRoomId, function (message) {
+                showEnterMessage((JSON.parse(message.body)));
+              });
+
+              // 실시간 채팅 메시지 전송 구독
               stompClient.subscribe('/topic/chat/' + chatRoomId, function (message) {
                 showMessage(JSON.parse(message.body));
               });
@@ -60,16 +84,18 @@
 
     function disconnect() {
       if (stompClient !== null) {
+        // TODO: 연결 중단 시, redis 삭제 API 호출
+        isConnected = false;
+        console.log("소켓 Disconnected");
+        alert('채팅방 연결 종료하였습니다. 다시 연결해주세요!');
         stompClient.disconnect();
       }
-      console.log("소켓 Disconnected");
-      alert('채팅방 연결 종료하였습니다. 다시 연결해주세요!');
     }
 
     function sendMessage() {
       const senderId = parseInt(document.getElementById('senderId').value); // 문자열을 숫자로 변환
       const message = document.getElementById('message').value;
-      stompClient.send("/app/chat/" + chatRoomId, {}, JSON.stringify({
+      stompClient.send("/app/chat/" + chatRoomId, {}, JSON.stringify({ // messageMapping 경로 사용
         'chatRoomId': chatRoomId,
         'senderId': senderId,
         'message': message
@@ -81,6 +107,13 @@
           alert("메시지 전송 실패. 서버 오류를 확인해주세요.");
         }
       });
+    }
+
+    function showEnterMessage(message) {
+      const messages = document.getElementById('messages');
+      const p = document.createElement('p');
+      p.textContent = message.message;
+      messages.appendChild(p);
     }
 
     function showMessage(message) {

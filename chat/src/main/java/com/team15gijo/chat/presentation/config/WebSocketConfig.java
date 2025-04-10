@@ -1,5 +1,7 @@
 package com.team15gijo.chat.presentation.config;
 
+import com.team15gijo.chat.presentation.handler.HttpHandshakeInterceptor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
@@ -11,15 +13,20 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
  * */
 @Configuration
 @EnableWebSocketMessageBroker
+@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    private final HttpHandshakeInterceptor handshakeInterceptor;
+
     // STOMP 엔트포인트를 "/ws-stomp" 로 설정하고 SocketJS를 활성화
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-stomp") // ws-stomp 경로로 SocketJS Fallback를 사용해 WebSocket 접속
+            .addInterceptors(handshakeInterceptor) // HandshakeInterceptor 등록
             .setAllowedOrigins("http://localhost:19097") // 도메인 제한 필요
             .withSockJS();
     }
-    // ws-stomp 경로로 SocketJS Fallback를 사용해 WebSocket 접속
+
     /**
      * 메시지 브로커 구성
      * /app 시작으로 들어오는 STOMP 메시지는 @Controller 객체로 라우팅
