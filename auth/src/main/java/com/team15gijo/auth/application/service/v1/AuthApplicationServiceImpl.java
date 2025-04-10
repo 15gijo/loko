@@ -6,6 +6,7 @@ import com.team15gijo.auth.domain.repository.AuthRepository;
 import com.team15gijo.auth.domain.service.AuthDomainService;
 import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpRequestDto;
 import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpResponseDto;
+import com.team15gijo.auth.presentation.dto.v1.AuthLoginRequestDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -24,10 +25,17 @@ public class AuthApplicationServiceImpl implements AuthApplicationService {
     @Override
     @Transactional
     public AuthSignUpResponseDto signUp(AuthSignUpRequestDto authSignUpRequestDto) {
-        log.info("signUp service authSignUpRequestDto={}", authSignUpRequestDto);
+        log.info("signup-auth authSignUpRequestDto={}", authSignUpRequestDto);
         AuthEntity createdAuth = authDomainService.createAuth(authSignUpRequestDto);
-        log.info("createdAuth={}", createdAuth);
         authRepository.save(createdAuth);
         return new AuthSignUpResponseDto("회원 가입 성공", String.valueOf(HttpStatus.CREATED.value()));
+    }
+
+    @Override
+    @Transactional
+    public void login(AuthLoginRequestDto authLoginRequestDto) {
+        log.info("login-auth authLoginRequestDto={}", authLoginRequestDto);
+        AuthEntity loginAuth = authDomainService.loginAuth(authLoginRequestCommand);
+
     }
 }
