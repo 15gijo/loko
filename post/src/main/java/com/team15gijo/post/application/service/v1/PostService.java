@@ -12,10 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.HashSet;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -47,7 +45,7 @@ public class PostService {
     public Post getPostById(UUID postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
-        Post.incrementViews(post);
+        post.setViews(post.getViews() + 1);
         return postRepository.save(post);
     }
 
@@ -57,7 +55,7 @@ public class PostService {
     public Post updatePost(UUID postId, PostRequestDto request) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
-        Post.updatePostContent(post, request.getPostContent());
+        post.updateContent(request.getPostContent());
         return postRepository.save(post);
     }
 
@@ -76,15 +74,16 @@ public class PostService {
     public Post addHashtags(UUID postId, List<String> hashtags) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
-        Set<Hashtag> tagsToAdd = new HashSet<>();
         for (String hashtagName : hashtags) {
             Hashtag hashtag = hashtagRepository.findByHashtagName(hashtagName)
-                    .orElseGet(() -> hashtagRepository.save(Hashtag.builder()
-                            .hashtagName(hashtagName)
-                            .build()));
-            tagsToAdd.add(hashtag);
+                    .orElseGet(() -> {
+                        Hashtag newTag = Hashtag.builder()
+                                .hashtagName(hashtagName)
+                                .build();
+                        return hashtagRepository.save(newTag);
+                    });
+            post.getHashtags().add(hashtag);
         }
-        Post.withAdditionalHashtags(post, tagsToAdd);
         return postRepository.save(post);
     }
 
@@ -102,7 +101,7 @@ public class PostService {
     public void addCommentCount(UUID postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
-        Post.incrementCommentCount(post);
+        post.setCommentCount(post.getCommentCount() + 1);
         postRepository.save(post);
     }
 }

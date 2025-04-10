@@ -2,12 +2,11 @@ package com.team15gijo.post.domain.model;
 
 import com.team15gijo.common.base.BaseEntity;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
-
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -42,7 +41,9 @@ public class Post extends BaseEntity {
     private String postContent;
 
     /**
-     * 다대다 관계 설정: 연결 테이블(p_post_hashtag_map)을 사용하여 post_id와 hashtag_id 매핑.
+     * 다대다 관계 설정.
+     * 연결 테이블(p_post_hashtag_map)을 직접 지정하고,
+     * joinColumns, inverseJoinColumns를 통해 post_id, hashtag_id를 매핑합니다.
      */
     @ManyToMany
     @JoinTable(
@@ -69,6 +70,13 @@ public class Post extends BaseEntity {
     @Column(name = "popularity_score", nullable = false, columnDefinition = "double precision default 0.0")
     private double popularityScore = 0.0;
 
+    public void updateContent(String newContent) {
+        if (newContent == null || newContent.trim().isEmpty()) {
+            throw new IllegalArgumentException("게시글 내용은 비어있을 수 없습니다.");
+        }
+        this.postContent = newContent;
+    }
+
     /**
      * 정적 팩토리 메서드: 새로운 게시글 객체를 생성하고 생성자 메타데이터(생성자 ID, 생성일시)를 설정합니다.
      */
@@ -85,41 +93,6 @@ public class Post extends BaseEntity {
                 .build();
         post.setCreatedBy(userId);
         post.setCreatedAt(LocalDateTime.now());
-        return post;
-    }
-
-    /**
-     * 정적 메서드: 게시글 내용을 업데이트합니다.
-     */
-    public static Post updatePostContent(Post post, String newContent) {
-        if (newContent == null || newContent.trim().isEmpty()) {
-            throw new IllegalArgumentException("게시글 내용은 비어있을 수 없습니다.");
-        }
-        post.setPostContent(newContent);
-        return post;
-    }
-
-    /**
-     * 정적 메서드: 조회수를 증가시킵니다.
-     */
-    public static Post incrementViews(Post post) {
-        post.setViews(post.getViews() + 1);
-        return post;
-    }
-
-    /**
-     * 정적 메서드: 댓글 수를 증가시킵니다.
-     */
-    public static Post incrementCommentCount(Post post) {
-        post.setCommentCount(post.getCommentCount() + 1);
-        return post;
-    }
-
-    /**
-     * 정적 메서드: 추가 해시태그들을 게시글에 포함시킵니다.
-     */
-    public static Post withAdditionalHashtags(Post post, Set<Hashtag> newHashtags) {
-        post.getHashtags().addAll(newHashtags);
         return post;
     }
 }

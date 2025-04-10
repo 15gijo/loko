@@ -12,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -33,16 +32,8 @@ public class CommentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "존재하지 않는 게시글입니다.");
         }
 
-        // 댓글 생성 및 저장
-        Comment comment = Comment.builder()
-                .postId(postId)
-                .userId(userId)
-                .username(username)
-                .commentContent(request.getCommentContent())
-                .parentCommentId(request.getParentCommentId())
-                .build();
-        comment.setCreatedBy(userId);
-        comment.setCreatedAt(LocalDateTime.now());
+        // Comment 엔티티의 정적 팩토리 메서드를 활용하여 댓글 생성
+        Comment comment = Comment.createComment(postId, userId, username, request.getCommentContent(), request.getParentCommentId());
         Comment savedComment = commentRepository.save(comment);
 
         // 게시글의 댓글 수 증가 호출 (post-service에 비즈니스 로직 위임)
