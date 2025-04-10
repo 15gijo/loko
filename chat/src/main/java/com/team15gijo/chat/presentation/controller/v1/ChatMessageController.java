@@ -133,6 +133,17 @@ public class ChatMessageController {
     }
 
     /**
+     * 소켓 연결 중단 시, redis 삭제 API 호출
+     */
+    @GetMapping("/redis/delete/{senderId}")
+    public ResponseEntity<ApiResponse<Boolean>> deleteRedisSenderId(
+        @PathVariable("senderId") Long senderId
+    ) {
+        Boolean response = chatMessageService.deleteRedisSenderId(senderId);
+        return ResponseEntity.ok(ApiResponse.success("Redis 캐시 삭제 성공하였습니다.", response));
+    }
+
+    /**
      * "/ws-stomp" 경로로 소켓 연결 시, 쿼리파라미터 senderId를 추출하여 Redis 캐시 저장
      * @param headerAccessor
      */

@@ -85,10 +85,23 @@
     function disconnect() {
       if (stompClient !== null) {
         // TODO: 연결 중단 시, redis 삭제 API 호출
-        isConnected = false;
-        console.log("소켓 Disconnected");
-        alert('채팅방 연결 종료하였습니다. 다시 연결해주세요!');
-        stompClient.disconnect();
+        fetch(`/api/v1/chats/redis/delete/${senderId}`)
+          .then(response => response.json())
+          .then(data => {
+            if(data.data) {
+              // Redis 캐시 삭제 성공
+              console.log("소켓 Disconnected");
+            } else {
+              console.log("저장된 캐시가 없습니다.");
+            }
+            isConnected = false;
+            alert('채팅방 연결 종료하였습니다. 다시 연결해주세요!');
+            stompClient.disconnect();
+          })
+          .catch(error => {
+            console.error("API 호출 실패: " + error);
+            alert('senderId:세션 ID 캐시 삭제 실패');
+          });
       }
     }
 

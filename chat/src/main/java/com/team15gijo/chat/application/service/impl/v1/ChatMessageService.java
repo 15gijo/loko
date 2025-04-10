@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -211,6 +212,21 @@ public class ChatMessageService {
         response.put("valid", participantExists);
         return response;
     }
+
+    /**
+     * 소켓 연결 중단 시, redis 삭제 호출
+     */
+    public Boolean deleteRedisSenderId(Long senderId) {
+        if(redisTemplate.hasKey(String.valueOf(senderId))) {
+            log.info("소켓 연결 해지로 senderId {}의 Redis 캐시 삭제", senderId);
+            redisTemplate.delete(String.valueOf(senderId));
+            return true;
+        } else {
+            log.info("senderId {}에 해당하는 Redis 캐시가 존재하지 않음", senderId);
+            return false;
+        }
+    }
+
     /**
      * "/ws-stomp" 경로로 소켓 연결 시, 채팅방에 참여한 user가 Redis 캐시 조회하여 있는 경우 소켓 연결 중단
      * 서버 리셋 후, 다시 소켓 연결하면 재접속 가능
@@ -237,7 +253,7 @@ public class ChatMessageService {
                     "중복 로그인으로 인해 연결이 거부되었습니다. 해당 채팅방에 다시 접속해주세요.");
             } else {
                 // 존재하지 않은 경우, Redis에 key(senderId)와 value(sessionId) 저장
-                redisTemplate.opsForValue().set(String.valueOf(senderId), sessionId);
+                redisTemplate.opsForValue().set(String.valueOf(senderId), sessionId, 30, TimeUnit.MINUTES);
                 log.info("senderId {} 과 sessionId {} Redis 저장", senderId, sessionId);
 
                 // mongoDB에서 userId와 chatRoomId에 대한 메시지 유무로 처음인지 판단하고 입장 메시지 전송
