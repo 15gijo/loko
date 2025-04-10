@@ -1,5 +1,7 @@
 package com.team15gijo.post.application.service.v1;
 
+import com.team15gijo.post.domain.exception.PostDomainException;
+import com.team15gijo.post.domain.exception.PostDomainExceptionCode;
 import com.team15gijo.post.domain.model.Post;
 import com.team15gijo.post.domain.model.Hashtag;
 import com.team15gijo.post.domain.repository.PostRepository;
@@ -8,11 +10,8 @@ import com.team15gijo.post.presentation.dto.v1.PostRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,7 +43,7 @@ public class PostService {
     @Transactional
     public Post getPostById(UUID postId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
         post.setViews(post.getViews() + 1);
         return postRepository.save(post);
     }
@@ -54,7 +53,7 @@ public class PostService {
      */
     public Post updatePost(UUID postId, PostRequestDto request) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
         post.updateContent(request.getPostContent());
         return postRepository.save(post);
     }
@@ -64,7 +63,7 @@ public class PostService {
      */
     public void deletePost(UUID postId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
         postRepository.delete(post);
     }
 
@@ -73,7 +72,7 @@ public class PostService {
      */
     public Post addHashtags(UUID postId, List<String> hashtags) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
         for (String hashtagName : hashtags) {
             Hashtag hashtag = hashtagRepository.findByHashtagName(hashtagName)
                     .orElseGet(() -> {
@@ -100,7 +99,7 @@ public class PostService {
     @Transactional
     public void addCommentCount(UUID postId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
         post.setCommentCount(post.getCommentCount() + 1);
         postRepository.save(post);
     }
