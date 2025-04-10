@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>SSE 알림 테스트</title>
+</head>
+<body>
+<h1>SSE 알림 수신 테스트</h1>
+<ul id="log"></ul>
+
+<script>
+  const baseUrl = "http://localhost:19098";
+  const logContainer = document.getElementById("log");
+
+  // ✅ 알림 목록 렌더링 함수
+  function renderNotification(notification, isNew = false) {
+    const li = document.createElement("li");
+    li.textContent = `${isNew ? '[NEW] ' : '[UNREAD] '}${notification.notificationContent}`;
+    li.dataset.id = notification.notificationId;
+    li.style.cursor = "pointer";
+
+    li.addEventListener("click", () => {
+      const id = li.dataset.id;
+      fetch(`${baseUrl}/api/v1/notifications/${id}/read`, {
+        method: "PATCH"
+      })
+      .then(response => {
+        if (response.ok) {
+          li.style.textDecoration = "line-through";
+          li.textContent += " (읽음)";
+        } else {
+          throw new Error(`상태 코드: ${response.status}`);
+        }
+      })
+      .catch(err => {
+        console.error("❌ 읽음 처리 실패", err);
+        alert("알림 읽음 처리에 실패했습니다.");
+      });
+    });
+
+    logContainer.appendChild(li);
+  }
+
+  // ✅ SSE 연결
+  const eventSource = new EventSource(`${baseUrl}/api/v1/sse/subscribe`);
+
+  eventSource.onopen = () => {
+    console.log("✅ SSE 연결 성공");
+    fetch(`${baseUrl}/api/v1/notifications`)
+    .then(res => res.json())
+    .then(data => {
+      data.forEach(notification => renderNotification(notification));
+    })
+    .catch(err => {
+      console.error("❌ 미확인 알림 불러오기 실패", err);
+    });
+  };
+
+  eventSource.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    renderNotification(data, true);
+  };
+
+  eventSource.addEventListener("CONNECT", (event) => {
+    const li = document.createElement("li");
+    li.textContent = "[CONNECT] SSE 연결됨";
+    logContainer.appendChild(li);
+  });
+
+  eventSource.addEventListener("NEW", (event) => {
+    const data = JSON.parse(event.data);
+    renderNotification(data, true);
+  });
+
+  eventSource.onerror = (event) => {
+    console.error("❌ SSE 연결 오류", event);
+  };
+</script>
+</body>
+</html>
