@@ -2,6 +2,7 @@ package com.team15gijo.chat.presentation.controller.v1;
 
 import com.team15gijo.chat.application.dto.v1.ChatRoomResponseDto;
 import com.team15gijo.chat.application.service.impl.v1.ChatMessageService;
+import com.team15gijo.chat.domain.model.ChatMessageDocument;
 import com.team15gijo.chat.domain.model.ChatRoom;
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageRequestDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageResponseDto;
@@ -141,6 +142,23 @@ public class ChatMessageController {
     ) {
         Boolean response = chatMessageService.deleteRedisSenderId(senderId);
         return ResponseEntity.ok(ApiResponse.success("Redis 캐시 삭제 성공하였습니다.", response));
+    }
+
+    /**
+     * mongoDB에서 메시지 페이징 조회 API
+     */
+    @GetMapping("/message/{chatRoomId}")
+    public ResponseEntity<ApiResponse<Page<ChatMessageDocument>>> getMessagesByChatRoomId(
+        @PathVariable("chatRoomId") UUID chatRoomId,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "sentAt") String sortField,
+        @RequestParam(defaultValue = "asc") String sortDirection
+    ) {
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
+        Page<ChatMessageDocument> chatMessages = chatMessageService.getMessagesByChatRoomId(chatRoomId, pageable);
+        return ResponseEntity.ok(ApiResponse.success("채팅방의 메시지가 조회되었습니다.", chatMessages));
     }
 
     /**

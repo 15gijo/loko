@@ -5,8 +5,10 @@ import jakarta.persistence.Id;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Builder;
+import lombok.Getter;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+@Getter
 @Builder
 @Document(collection = "chat")
 public class ChatMessageDocument {

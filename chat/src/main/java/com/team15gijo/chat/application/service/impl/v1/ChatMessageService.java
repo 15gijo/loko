@@ -28,7 +28,11 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -49,6 +53,7 @@ public class ChatMessageService {
 
     private final RedisTemplate<String, String> redisTemplate;
     private final SimpMessagingTemplate messagingTemplate;
+    private final MongoTemplate mongoTemplate;
 
     /**
      * 1차 MVP 1:1 채팅만 구현
@@ -228,6 +233,27 @@ public class ChatMessageService {
     }
 
     /**
+     * mongoDB에서 채팅방(chatRoomId) 내 메시지 전체 조회
+     */
+    public Page<ChatMessageDocument> getMessagesByChatRoomId(UUID chatRoomId, Pageable pageable) {
+        // chatRoomId가 UUID를 바이너리 형태로 저장되어 쿼리 시 바이너리 데이터를 직접 비교하고 조회가 제대로 되지 않음
+        // 고유 id 값을 추출하여 데이터 조회
+        List<String> idList = chatMessageRepository.findAll().stream()
+            .filter(chatMessage -> chatMessage.getChatRoomId().equals(chatRoomId))
+            .map(ChatMessageDocument::get_id)
+            .toList();
+        log.info("idList {}", idList);
+
+        Query query = Query.query(Criteria.where("_id").in(idList))
+            .with(pageable);
+
+        long total = mongoTemplate.count(query, ChatMessageDocument.class);
+        List<ChatMessageDocument> messageDocumentList = mongoTemplate.find(query, ChatMessageDocument.class);
+
+        return new PageImpl<>(messageDocumentList, pageable, total);
+    }
+
+    /**
      * "/ws-stomp" 경로로 소켓 연결 시, 채팅방에 참여한 user가 Redis 캐시 조회하여 있는 경우 소켓 연결 중단
      * 서버 리셋 후, 다시 소켓 연결하면 재접속 가능
      * 웹 소켓 연결 시, redis senderId(key)-sessionId(value) 캐시 저장
@@ -275,7 +301,6 @@ public class ChatMessageService {
             }
         }
     }
-
 
     /**
      * stomp 메시지 브로커를 통한 메시지 전송

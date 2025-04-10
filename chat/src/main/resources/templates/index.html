@@ -39,7 +39,7 @@
           } else {
             console.log("채팅방 ID에 해당하는 senderId 유효성 검증 성공");
 
-            // 채팅방 id과 userId가 유효성 검증 성공하면 webSocket 연결
+            // 채팅방 id과 userId가 유효성 검증 성공하면 webSocket 연결(쿠키 senderId 추출안되서 쿼리 파라미터로 대체)
             document.cookie = "senderId=" + senderId;
             // 소켓 연결 시, 쿼리 파리미터로 senderId 전달
             const socket = new SockJS('/ws-stomp?senderId=' + senderId);
@@ -66,9 +66,23 @@
                 showEnterMessage((JSON.parse(message.body)));
               });
 
+              // TODO: 재접속 시 MongoDB 메시지 조회 API 호출
+              // -> postman 정상 작성하나, fetch PageImpl JSON 직렬화 불가로 불러오기 실패
+              fetch(`/api/v1/chats/messages/${chatRoomId}`)
+              .then(response => response.json())
+              .then(messages => {
+                messages.forEach(message => {
+                  showMessage(JSON.parse(message.body));
+                });
+              })
+              .catch(error => {
+                console.error("MongoDB 메시지 조회 실패: " + error);
+                alert("이전 메시지 불러오기 실패했습니다.");
+              });
+
               // 실시간 채팅 메시지 전송 구독
               stompClient.subscribe('/topic/chat/' + chatRoomId, function (message) {
-                showMessage(JSON.parse(message.body));
+                showMessage(message.body);
               });
             }, function (error) {
               console.error("소켓 Connection error: ", error);
@@ -84,7 +98,7 @@
 
     function disconnect() {
       if (stompClient !== null) {
-        // TODO: 연결 중단 시, redis 삭제 API 호출
+        // 연결 중단 시, redis 삭제 API 호출
         fetch(`/api/v1/chats/redis/delete/${senderId}`)
           .then(response => response.json())
           .then(data => {
