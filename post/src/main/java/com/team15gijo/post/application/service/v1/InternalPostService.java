@@ -37,14 +37,14 @@ public class InternalPostService {
 
 
     @Transactional(readOnly = true)
-    public List<PostSearchResponseDto> searchPost(String keyword, String region, UUID lastPostId, int size) {
+    public List<PostSearchResponseDto> searchPost(String keyword, String region, LocalDateTime lastCreatedAt, int size) {
         List<Post> posts;
 
-        if (lastPostId == null) {
-            posts = postRepository.findPostByKeyword(keyword, region, PageRequest.of(0, size));
-        } else {
-            posts = postRepository.findPostByKeywordAfter(keyword, region, lastPostId, PageRequest.of(0, size));
+        if (lastCreatedAt == null) {
+            lastCreatedAt = LocalDateTime.now();
         }
+
+        posts = postRepository.findPostByKeywordAfter(keyword, region, lastCreatedAt, PageRequest.of(0, size));
 
         return posts.stream()
                 .map(PostSearchResponseDto::from)

@@ -1,5 +1,6 @@
 package com.team15gijo.search.infrastructure.client.post;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -18,5 +19,6 @@ public class PostSearchResponseDto {
     private int views;
     private int commentCount;
     private int likeCount;
+    private LocalDateTime createdAt;
 
 }

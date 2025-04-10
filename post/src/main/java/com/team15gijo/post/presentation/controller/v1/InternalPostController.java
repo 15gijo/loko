@@ -46,10 +46,10 @@ public class InternalPostController {
     public ResponseEntity<ApiResponse<List<PostSearchResponseDto>>> searchPosts(
             @RequestParam String keyword,
             @RequestParam String region,
-            @RequestParam(required = false) UUID lastPostId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastCreatedAt,
             @RequestParam(defaultValue = "10") int size) {
 
-        List<PostSearchResponseDto> posts = internalPostService.searchPost(keyword, region, lastPostId, size);
+        List<PostSearchResponseDto> posts = internalPostService.searchPost(keyword, region, lastCreatedAt, size);
         return ResponseEntity.ok(ApiResponse.success("게시글 검색 성공", posts));
     }
 

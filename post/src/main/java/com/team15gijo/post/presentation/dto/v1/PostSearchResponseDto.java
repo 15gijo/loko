@@ -2,6 +2,7 @@ package com.team15gijo.post.presentation.dto.v1;
 
 import com.team15gijo.post.domain.model.Hashtag;
 import com.team15gijo.post.domain.model.Post;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,7 @@ public class PostSearchResponseDto {
     private int views;
     private int commentCount;
     private int likeCount;
+    private LocalDateTime createdAt;
 
     public static PostSearchResponseDto from(Post post) {
         return PostSearchResponseDto.builder()
@@ -34,6 +36,7 @@ public class PostSearchResponseDto {
                 .views(post.getViews())
                 .commentCount(post.getCommentCount())
                 .likeCount(post.getLikeCount())
+                .createdAt(post.getCreatedAt())
                 .build();
     }
 }

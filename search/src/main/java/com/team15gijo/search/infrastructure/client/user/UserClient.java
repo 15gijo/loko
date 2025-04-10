@@ -12,5 +12,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface UserClient {
 
     @GetMapping("/api/v1/users/search")
-    ApiResponse<List<UserSearchResponseDto>> searchUsers(@RequestParam String keyword, @RequestParam String region, Long lastUserId, int size);
+    ApiResponse<List<UserSearchResponseDto>> searchUsers(
+            @RequestParam String keyword,
+            @RequestParam String region,
+            @RequestParam Long lastUserId,
+            @RequestParam int size);
 }

@@ -6,9 +6,11 @@ import com.team15gijo.search.application.service.v1.SearchService;
 import com.team15gijo.search.infrastructure.client.post.PostSearchResponseDto;
 import com.team15gijo.search.infrastructure.client.user.UserSearchResponseDto;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,9 +44,9 @@ public class SearchController {
     public ResponseEntity<ApiResponse<CursorResultDto<PostSearchResponseDto>>> searchPost(
             @RequestParam String keyword,
             @RequestParam String region,
-            @RequestParam(required = false) UUID lastPostId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastCreatedAt,
             @RequestParam(defaultValue = "10") int size,
             HttpServletRequest request) {
-        return ResponseEntity.ok(ApiResponse.success("검색 성공", searchService.searchPosts(keyword, region, lastPostId, size)));
+        return ResponseEntity.ok(ApiResponse.success("검색 성공", searchService.searchPosts(keyword, region, lastCreatedAt, size)));
     }
 }

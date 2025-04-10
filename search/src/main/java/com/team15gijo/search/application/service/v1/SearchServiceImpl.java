@@ -5,6 +5,7 @@ import com.team15gijo.search.infrastructure.client.post.PostClient;
 import com.team15gijo.search.infrastructure.client.post.PostSearchResponseDto;
 import com.team15gijo.search.infrastructure.client.user.UserClient;
 import com.team15gijo.search.infrastructure.client.user.UserSearchResponseDto;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -47,11 +48,14 @@ public class SearchServiceImpl implements SearchService {
     public CursorResultDto<PostSearchResponseDto> searchPosts(
             String keyword,
             String region,
-            UUID lastPostId,
+            LocalDateTime lastCreatedAt,
             int size) {
-        List<PostSearchResponseDto> posts = postClient.searchPosts(keyword, region, lastPostId, size).getData();
+        List<PostSearchResponseDto> posts = postClient
+                .searchPosts(keyword, region, lastCreatedAt, size)
+                .getData();
+
         boolean hasNext = posts.size() == size;
-        UUID nextCursor = hasNext ? posts.get(posts.size() - 1).getPostId() : null;
+        LocalDateTime nextCursor = hasNext ? posts.get(posts.size() - 1).getCreatedAt() : null;
 
         return CursorResultDto.<PostSearchResponseDto>builder()
                 .items(posts)
