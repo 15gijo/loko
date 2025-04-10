@@ -2,20 +2,19 @@ package com.team15gijo.post.domain.model;
 
 import com.team15gijo.common.base.BaseEntity;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
-
-import java.util.List;
-import java.util.UUID;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
-
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 @Entity
 @Table(name = "p_posts")
 @SQLRestriction("deleted_at IS NULL")
 @SQLDelete(sql = "UPDATE p_posts SET deleted_at = now() WHERE post_id = ?")
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -33,31 +32,69 @@ public class Post extends BaseEntity {
     @Column(name = "username", nullable = false, length = 50)
     private String username;
 
-    // 유저의 지역정보
     @Column(name = "region", nullable = false, length = 50)
     private String region;
 
     @Column(name = "post_content", nullable = false, columnDefinition = "TEXT")
     private String postContent;
 
-    // 해시태그 (추후 자동 생성 로직 추가 예정)
-    @ElementCollection
-    @CollectionTable(name = "post_hashtags", joinColumns = @JoinColumn(name = "post_id"))
-    @Column(name = "hashtag")
-    private List<String> hashtags;
+    @ManyToMany
+    @JoinTable(
+            name = "p_post_hashtag_map",
+            joinColumns = @JoinColumn(name = "post_id"),
+            inverseJoinColumns = @JoinColumn(name = "hashtag_id")
+    )
+    @Builder.Default
+    private Set<Hashtag> hashtags = new HashSet<>();
 
-    @Column(name = "views")
-    private int views;
+    @Builder.Default
+    @Column(name = "views", nullable = false, columnDefinition = "int default 0")
+    private int views = 0;
 
-    // 추가: 댓글 수
-    @Column(name = "comment_count")
-    private int commentCount;
+    @Builder.Default
+    @Column(name = "comment_count", nullable = false, columnDefinition = "int default 0")
+    private int commentCount = 0;
 
-    // 추가: 좋아요 수
-    @Column(name = "like_count")
-    private int likeCount;
+    @Builder.Default
+    @Column(name = "like_count", nullable = false, columnDefinition = "int default 0")
+    private int likeCount = 0;
 
-    // 추가: popularity_score
-    @Column(name = "popularity_score")
-    private double popularityScore;
+    @Builder.Default
+    @Column(name = "popularity_score", nullable = false, columnDefinition = "double precision default 0.0")
+    private double popularityScore = 0.0;
+
+    // 콘텐츠 업데이트 메서드
+    public void updateContent(String newContent) {
+        if (newContent == null || newContent.trim().isEmpty()) {
+            throw new IllegalArgumentException("게시글 내용은 비어있을 수 없습니다.");
+        }
+        this.postContent = newContent;
+    }
+
+    // 조회수 증가 메서드 (setter 없이)
+    public void incrementViews() {
+        this.views++;
+    }
+
+    // 댓글 수 증가 메서드 (setter 없이)
+    public void incrementCommentCount() {
+        this.commentCount++;
+    }
+
+    // 새로운 게시글 생성하는 정적 팩토리 메서드
+    public static Post createPost(long userId, String username, String region, String postContent) {
+        Post post = Post.builder()
+                .userId(userId)
+                .username(username)
+                .region(region)
+                .postContent(postContent)
+                .views(0)
+                .commentCount(0)
+                .likeCount(0)
+                .popularityScore(0.0)
+                .build();
+        post.setCreatedBy(userId);
+        post.setCreatedAt(LocalDateTime.now());
+        return post;
+    }
 }

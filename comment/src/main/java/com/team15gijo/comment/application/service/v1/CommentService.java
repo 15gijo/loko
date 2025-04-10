@@ -1,16 +1,16 @@
 package com.team15gijo.comment.application.service.v1;
 
+import com.team15gijo.comment.domain.exception.CommentDomainException;
+import com.team15gijo.comment.domain.exception.CommentDomainExceptionCode;
 import com.team15gijo.comment.domain.model.Comment;
 import com.team15gijo.comment.domain.repository.CommentRepository;
+import com.team15gijo.comment.infrastructure.client.PostClient;
 import com.team15gijo.comment.presentation.dto.v1.CommentRequestDto;
+import com.team15gijo.common.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -18,22 +18,27 @@ import java.util.UUID;
 public class CommentService {
 
     private final CommentRepository commentRepository;
+    private final PostClient postClient;  // Feign Client 주입
 
     /**
-     * 댓글 생성
-     * (작성자 정보는 파라미터로 전달하며, BaseEntity의 createdBy, createdAt 은 빌드 후 설정)
+     * 댓글 생성: 게시글 존재 여부를 검증한 후 댓글을 생성하고,
+     * 게시글에 댓글 수 증가를 호출
      */
     public Comment createComment(long userId, String username, UUID postId, CommentRequestDto request) {
-        Comment comment = Comment.builder()
-                .postId(postId)
-                .userId(userId)
-                .username(username)
-                .commentContent(request.getCommentContent())
-                .parentCommentId(request.getParentCommentId())
-                .build();
-        comment.setCreatedBy(userId);
-        comment.setCreatedAt(LocalDateTime.now());
-        return commentRepository.save(comment);
+        // Feign Client 호출로 게시글 존재 여부 확인
+        ApiResponse<Boolean> existsResponse = postClient.exists(postId);
+        if (existsResponse.getData() == null || !existsResponse.getData()) {
+            throw new CommentDomainException(CommentDomainExceptionCode.POST_NOT_FOUND);
+        }
+
+        // Comment 엔티티의 정적 팩토리 메서드를 활용하여 댓글 생성
+        Comment comment = Comment.createComment(postId, userId, username, request.getCommentContent(), request.getParentCommentId());
+        Comment savedComment = commentRepository.save(comment);
+
+        // 게시글의 댓글 수 증가 호출
+        postClient.addCommentCount(postId);
+
+        return savedComment;
     }
 
     /**
@@ -48,9 +53,8 @@ public class CommentService {
      */
     public Comment updateComment(UUID commentId, CommentRequestDto request) {
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."));
-        comment.setCommentContent(request.getCommentContent());
-        // JPA Auditing에 의해 updatedAt, updatedBy가 추후 기록될 예정
+                .orElseThrow(() -> new CommentDomainException(CommentDomainExceptionCode.COMMENT_NOT_FOUND));
+        comment.updateContent(request.getCommentContent());
         return commentRepository.save(comment);
     }
 
@@ -59,8 +63,7 @@ public class CommentService {
      */
     public void deleteComment(UUID commentId) {
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."));
-        // JPA Auditing에 의해 deletedAt, deletedBy가 추후 기록될 예정
+                .orElseThrow(() -> new CommentDomainException(CommentDomainExceptionCode.COMMENT_NOT_FOUND));
         commentRepository.delete(comment);
     }
 }

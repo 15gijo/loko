@@ -2,7 +2,7 @@ package com.team15gijo.feed.infrastructure.client.post;
 
 
 import com.team15gijo.common.dto.ApiResponse;
-import com.team15gijo.feed.infrastructure.client.post.dto.PostFeedPageResponseDto;
+import com.team15gijo.feed.presentation.dto.v1.PostFeedPageResponseDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;

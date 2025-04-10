@@ -1,13 +1,27 @@
 spring:
   application:
     name: user-service
+  cloud:
+    config:
+      enabled: false #일단 config server 비활성화
+  config:
+    import: optional:file:./user/.env[.properties] # 모듈 내부 env
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
 
 server:
-  port: 19092
+  port: 19093
 
 eureka:
   client:
-    register-with-eureka: true
-    fetch-registry: true
     service-url:
-      defaultZone: http://localhost:19090/eureka/
+      defaultZone: http://localhost:19090/eureka/  # Eureka 서버 URL

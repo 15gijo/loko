@@ -25,11 +25,11 @@ import org.hibernate.annotations.SQLRestriction;
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder(access = AccessLevel.PRIVATE)
 @SQLRestriction("deleted_at IS NULL")
-@SQLDelete(sql = "UPDATE p_notification SET is_deleted = true WHERE notification_id = ?")
+@SQLDelete(sql = "UPDATE p_notification SET deleted_at = now(), deleted_by = updated_by WHERE notification_id = ?")
 public class Notification extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     @Column(name = "notification_id")
     private UUID notificationId;
 
@@ -49,5 +49,18 @@ public class Notification extends BaseEntity {
     @Column(name = "event_id")
     private String eventId;     // SSE 이벤트 고유 식별자. 클라이언트 reconnect 및 이벤트 트래킹/재전송용
 
+    public static Notification createNotification(Long receiverId, NotificationType type, String content, String eventId) {
+        return Notification.builder()
+                .notificationType(type)
+                .notificationContent(content)
+                .receiver(receiverId)
+                .isChecked(false)
+                .eventId(eventId)
+                .build();
+    }
+
+    public void updateIsChecked() {
+        this.isChecked = true;
+    }
 
 }
