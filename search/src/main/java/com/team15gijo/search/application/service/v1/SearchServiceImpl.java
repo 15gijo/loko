@@ -1,11 +1,15 @@
 package com.team15gijo.search.application.service.v1;
 
+import com.team15gijo.search.application.dto.v1.CursorResultDto;
 import com.team15gijo.search.infrastructure.client.post.PostClient;
 import com.team15gijo.search.infrastructure.client.post.PostSearchResponseDto;
 import com.team15gijo.search.infrastructure.client.user.UserClient;
 import com.team15gijo.search.infrastructure.client.user.UserSearchResponseDto;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.common.protocol.types.Field.Str;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,17 +26,37 @@ public class SearchServiceImpl implements SearchService {
 
 
     @Override
-    public Page<UserSearchResponseDto> searchUsers(
+    public CursorResultDto<UserSearchResponseDto> searchUsers(
             String keyword,
-            Pageable pageable) {
-        return userClient.searchUsers(keyword).getData();
+            String region,
+            Long lastUserId,
+            int size) {
+        List<UserSearchResponseDto> users = userClient.searchUsers(keyword, region, lastUserId, size).getData();
+        boolean hasNext = users.size() == size;
+        Long nextCursor = hasNext ? users.get(users.size() - 1).getUserId() : null;
+
+        return CursorResultDto.<UserSearchResponseDto>builder()
+                .items(users)
+                .nextCursor(nextCursor)
+                .hasNext(hasNext)
+                .build();
     }
 
 
     @Override
-    public Page<PostSearchResponseDto> searchPosts(
+    public CursorResultDto<PostSearchResponseDto> searchPosts(
             String keyword,
-            Pageable pageable) {
-        return postClient.searchPosts(keyword).getData();
+            String region,
+            UUID lastPostId,
+            int size) {
+        List<PostSearchResponseDto> posts = postClient.searchPosts(keyword, region, lastPostId, size).getData();
+        boolean hasNext = posts.size() == size;
+        UUID nextCursor = hasNext ? posts.get(posts.size() - 1).getPostId() : null;
+
+        return CursorResultDto.<PostSearchResponseDto>builder()
+                .items(posts)
+                .nextCursor(nextCursor)
+                .hasNext(hasNext)
+                .build();
     }
 }

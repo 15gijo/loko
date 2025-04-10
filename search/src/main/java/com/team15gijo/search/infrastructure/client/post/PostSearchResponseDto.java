@@ -12,11 +12,11 @@ import lombok.NoArgsConstructor;
 public class PostSearchResponseDto {
 
     private UUID postId;
-    private long userId;
     private String username;
-    private String region;
-    private String content;
+    private String postContent;
     private List<String> hashtags;
     private int views;
+    private int commentCount;
+    private int likeCount;
 
 }
