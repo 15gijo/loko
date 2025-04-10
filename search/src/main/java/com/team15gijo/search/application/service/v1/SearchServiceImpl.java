@@ -1,7 +1,5 @@
-package com.team15gijo.search.domain.service;
+package com.team15gijo.search.application.service.v1;
 
-import com.team15gijo.search.application.dto.v1.SearchResponseDto;
-import com.team15gijo.search.application.service.v1.SearchService;
 import com.team15gijo.search.infrastructure.client.post.PostClient;
 import com.team15gijo.search.infrastructure.client.post.PostSearchResponseDto;
 import com.team15gijo.search.infrastructure.client.user.UserClient;
@@ -24,14 +22,17 @@ public class SearchServiceImpl implements SearchService {
 
 
     @Override
-    public SearchResponseDto searchUsersAndPosts(
+    public Page<UserSearchResponseDto> searchUsers(
             String keyword,
             Pageable pageable) {
-        Page<UserSearchResponseDto> users = userClient.searchUsers(keyword);
-        Page<PostSearchResponseDto> posts = postClient.searchPosts(keyword);
-        return SearchResponseDto.builder()
-                .users(users)
-                .posts(posts)
-                .build();
+        return userClient.searchUsers(keyword).getData();
+    }
+
+
+    @Override
+    public Page<PostSearchResponseDto> searchPosts(
+            String keyword,
+            Pageable pageable) {
+        return postClient.searchPosts(keyword).getData();
     }
 }
