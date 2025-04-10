@@ -44,9 +44,11 @@ public class PostService {
     public Post getPostById(UUID postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
-        post.setViews(post.getViews() + 1);
+        // 도메인 메서드를 통해 조회수 증가
+        post.incrementViews();
         return postRepository.save(post);
     }
+
 
     /**
      * 게시글 수정 (내용 업데이트)
@@ -100,7 +102,8 @@ public class PostService {
     public void addCommentCount(UUID postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
-        post.setCommentCount(post.getCommentCount() + 1);
+        // 도메인 메서드를 통해 댓글 수 증가
+        post.incrementCommentCount();
         postRepository.save(post);
     }
 }
