@@ -2,6 +2,7 @@ package com.team15gijo.post.domain.model;
 
 import com.team15gijo.common.base.BaseEntity;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.SQLDelete;
@@ -9,13 +10,11 @@ import org.hibernate.annotations.SQLRestriction;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-
 @Entity
 @Table(name = "p_posts")
 @SQLRestriction("deleted_at IS NULL")
 @SQLDelete(sql = "UPDATE p_posts SET deleted_at = now() WHERE post_id = ?")
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -39,11 +38,6 @@ public class Post extends BaseEntity {
     @Column(name = "post_content", nullable = false, columnDefinition = "TEXT")
     private String postContent;
 
-    /**
-     * 다대다 관계 설정.
-     * 연결 테이블(p_post_hashtag_map)을 직접 지정하고,
-     * joinColumns, inverseJoinColumns를 통해 post_id, hashtag_id를 매핑합니다.
-     */
     @ManyToMany
     @JoinTable(
             name = "p_post_hashtag_map",
@@ -69,10 +63,38 @@ public class Post extends BaseEntity {
     @Column(name = "popularity_score", nullable = false, columnDefinition = "double precision default 0.0")
     private double popularityScore = 0.0;
 
+    // 콘텐츠 업데이트 메서드
     public void updateContent(String newContent) {
         if (newContent == null || newContent.trim().isEmpty()) {
             throw new IllegalArgumentException("게시글 내용은 비어있을 수 없습니다.");
         }
         this.postContent = newContent;
+    }
+
+    // 조회수 증가 메서드 (setter 없이)
+    public void incrementViews() {
+        this.views++;
+    }
+
+    // 댓글 수 증가 메서드 (setter 없이)
+    public void incrementCommentCount() {
+        this.commentCount++;
+    }
+
+    // 새로운 게시글 생성하는 정적 팩토리 메서드
+    public static Post createPost(long userId, String username, String region, String postContent) {
+        Post post = Post.builder()
+                .userId(userId)
+                .username(username)
+                .region(region)
+                .postContent(postContent)
+                .views(0)
+                .commentCount(0)
+                .likeCount(0)
+                .popularityScore(0.0)
+                .build();
+        post.setCreatedBy(userId);
+        post.setCreatedAt(LocalDateTime.now());
+        return post;
     }
 }

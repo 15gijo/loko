@@ -1,5 +1,7 @@
 package com.team15gijo.post.application.service.v1;
 
+import com.team15gijo.post.domain.exception.PostDomainException;
+import com.team15gijo.post.domain.exception.PostDomainExceptionCode;
 import com.team15gijo.post.domain.model.Post;
 import com.team15gijo.post.domain.model.Hashtag;
 import com.team15gijo.post.domain.repository.PostRepository;
@@ -8,11 +10,8 @@ import com.team15gijo.post.presentation.dto.v1.PostRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,15 +26,7 @@ public class PostService {
      * 게시글 생성
      */
     public Post createPost(long userId, String username, String region, PostRequestDto request) {
-        Post post = Post.builder()
-                .userId(userId)
-                .username(username)
-                .region(region)
-                .postContent(request.getPostContent())
-                .build();
-        // 기본 생성 시 views, commentCount, likeCount, popularityScore는 엔티티 기본값(0 또는 a 0.0)으로 설정.
-        post.setCreatedBy(userId);
-        post.setCreatedAt(LocalDateTime.now());
+        Post post = Post.createPost(userId, username, region, request.getPostContent());
         return postRepository.save(post);
     }
 
@@ -52,17 +43,19 @@ public class PostService {
     @Transactional
     public Post getPostById(UUID postId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
-        post.setViews(post.getViews() + 1);
+                .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
+        // 도메인 메서드를 통해 조회수 증가
+        post.incrementViews();
         return postRepository.save(post);
     }
+
 
     /**
      * 게시글 수정 (내용 업데이트)
      */
     public Post updatePost(UUID postId, PostRequestDto request) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
         post.updateContent(request.getPostContent());
         return postRepository.save(post);
     }
@@ -72,7 +65,7 @@ public class PostService {
      */
     public void deletePost(UUID postId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
         postRepository.delete(post);
     }
 
@@ -81,7 +74,7 @@ public class PostService {
      */
     public Post addHashtags(UUID postId, List<String> hashtags) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
         for (String hashtagName : hashtags) {
             Hashtag hashtag = hashtagRepository.findByHashtagName(hashtagName)
                     .orElseGet(() -> {
@@ -108,8 +101,9 @@ public class PostService {
     @Transactional
     public void addCommentCount(UUID postId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."));
-        post.setCommentCount(post.getCommentCount() + 1);
+                .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
+        // 도메인 메서드를 통해 댓글 수 증가
+        post.incrementCommentCount();
         postRepository.save(post);
     }
 }
