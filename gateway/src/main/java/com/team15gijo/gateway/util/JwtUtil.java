@@ -1,7 +1,5 @@
 package com.team15gijo.gateway.util;
 
-import com.team15gijo.common.exception.CommonExceptionCode;
-import com.team15gijo.common.exception.CustomException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -9,10 +7,9 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
+import java.security.Key;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.security.Key;
 
 @Component
 public class JwtUtil {
@@ -44,9 +41,11 @@ public class JwtUtil {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (ExpiredJwtException e) {
-            throw new CustomException(CommonExceptionCode.EXPIRED_TOKEN, e);
+//            throw new CustomException(CommonExceptionCode.EXPIRED_TOKEN, e);
+            throw new RuntimeException("token expired", e);
         } catch (JwtException e) {
-            throw new CustomException(CommonExceptionCode.INVALID_TOKEN, e);
+//            throw new CustomException(CommonExceptionCode.INVALID_TOKEN, e);
+            throw new RuntimeException("token jwt error", e);
         }
     }
 }

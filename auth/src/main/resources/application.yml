@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: auth-service
+  cloud:
+    config:
+      enabled: false #?? config server ????
+  config:
+    import: optional:file:./auth/.env[.properties] # ?? ?? env
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+
+server:
+  port: 19092
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:19090/eureka/  # Eureka ?? URL
