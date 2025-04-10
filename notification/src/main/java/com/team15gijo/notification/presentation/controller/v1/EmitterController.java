@@ -11,6 +11,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+
+/**
+ *  클라이언트와의 통신 테스트로 CrossOrigin 허용을 했지만 추후 수정 필요.
+ */
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/v1/sse")
