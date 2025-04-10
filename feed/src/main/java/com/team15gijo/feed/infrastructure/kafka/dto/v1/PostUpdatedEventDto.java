@@ -1,11 +1,13 @@
 package com.team15gijo.feed.infrastructure.kafka.dto.v1;
 
+import com.team15gijo.feed.domain.model.Feed;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,4 +30,21 @@ public class PostUpdatedEventDto implements FeedEventDto {
     private double popularityScore;
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
+
+    public Feed toEntity() {
+        return new Feed(
+                postId,
+                userId,
+                username,
+                region,
+                postContent,
+                hashtags != null ? new ArrayList<>(hashtags) : new ArrayList<>(),
+                views,
+                commentCount,
+                likeCount,
+                popularityScore,
+                createdAt,
+                deletedAt
+        );
+    }
 }

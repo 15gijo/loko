@@ -31,37 +31,41 @@ public class ProducerTestController {
     public String sendMessage(@RequestParam(value = "topic", required = true, defaultValue = "feed_events") String topic,
                               @RequestParam(value = "key", required = false) String key,
                               @RequestParam(value = "message", required = false, defaultValue = "테스트용 글입니다.") String message,
-                              @RequestParam(value = "eventType", required = false, defaultValue = "post_created") String eventType) {
-        FeedEventDto feedEventDto = createEventMessageByType(eventType, message);
+                              @RequestParam(value = "eventType", required = false, defaultValue = "post_created") String eventType,
+                              @RequestParam(value = "postId", required = false) UUID postId) {
+        if (postId == null) postId = UUID.randomUUID();
+        FeedEventDto feedEventDto = createEventMessageByType(eventType, message, postId);
         producerService.sendMessage(topic, key, feedEventDto);
         return "Message sent to Kafka topic";
     }
 
-    private PostCreatedEventDto getPostCreatedEventDto(String message) {
+    private PostCreatedEventDto getPostCreatedEventDto(String message, UUID postId) {
         return PostCreatedEventDto.builder()
-                .postContent(message)
-                .build();
-    }
-
-    private PostUpdatedEventDto getPostUpdatedEventDto(String message) {
-        return PostUpdatedEventDto.builder()
-                .postContent(message)
-                .build();
-    }
-
-    private PostDeletedEventDto getPostDeletedEventDto() {
-        return PostDeletedEventDto.builder()
                 .postId(UUID.randomUUID())
+                .postContent(message)
                 .build();
     }
 
-    private FeedEventDto createEventMessageByType(String eventType, String message) {
+    private PostUpdatedEventDto getPostUpdatedEventDto(String message, UUID postId) {
+        return PostUpdatedEventDto.builder()
+                .postId(postId)
+                .postContent(message)
+                .build();
+    }
+
+    private PostDeletedEventDto getPostDeletedEventDto(UUID postId) {
+        return PostDeletedEventDto.builder()
+                .postId(postId)
+                .build();
+    }
+
+    private FeedEventDto createEventMessageByType(String eventType, String message, UUID postId) {
         if (eventType == null || message == null) return null;
 
         return switch (eventType) {
-            case "post_created" -> getPostCreatedEventDto(message);
-            case "post_updated" -> getPostUpdatedEventDto(message);
-            case "post_deleted" -> getPostDeletedEventDto();
+            case "post_created" -> getPostCreatedEventDto(message, postId);
+            case "post_updated" -> getPostUpdatedEventDto(message, postId);
+            case "post_deleted" -> getPostDeletedEventDto(postId);
             default -> null;
         };
     }
