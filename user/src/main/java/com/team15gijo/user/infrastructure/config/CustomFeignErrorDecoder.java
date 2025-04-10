@@ -13,11 +13,6 @@ public class CustomFeignErrorDecoder implements ErrorDecoder {
     @Override
     public Exception decode(String methodKey, Response response) {
 
-        if (response.status() == 500) {
-            String errorMessage = response.body().toString();
-            return new InternalServerErrorException("서버 내부 오류: " + errorMessage);
-        }
-
         if (methodKey.contains("signup") && response.status() == 400) {
             return new CustomException(UserApplicationExceptionCode.AUTH_SERVICE_SIGNUP_FAILED);
         }

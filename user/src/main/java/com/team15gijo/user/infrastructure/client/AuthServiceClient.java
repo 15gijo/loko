@@ -7,9 +7,9 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "auth-service", configuration = AuthFeignClientConfig.class)
+@FeignClient(name = "auth-service", path = "/api/v1/internal/auth", configuration = AuthFeignClientConfig.class)
 public interface AuthServiceClient {
 
-    @PostMapping("/api/v1/internal/auth/signup")
+    @PostMapping("/signup")
     AuthSignUpResponseDto signUp(@RequestBody AuthSignUpRequestDto authSignUpRequestDto);
 }
