@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
@@ -95,7 +96,7 @@ public class ChatMessageController {
 
     /**
      * 채팅방에 상대방 참여자 입장(접속)
-     * TODO: 채팅방에 상대방 참여자 입장(접속) -> 메시지 브로커로 연결되야 함
+     * TODO: 채팅방 생성 및 메시지 전송 테스트용(feign client 연결되면 삭제 예정)
      */
     @PostMapping("/rooms/participants")
     @ResponseBody
@@ -129,6 +130,21 @@ public class ChatMessageController {
     ) {
         Map<String, Boolean> response = chatMessageService.validateSenderId(chatRoomId, senderId);
         return ResponseEntity.ok(ApiResponse.success("senderId 유효성 검증 성공하였습니다.", response));
+    }
+
+    /**
+     * "/ws-stomp" 경로로 소켓 연결 시, 쿼리파라미터 senderId를 추출하여 Redis 캐시 저장
+     * @param headerAccessor
+     */
+    @MessageMapping("/chat/connect/{chatRoomId}/{senderId}")
+    @SendTo("/topic/chat/{chatRoomId}")
+    public void connectChatRoom(
+        @DestinationVariable UUID chatRoomId,
+        @DestinationVariable Long senderId,
+        SimpMessageHeaderAccessor headerAccessor,
+        String message
+    ) {
+        chatMessageService.connectChatRoom(chatRoomId, senderId, headerAccessor, message);
     }
 
     /**
