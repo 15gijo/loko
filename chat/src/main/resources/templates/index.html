@@ -10,13 +10,51 @@
 
     function connect() {
       chatRoomId = document.getElementById('chatRoomId').value;
-      const socket = new SockJS('/ws-stomp');
-      stompClient = Stomp.over(socket);
-      stompClient.connect({}, function (frame) {
-        console.log('Connected: ' + frame);
-        stompClient.subscribe('/topic/chat/' + chatRoomId, function (message) {
-          showMessage(JSON.parse(message.body));
+      senderId = parseInt(document.getElementById('senderId').value);
+
+      // 채팅방 ID 유효성 검증 API 호출
+      fetch(`/api/v1/chats/validate/${chatRoomId}`)
+        .then(response => response.json())
+        .then(data => {
+          if(!data.data.valid) {
+            // 채팅방 id가 유효하지 않을 때 오류 표시
+            alert('존재하지 않은 채팅방 ID 입니다. 다시 확인해주세요.');
+          } else {
+            console.log("채팅방 ID 유효성 검증 성공");
+          }
+        })
+        .catch(error => {
+          console.error("API 호출 실패: " + error);
+          alert('채팅방 ID 유효성 검증 실패. 서버 오류를 확인해주세요.');
         });
+
+      // 채팅방에 해당하는 userId 유효성 검증 API 호출
+      fetch(`/api/v1/chats/validate/${chatRoomId}/${senderId}`)
+        .then(response => response.json())
+        .then(data => {
+          if(!data.data.valid) {
+            // 해당 chatRoomId의 userId가 유효하지 않을 때 오류 표시
+            alert('해당 채팅방의 사용자가 아닙니다. 다시 확인해주세요.');
+          } else {
+            console.log("채팅방 ID에 해당하는 senderId 유효성 검증 성공");
+
+            // 채팅방 id과 userId가 유효성 검증 성공하면 webSocket 연결
+            const socket = new SockJS('/ws-stomp');
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, function (frame) {
+              console.log('소켓 Connected: ' + frame);
+              stompClient.subscribe('/topic/chat/' + chatRoomId, function (message) {
+                showMessage(JSON.parse(message.body));
+              });
+            }, function (error) {
+              console.error("소켓 Connection error: ", error);
+              alert('채팅방 연결 종료 및 실패하였습니다. 서버 오류를 확인해주세요.');
+            });
+          }
+        })
+      .catch(error => {
+        console.error("API 호출 실패: " + error);
+        alert('채팅방의 사용자 ID 유효성 검증 실패. 서버 오류를 확인해주세요.');
       });
     }
 
@@ -24,24 +62,28 @@
       if (stompClient !== null) {
         stompClient.disconnect();
       }
-      console.log("Disconnected");
+      console.log("소켓 Disconnected");
+      alert('채팅방 연결 종료하였습니다. 다시 연결해주세요!');
     }
 
     function sendMessage() {
-      const senderId = document.getElementById('senderId').value;
+      const senderId = parseInt(document.getElementById('senderId').value); // 문자열을 숫자로 변환
       const message = document.getElementById('message').value;
       stompClient.send("/app/chat/" + chatRoomId, {}, JSON.stringify({
         'chatRoomId': chatRoomId,
         'senderId': senderId,
         'message': message
-      }));
+      }), {}, function (error) {
+        console.error("메시지 전송 실패: " + error);
+        if (error && error.header && error.header.error) { // 헤더 존재 여부 확인
+          alert("메시지 전송 실패: " + error.header.error);
+        } else {
+          alert("메시지 전송 실패. 서버 오류를 확인해주세요.");
+        }
+      });
     }
 
     function showMessage(message) {
-      console.log("showMessage 함수 내 message=" + message);
-      for (const key in message) {
-        console.log(key + ": " + message[key]);
-      }
       const messages = document.getElementById('messages');
       const p = document.createElement('p');
       p.textContent = message.senderId + ': ' + message.message
@@ -56,7 +98,7 @@
   <input type="text" id="chatRoomId" value="1f46fcd1-e676-402e-8703-2183be76b021" />
 </div>
 <div>
-  <label>Sender:</label>
+  <label>SenderId:</label>
   <input type="text" id="senderId" value="1L" />
 </div>
 <div>

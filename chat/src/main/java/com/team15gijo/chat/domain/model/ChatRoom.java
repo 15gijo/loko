@@ -2,13 +2,18 @@ package com.team15gijo.chat.domain.model;
 
 import com.team15gijo.chat.application.dto.v1.ChatRoomResponseDto;
 import com.team15gijo.common.base.BaseEntity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,10 +39,15 @@ public class ChatRoom extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private ChatRoomType chatRoomType;
 
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "chat_room_id") // ChatRoomParticipants 테이블의 chat_room_id 외래키
+    private Set<ChatRoomParticipant> chatRoomParticipants;
+
     public ChatRoomResponseDto toResponse() {
         return ChatRoomResponseDto.builder()
             .chatRoomId(chatRoomId)
             .chatRoomType(chatRoomType)
+            .chatRoomParticipants(chatRoomParticipants)
             .build();
     }
 }

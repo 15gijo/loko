@@ -11,7 +11,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChatMessageResponseDto {
-    private String senderId;
+    private String id;
+    private Long senderId;
+    private String senderNickname;
     private String message;
     private LocalDateTime sentAt;
     private Boolean readStatus;

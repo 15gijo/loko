@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChatRoomParticipantResponseDto {
-    private UUID chatRoomId;
+    private UUID id;
     private Long userId;
     private Boolean activation;
 }
