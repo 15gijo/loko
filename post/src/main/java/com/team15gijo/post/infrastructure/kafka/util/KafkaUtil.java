@@ -7,7 +7,7 @@ import com.team15gijo.post.infrastructure.kafka.dto.v1.PostCreatedEventDto;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.PostDeletedEventDto;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.PostUpdatedEventDto;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.PostViewedEventDto;
-import com.team15gijo.post.infrastructure.kafka.service.v1.ProducerTestService;
+import com.team15gijo.post.infrastructure.kafka.service.v1.ProducerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class KafkaUtil {
 
-    private final ProducerTestService producerService;
+    private final ProducerService producerService;
 
     /**
      * kafka 이벤트 발행

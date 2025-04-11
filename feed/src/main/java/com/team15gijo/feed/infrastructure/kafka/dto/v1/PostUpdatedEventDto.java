@@ -30,21 +30,4 @@ public class PostUpdatedEventDto implements FeedEventDto {
     private double popularityScore;
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
-
-    public Feed toEntity() {
-        return Feed.builder()
-                .postId(postId)
-                .userId(userId)
-                .username(username)
-                .region(region)
-                .postContent(postContent)
-                .hashtags(hashtags != null ? new ArrayList<>(hashtags) : new ArrayList<>())
-                .views(views)
-                .commentCount(commentCount)
-                .likeCount(likeCount)
-                .popularityScore(popularityScore)
-                .createdAtOrigin(createdAt)
-                .deletedAtOrigin(deletedAt)
-                .build();
-    }
 }

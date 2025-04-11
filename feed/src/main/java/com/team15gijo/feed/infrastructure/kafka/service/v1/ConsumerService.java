@@ -22,10 +22,10 @@ public class ConsumerService {
     private final ObjectMapper objectMapper;
     private final FeedRepository feedRepository;
 
-    private static final String FEED_EVETNS_TOPIC = "feed_events";
+    private static final String FEED_EVENTS_TOPIC = "feed_events";
     private static final String FEED_CONSUMER_GROUP_ID = "feed-service";
 
-    @KafkaListener(groupId = FEED_CONSUMER_GROUP_ID, topics = FEED_EVETNS_TOPIC)
+    @KafkaListener(groupId = FEED_CONSUMER_GROUP_ID, topics = FEED_EVENTS_TOPIC)
     public void consumeFromFeedEvents(String message) throws IOException {
         log.info("Kafka Consumer 메시지 수신: {}", message);
 
@@ -113,6 +113,5 @@ public class ConsumerService {
         log.info("💬 POST_COMMENTED received: {}", dto.toString());
         // TODO: 댓글 수 증가 처리
     }
-
 
 }

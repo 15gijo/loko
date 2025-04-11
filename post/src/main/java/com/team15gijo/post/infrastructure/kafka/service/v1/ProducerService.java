@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class ProducerTestService {
+public class ProducerService {
 
     private final KafkaTemplate<String, FeedEventDto> postCreadtedkafkaTemplate;
 
