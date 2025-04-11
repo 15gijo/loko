@@ -18,6 +18,7 @@ public class NotificationResponseDto {
     private NotificationType notificationType;
     private String notificationContent;
     private String eventId;
+    private boolean isChecked;
 
     public static NotificationResponseDto fromEntity(Notification notification) {
         return NotificationResponseDto.builder()
@@ -25,6 +26,7 @@ public class NotificationResponseDto {
                 .notificationType(notification.getNotificationType())
                 .notificationContent(notification.getNotificationContent())
                 .eventId(notification.getEventId())
+                .isChecked(notification.getIsChecked())
                 .build();
     }
 }
