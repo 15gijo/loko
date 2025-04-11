@@ -93,8 +93,6 @@ public class Post extends BaseEntity {
                 .likeCount(0)
                 .popularityScore(0.0)
                 .build();
-        post.setCreatedBy(userId);
-        post.setCreatedAt(LocalDateTime.now());
         return post;
     }
 }

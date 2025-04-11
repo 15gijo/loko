@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,7 +22,11 @@ public class JwtUtil {
 
     @PostConstruct
     public void init() {
-        this.secretKey = Keys.hmacShaKeyFor(secretKeyString.getBytes());
+        /**
+         * post 생성시에 에러가 발생해서 추가하였습니다!
+         */
+        byte[] keyBytes = Decoders.BASE64.decode(secretKeyString);
+        this.secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String extractToken(HttpServletRequest request) {

@@ -3,6 +3,7 @@ package com.team15gijo.common.base;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreRemove;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,7 +31,6 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 @SuperBuilder
 @Getter
-@Setter
 @NoArgsConstructor
 public abstract class BaseEntity {
 
@@ -38,7 +38,7 @@ public abstract class BaseEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     @CreatedBy
-    @Column(name = "created_by", nullable = false, updatable = false)
+    @Column(name = "created_by")
     private Long createdBy;
 
     @LastModifiedDate
@@ -65,4 +65,19 @@ public abstract class BaseEntity {
 
     //복구용 메소드
     //public void restore(){}
+
+
+    /**
+     * baseEntity 가 로그인 한 유저 정보를 받아와서 알아서 채워오는 것이 안되어서
+     * 임시로 추가하였습니다.
+     */
+    @PrePersist
+    public void prePersistAuditing() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+        System.out.println("AuditingEntityListener prePersist 호출 - createdAt: " + this.createdAt);
+    }
+
+
 }
