@@ -2,6 +2,7 @@ package com.team15gijo.chat.presentation.controller.v1;
 
 import com.team15gijo.chat.application.dto.v1.ChatRoomResponseDto;
 import com.team15gijo.chat.application.service.impl.v1.ChatMessageService;
+import com.team15gijo.chat.domain.model.ChatMessageDocument;
 import com.team15gijo.chat.domain.model.ChatRoom;
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageRequestDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageResponseDto;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
@@ -95,7 +97,7 @@ public class ChatMessageController {
 
     /**
      * 채팅방에 상대방 참여자 입장(접속)
-     * TODO: 채팅방에 상대방 참여자 입장(접속) -> 메시지 브로커로 연결되야 함
+     * TODO: 채팅방 생성 및 메시지 전송 테스트용(feign client 연결되면 삭제 예정)
      */
     @PostMapping("/rooms/participants")
     @ResponseBody
@@ -129,6 +131,49 @@ public class ChatMessageController {
     ) {
         Map<String, Boolean> response = chatMessageService.validateSenderId(chatRoomId, senderId);
         return ResponseEntity.ok(ApiResponse.success("senderId 유효성 검증 성공하였습니다.", response));
+    }
+
+    /**
+     * 소켓 연결 중단 시, redis 삭제 API 호출
+     */
+    @GetMapping("/redis/delete/{senderId}")
+    public ResponseEntity<ApiResponse<Boolean>> deleteRedisSenderId(
+        @PathVariable("senderId") Long senderId
+    ) {
+        Boolean response = chatMessageService.deleteRedisSenderId(senderId);
+        return ResponseEntity.ok(ApiResponse.success("Redis 캐시 삭제 성공하였습니다.", response));
+    }
+
+    /**
+     * mongoDB에서 메시지 페이징 조회 API
+     */
+    @GetMapping("/message/{chatRoomId}")
+    public ResponseEntity<ApiResponse<Page<ChatMessageDocument>>> getMessagesByChatRoomId(
+        @PathVariable("chatRoomId") UUID chatRoomId,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "sentAt") String sortField,
+        @RequestParam(defaultValue = "asc") String sortDirection
+    ) {
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
+        Page<ChatMessageDocument> chatMessages = chatMessageService.getMessagesByChatRoomId(chatRoomId, pageable);
+        return ResponseEntity.ok(ApiResponse.success("채팅방의 메시지가 조회되었습니다.", chatMessages));
+    }
+
+    /**
+     * "/ws-stomp" 경로로 소켓 연결 시, 쿼리파라미터 senderId를 추출하여 Redis 캐시 저장
+     * @param headerAccessor
+     */
+    @MessageMapping("/chat/connect/{chatRoomId}/{senderId}")
+    @SendTo("/topic/chat/{chatRoomId}")
+    public void connectChatRoom(
+        @DestinationVariable UUID chatRoomId,
+        @DestinationVariable Long senderId,
+        SimpMessageHeaderAccessor headerAccessor,
+        String message
+    ) {
+        chatMessageService.connectChatRoom(chatRoomId, senderId, headerAccessor, message);
     }
 
     /**

@@ -7,6 +7,7 @@
   <script>
     let stompClient = null;
     let chatRoomId = null;
+    let isConnected = false;
 
     function connect() {
       chatRoomId = document.getElementById('chatRoomId').value;
@@ -38,13 +39,50 @@
           } else {
             console.log("채팅방 ID에 해당하는 senderId 유효성 검증 성공");
 
-            // 채팅방 id과 userId가 유효성 검증 성공하면 webSocket 연결
-            const socket = new SockJS('/ws-stomp');
+            // 채팅방 id과 userId가 유효성 검증 성공하면 webSocket 연결(쿠키 senderId 추출안되서 쿼리 파라미터로 대체)
+            document.cookie = "senderId=" + senderId;
+            // 소켓 연결 시, 쿼리 파리미터로 senderId 전달
+            const socket = new SockJS('/ws-stomp?senderId=' + senderId);
             stompClient = Stomp.over(socket);
             stompClient.connect({}, function (frame) {
+              isConnected = true;
               console.log('소켓 Connected: ' + frame);
+
+              // connect 엔드포인트로 메시지 전송하여 Redis 저장
+              stompClient.send("/app/chat/connect/" + chatRoomId + "/" + senderId, {}, JSON.stringify({
+                "message" : senderId + "님이 입장하였습니다."
+              }));
+
+              // connect 에서 오류 메시지 구독
+              stompClient.subscribe('/topic/chat/errors/' + senderId, function (message) {
+                alert(message.body);
+                isConnected = false;
+                console.log("소켓 Disconnected");
+                stompClient.disconnect();
+              });
+
+              // 처음 채팅방 입장 메시지 구독
+              stompClient.subscribe('/topic/chat/enter/' + chatRoomId, function (message) {
+                showEnterMessage((JSON.parse(message.body)));
+              });
+
+              // TODO: 재접속 시 MongoDB 메시지 조회 API 호출
+              // -> postman 정상 작성하나, fetch PageImpl JSON 직렬화 불가로 불러오기 실패
+              fetch(`/api/v1/chats/messages/${chatRoomId}`)
+              .then(response => response.json())
+              .then(messages => {
+                messages.forEach(message => {
+                  showMessage(JSON.parse(message.body));
+                });
+              })
+              .catch(error => {
+                console.error("MongoDB 메시지 조회 실패: " + error);
+                alert("이전 메시지 불러오기 실패했습니다.");
+              });
+
+              // 실시간 채팅 메시지 전송 구독
               stompClient.subscribe('/topic/chat/' + chatRoomId, function (message) {
-                showMessage(JSON.parse(message.body));
+                showMessage(message.body);
               });
             }, function (error) {
               console.error("소켓 Connection error: ", error);
@@ -60,27 +98,51 @@
 
     function disconnect() {
       if (stompClient !== null) {
-        stompClient.disconnect();
+        // 연결 중단 시, redis 삭제 API 호출
+        fetch(`/api/v1/chats/redis/delete/${senderId}`)
+          .then(response => response.json())
+          .then(data => {
+            if(data.data) {
+              // Redis 캐시 삭제 성공
+              console.log("소켓 Disconnected");
+            } else {
+              console.log("저장된 캐시가 없습니다.");
+            }
+            isConnected = false;
+            alert('채팅방 연결 종료하였습니다. 다시 연결해주세요!');
+            stompClient.disconnect();
+          })
+          .catch(error => {
+            console.error("API 호출 실패: " + error);
+            alert('senderId:세션 ID 캐시 삭제 실패');
+          });
       }
-      console.log("소켓 Disconnected");
-      alert('채팅방 연결 종료하였습니다. 다시 연결해주세요!');
     }
 
     function sendMessage() {
-      const senderId = parseInt(document.getElementById('senderId').value); // 문자열을 숫자로 변환
-      const message = document.getElementById('message').value;
-      stompClient.send("/app/chat/" + chatRoomId, {}, JSON.stringify({
-        'chatRoomId': chatRoomId,
-        'senderId': senderId,
-        'message': message
-      }), {}, function (error) {
-        console.error("메시지 전송 실패: " + error);
-        if (error && error.header && error.header.error) { // 헤더 존재 여부 확인
+      // 웹소켓 연결 시에만 메시지 전송 가능
+      if(isConnected) {
+        const senderId = parseInt(document.getElementById('senderId').value); // 문자열을 숫자로 변환
+        const message = document.getElementById('message').value;
+        stompClient.send("/app/chat/" + chatRoomId, {}, JSON.stringify({ // messageMapping 경로 사용
+          'chatRoomId': chatRoomId,
+          'senderId': senderId,
+          'message': message
+        }), {}, function (error) {
+          console.error("메시지 전송 실패: " + error);
           alert("메시지 전송 실패: " + error.header.error);
-        } else {
-          alert("메시지 전송 실패. 서버 오류를 확인해주세요.");
-        }
-      });
+        });
+      } else {
+        console.log("웹소켓 연결이 중단되어 메시지 전송이 불가");
+        alert("웹소켓 연결이 중단되어 메시지 전송이 불가합니다. ");
+      }
+    }
+
+    function showEnterMessage(message) {
+      const messages = document.getElementById('messages');
+      const p = document.createElement('p');
+      p.textContent = message.message;
+      messages.appendChild(p);
     }
 
     function showMessage(message) {

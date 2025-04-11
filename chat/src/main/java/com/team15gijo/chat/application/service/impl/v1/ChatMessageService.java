@@ -6,6 +6,7 @@ import com.team15gijo.chat.domain.model.ChatMessageType;
 import com.team15gijo.chat.domain.model.ChatRoom;
 import com.team15gijo.chat.domain.model.ChatRoomParticipant;
 import com.team15gijo.chat.domain.model.ChatRoomType;
+import com.team15gijo.chat.domain.model.ConnectionType;
 import com.team15gijo.chat.domain.repository.ChatMessageRepository;
 import com.team15gijo.chat.domain.repository.ChatRoomParticipantRepository;
 import com.team15gijo.chat.domain.repository.ChatRoomRepository;
@@ -18,14 +19,23 @@ import com.team15gijo.chat.presentation.dto.v1.ChatRoomRequestDto;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +50,10 @@ public class ChatMessageService {
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
 
     private final FeignClientService feignClientService;
+
+    private final RedisTemplate<String, String> redisTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final MongoTemplate mongoTemplate;
 
     /**
      * 1차 MVP 1:1 채팅만 구현
@@ -148,7 +162,6 @@ public class ChatMessageService {
      * 채팅방에 상대방 참여자 입장(접속) -> 채팅방 생성과 동시에 참여자 전원 채팅방참여자 생성 구현함
      * 그러나, User feign client로 상대방 닉네임으로 userId 조회하여 참여자 등록 전까지
      * TODO: 현재 참여자 등록으로 테스트 진행 예정 -> 최종 구현 이후 삭제 예정
-     * 1:1 채팅(chatRoomType=INDIVIDUAL)에서 채팅방 내 참여자 인원 2명으로 제한
      * @param request(userId, chatRoomId)
      * @return
      */
@@ -203,6 +216,90 @@ public class ChatMessageService {
         Map<String, Boolean> response = new HashMap<>();
         response.put("valid", participantExists);
         return response;
+    }
+
+    /**
+     * 소켓 연결 중단 시, redis 삭제 호출
+     */
+    public Boolean deleteRedisSenderId(Long senderId) {
+        if(redisTemplate.hasKey(String.valueOf(senderId))) {
+            log.info("소켓 연결 해지로 senderId {}의 Redis 캐시 삭제", senderId);
+            redisTemplate.delete(String.valueOf(senderId));
+            return true;
+        } else {
+            log.info("senderId {}에 해당하는 Redis 캐시가 존재하지 않음", senderId);
+            return false;
+        }
+    }
+
+    /**
+     * mongoDB에서 채팅방(chatRoomId) 내 메시지 전체 조회
+     */
+    public Page<ChatMessageDocument> getMessagesByChatRoomId(UUID chatRoomId, Pageable pageable) {
+        // chatRoomId가 UUID를 바이너리 형태로 저장되어 쿼리 시 바이너리 데이터를 직접 비교하고 조회가 제대로 되지 않음
+        // 고유 id 값을 추출하여 데이터 조회
+        List<String> idList = chatMessageRepository.findAll().stream()
+            .filter(chatMessage -> chatMessage.getChatRoomId().equals(chatRoomId))
+            .map(ChatMessageDocument::get_id)
+            .toList();
+        log.info("idList {}", idList);
+
+        Query query = Query.query(Criteria.where("_id").in(idList))
+            .with(pageable);
+
+        long total = mongoTemplate.count(query, ChatMessageDocument.class);
+        List<ChatMessageDocument> messageDocumentList = mongoTemplate.find(query, ChatMessageDocument.class);
+
+        return new PageImpl<>(messageDocumentList, pageable, total);
+    }
+
+    /**
+     * "/ws-stomp" 경로로 소켓 연결 시, 채팅방에 참여한 user가 Redis 캐시 조회하여 있는 경우 소켓 연결 중단
+     * 서버 리셋 후, 다시 소켓 연결하면 재접속 가능
+     * 웹 소켓 연결 시, redis senderId(key)-sessionId(value) 캐시 저장
+     * 이전 메시지 조회로 채팅방에 처음 입장한 경우, 입장 메시지 전송
+     */
+    public void connectChatRoom(
+        UUID chatRoomId,
+        Long senderId,
+        SimpMessageHeaderAccessor headerAccessor,
+        String message
+    ) {
+        if (senderId != null) {
+            // 세션 ID 가져오기
+            String sessionId = headerAccessor.getSessionId();
+            log.info("connectChatRoom sessionId: {}", sessionId);
+
+            // Redis에 senderId가 이미 존재하는지 확인
+            if(redisTemplate.hasKey(senderId.toString())) {
+                // 이미 존재하는 경우, 중복 연결 차단 메시지 전송 및 senderId가 연결된 소켓 연결 중단
+                log.warn("senderId {} 가 이미 존재하여 중복 연결이 차단됨", senderId);
+                redisTemplate.delete(senderId.toString());
+                messagingTemplate.convertAndSend("/topic/chat/errors/" + senderId,
+                    "중복 로그인으로 인해 연결이 거부되었습니다. 해당 채팅방에 다시 접속해주세요.");
+            } else {
+                // 존재하지 않은 경우, Redis에 key(senderId)와 value(sessionId) 저장
+                redisTemplate.opsForValue().set(String.valueOf(senderId), sessionId, 30, TimeUnit.MINUTES);
+                log.info("senderId {} 과 sessionId {} Redis 저장", senderId, sessionId);
+
+                // mongoDB에서 userId와 chatRoomId에 대한 메시지 유무로 처음인지 판단하고 입장 메시지 전송
+                List<ChatMessageDocument> messageDocumentList = chatMessageRepository.findByChatRoomIdAndSenderId(chatRoomId, senderId);
+                if(messageDocumentList.isEmpty()) {
+                    // chatRoomId에서 senderId가 보낸 메시지가 없는 경우, mongoDB 메시지 저장
+                    ChatMessageDocument firstMessage = ChatMessageDocument.builder()
+                        .chatRoomId(chatRoomId)
+                        .senderId(senderId)
+                        .connectionType(ConnectionType.ENTER)
+                        .messageContent(message)
+                        .sentAt(LocalDateTime.now())
+                        .build();
+                    chatMessageRepository.save(firstMessage);
+
+                    // 처음 채팅방 접속으로 입장 메시지 전송
+                    messagingTemplate.convertAndSend("/topic/chat/enter/" + chatRoomId, message);
+                }
+            }
+        }
     }
 
     /**
