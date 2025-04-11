@@ -233,10 +233,12 @@ public class ChatMessageService {
     }
 
     /**
-     * mongoDB에서 채팅방(chatRoomId) 내 메시지 전체 조회
+     * mongoDB에서 채팅방(chatRoomId) 이전 메시지 불러오기(조회)
+     * Page 전체 조회(sentAt ASC 정렬)
      */
     public Page<ChatMessageDocument> getMessagesByChatRoomId(UUID chatRoomId, Pageable pageable) {
-        // chatRoomId가 UUID를 바이너리 형태로 저장되어 쿼리 시 바이너리 데이터를 직접 비교하고 조회가 제대로 되지 않음
+        // chatRoomId가 UUID 타입으로 mongoDB 에서 바이너리 형태로 저장되어
+        // 쿼리에서 바이너리 데이터를 직접 비교하고 인덱싱, 조회가 제대로 되지 않음
         // 고유 id 값을 추출하여 데이터 조회
         List<String> idList = chatMessageRepository.findAll().stream()
             .filter(chatMessage -> chatMessage.getChatRoomId().equals(chatRoomId))
@@ -251,6 +253,21 @@ public class ChatMessageService {
         List<ChatMessageDocument> messageDocumentList = mongoTemplate.find(query, ChatMessageDocument.class);
 
         return new PageImpl<>(messageDocumentList, pageable, total);
+    }
+
+    /**
+     * 채팅방 메시지 상세 조회
+     * chatRoomId의 메시지 id가 아닌 경우 에러 발생
+     */
+    public ChatMessageResponseDto getMessageById(UUID chatRoomId, String id) {
+        Query query = Query.query(Criteria.where("_id").is(id));
+        ChatMessageDocument responseDocument = mongoTemplate.findOne(query, ChatMessageDocument.class);
+
+        if(!responseDocument.getChatRoomId().equals(chatRoomId)) {
+            log.error("chatRoomId: {} 해당 채팅방의 id:{} 메시지가 아닙니다.", chatRoomId, id);
+            throw new RuntimeException("해당 채팅방의 메시지가 아닙니다.");
+        }
+        return responseDocument.toResponse();
     }
 
     /**
@@ -279,7 +296,7 @@ public class ChatMessageService {
                     "중복 로그인으로 인해 연결이 거부되었습니다. 해당 채팅방에 다시 접속해주세요.");
             } else {
                 // 존재하지 않은 경우, Redis에 key(senderId)와 value(sessionId) 저장
-                redisTemplate.opsForValue().set(String.valueOf(senderId), sessionId, 30, TimeUnit.MINUTES);
+                redisTemplate.opsForValue().set(String.valueOf(senderId), sessionId, 1, TimeUnit.DAYS);
                 log.info("senderId {} 과 sessionId {} Redis 저장", senderId, sessionId);
 
                 // mongoDB에서 userId와 chatRoomId에 대한 메시지 유무로 처음인지 판단하고 입장 메시지 전송
@@ -290,13 +307,14 @@ public class ChatMessageService {
                         .chatRoomId(chatRoomId)
                         .senderId(senderId)
                         .connectionType(ConnectionType.ENTER)
+                        .chatMessageType(ChatMessageType.TEXT)
                         .messageContent(message)
                         .sentAt(LocalDateTime.now())
                         .build();
                     chatMessageRepository.save(firstMessage);
 
                     // 처음 채팅방 접속으로 입장 메시지 전송
-                    messagingTemplate.convertAndSend("/topic/chat/enter/" + chatRoomId, message);
+                    messagingTemplate.convertAndSend("/topic/chat/enter/" + chatRoomId, firstMessage);
                 }
             }
         }
@@ -315,8 +333,9 @@ public class ChatMessageService {
             // TODO: 인증 헤더로 전달된 nickname 사용
 //            .senderNickname("닉네임1")
             .chatRoomId(requestDto.getChatRoomId())
+            .connectionType(ConnectionType.CHAT)
             .chatMessageType(ChatMessageType.TEXT)
-            .messageContent(requestDto.getMessage())
+            .messageContent(requestDto.getMessageContent())
             .sentAt(LocalDateTime.now())
             .build();
         chatMessageRepository.save(chatMessage);
