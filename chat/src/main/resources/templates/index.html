@@ -67,13 +67,12 @@
               });
 
               // 재접속 시 MongoDB 메시지 조회 API 호출
-              // TODO: fetch PageImpl JSON 직렬화 불가로 불러오기 실패
-              // -> List<ChatMessageDocument> 타입으로 변경 적용
+              // fetch PageImpl JSON 응답
               fetch(`/api/v1/chats/message/${chatRoomId}`)
               .then(response => response.json())
               .then(messages => {
                 if(messages) {
-                  messages.forEach(message => {
+                  messages.content.forEach(message => {
                     showMessage(message);
                   });
                 } else {

@@ -28,9 +28,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -234,31 +233,13 @@ public class ChatMessageService {
     }
 
     /**
-     * mongoDB에서 채팅방(chatRoomId) 내 메시지 전체 조회
+     * mongoDB에서 채팅방(chatRoomId) 이전 메시지 불러오기(조회)
+     * Page 전체 조회(sentAt ASC 정렬)
      */
-//    public Page<ChatMessageDocument> getMessagesByChatRoomId(UUID chatRoomId, Pageable pageable) {
-//        // chatRoomId가 UUID를 바이너리 형태로 저장되어 쿼리 시 바이너리 데이터를 직접 비교하고 조회가 제대로 되지 않음
-//        // 고유 id 값을 추출하여 데이터 조회
-//        List<String> idList = chatMessageRepository.findAll().stream()
-//            .filter(chatMessage -> chatMessage.getChatRoomId().equals(chatRoomId))
-//            .map(ChatMessageDocument::get_id)
-//            .toList();
-//        log.info("idList {}", idList);
-//
-//        Query query = Query.query(Criteria.where("_id").in(idList))
-//            .with(pageable);
-//
-//        long total = mongoTemplate.count(query, ChatMessageDocument.class);
-//        List<ChatMessageDocument> messageDocumentList = mongoTemplate.find(query, ChatMessageDocument.class);
-//
-//        return new PageImpl<>(messageDocumentList, pageable, total);
-//    }
-
-    /**
-     * chatRoomId의 이전 메시지 불러오기(조회)
-     * Page 객체 없이 전체 조회(sentAt ASC 정렬)
-     */
-    public List<ChatMessageDocument> getMessagesByChatRoomId(UUID chatRoomId) {
+    public Page<ChatMessageDocument> getMessagesByChatRoomId(UUID chatRoomId, Pageable pageable) {
+        // chatRoomId가 UUID 타입으로 mongoDB 에서 바이너리 형태로 저장되어
+        // 쿼리에서 바이너리 데이터를 직접 비교하고 인덱싱, 조회가 제대로 되지 않음
+        // 고유 id 값을 추출하여 데이터 조회
         List<String> idList = chatMessageRepository.findAll().stream()
             .filter(chatMessage -> chatMessage.getChatRoomId().equals(chatRoomId))
             .map(ChatMessageDocument::get_id)
@@ -266,10 +247,12 @@ public class ChatMessageService {
         log.info("idList {}", idList);
 
         Query query = Query.query(Criteria.where("_id").in(idList))
-            .with(Sort.by(Direction.ASC, "sentAt")); // sentAt 내림차순 정렬
+            .with(pageable);
 
+        long total = mongoTemplate.count(query, ChatMessageDocument.class);
         List<ChatMessageDocument> messageDocumentList = mongoTemplate.find(query, ChatMessageDocument.class);
-        return messageDocumentList;
+
+        return new PageImpl<>(messageDocumentList, pageable, total);
     }
 
     /**
