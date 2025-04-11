@@ -97,6 +97,15 @@ public class ConsumerService {
     public void handlePostViewed(PostViewedEventDto dto) {
         log.info("👀 POST_VIEWED received: {}", dto.toString());
         // TODO: 조회수 누적 처리 등
+        Feed feed = feedRepository.findById(dto.getPostId()).orElse(null);
+        if (feed == null) {
+            log.warn("Feed not found for postId: {}", dto.getPostId());
+            // 경우에 따라선 새로 insert할 수도 있음
+            return;
+        }
+        feed.updateFeedViews(dto.getViews());
+        feedRepository.save(feed);
+        log.info("Feed 정보(조회수) 수정 완료 - postId: {}", feed.getPostId());
     }
 
     @Transactional
