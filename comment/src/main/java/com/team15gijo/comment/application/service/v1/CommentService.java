@@ -73,5 +73,8 @@ public class CommentService {
         }
 
         commentRepository.delete(comment);
+
+        // 댓글 삭제 후 게시글 댓글 수 감소 처리
+        postClient.decreaseCommentCount(comment.getPostId());
     }
 }

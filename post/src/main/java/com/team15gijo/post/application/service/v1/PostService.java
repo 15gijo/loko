@@ -119,4 +119,13 @@ public class PostService {
         post.incrementCommentCount();
         postRepository.save(post);
     }
+
+    @Transactional
+    public void minusCommentCount(UUID postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
+        // 도메인 메서드를 통해 댓글 수 증가
+        post.decrementCommentCount();
+        postRepository.save(post);
+    }
 }

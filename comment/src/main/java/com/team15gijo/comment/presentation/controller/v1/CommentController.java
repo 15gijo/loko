@@ -22,9 +22,8 @@ public class CommentController {
 
     /**
      * 댓글 생성 엔드포인트
-     * (추후 JWT를 통한 인증 시 헤더로 대체 가능)
      */
-    @PostMapping("/{postId}/comments")
+    @PostMapping("/{postId}")
     public ResponseEntity<ApiResponse<Comment>> createComment(
             @PathVariable UUID postId,
             @RequestHeader("X-User-Id") Long userId,
@@ -38,7 +37,7 @@ public class CommentController {
     /**
      * 댓글 목록 조회 (페이징)
      */
-    @GetMapping("/{postId}/comments")
+    @GetMapping("/{postId}")
     public ResponseEntity<ApiResponse<Page<Comment>>> getCommentsByPostId(
             @PathVariable UUID postId,
             @RequestParam(defaultValue = "1") int page,
