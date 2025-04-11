@@ -3,6 +3,8 @@ package com.team15gijo.gateway.filter;
 import com.team15gijo.gateway.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.servlet.function.HandlerFilterFunction;
@@ -55,12 +57,18 @@ public class JwtTokenValidationFilter implements
             String nickname = claims.get("nickname", String.class);
             String region = claims.get("region", String.class);
 
+            /**
+             * 한글이 깨져서 인코딩 해주었습니다. post 에서는 디코딩해서 db에 저장하였습니다.
+             */
+            String encodedRegion = URLEncoder.encode(region, StandardCharsets.UTF_8.toString());
+
+
             //헤더 추가
             ServerRequest mutated = ServerRequest.from(request)
                     .header("X-User-Id", userId)
                     .header("X-User-Role", role)
                     .header("X-User-Nickname", nickname)
-                    .header("X-User-Region", region)
+                    .header("X-User-Region", encodedRegion)
                     .build();
 
             return next.handle(mutated);

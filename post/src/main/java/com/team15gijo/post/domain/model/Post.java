@@ -13,7 +13,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "p_posts")
 @SQLRestriction("deleted_at IS NULL")
-@SQLDelete(sql = "UPDATE p_posts SET deleted_at = now() deleted_by = updated_by WHERE post_id = ?")
+@SQLDelete(sql = "UPDATE p_posts SET deleted_at = now() WHERE post_id = ?")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

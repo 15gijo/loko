@@ -42,6 +42,12 @@ public class GateWayRoutesConfig {
                         .filter(lb("post-service"))
                         .filter(loggingFilter)
                         .filter(jwtFilter)
+                        .build())
+                .and(route("comment-service")
+                        .route(path("/api/v1/comments/**"), http())
+                        .filter(lb("comment-service"))
+                        .filter(loggingFilter)
+                        .filter(jwtFilter)
                         .build());
     }
 }

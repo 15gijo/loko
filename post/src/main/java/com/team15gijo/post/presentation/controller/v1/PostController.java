@@ -5,6 +5,8 @@ import com.team15gijo.post.application.service.v1.PostService;
 import com.team15gijo.post.domain.model.Post;
 import com.team15gijo.post.presentation.dto.v1.PostRequestDto;
 import com.team15gijo.post.presentation.dto.v1.PostResponseDto;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,10 +35,15 @@ public class PostController {
             @RequestHeader("X-User-Nickname") String username,
             @RequestHeader("X-User-Region") String region,
             @RequestBody PostRequestDto request) {
+
+        // URL 디코딩하여 원래의 한글 문자열로 복원
+        String decodedRegion = URLDecoder.decode(region, StandardCharsets.UTF_8);
+
         System.out.println("수신된 헤더 X-User-Id: " + userId);
         System.out.println("수신된 헤더 X-User-Nickname: " + username);
-        System.out.println("수신된 헤더 X-User-Region: " + region);
-        Post created = postService.createPost(userId, username, region, request);
+        System.out.println("수신된 헤더 X-User-Region: " + decodedRegion);
+
+        Post created = postService.createPost(userId, username, decodedRegion, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("신규 게시글 등록 성공", PostResponseDto.from(created)));
     }
