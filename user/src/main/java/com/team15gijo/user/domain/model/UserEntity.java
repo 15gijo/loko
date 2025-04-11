@@ -33,10 +33,10 @@ public class UserEntity extends BaseEntity {
     @Column(name = "username", nullable = false)
     private String userName;
 
-    @Column(name = "nickname", nullable = false)
+    @Column(name = "nickname", nullable = false, unique = true)
     private String nickName;
 
-    @Column(name = "email", nullable = false)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
     @Column(name = "profile")

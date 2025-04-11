@@ -1,10 +1,13 @@
 package com.team15gijo.user.application.service.v1;
 
+import com.team15gijo.common.exception.CustomException;
 import com.team15gijo.user.application.service.UserApplicationService;
+import com.team15gijo.user.domain.exception.UserDomainExceptionCode;
 import com.team15gijo.user.domain.model.UserEntity;
 import com.team15gijo.user.domain.repository.UserRepository;
 import com.team15gijo.user.domain.service.UserDomainService;
 import com.team15gijo.user.infrastructure.client.AuthServiceClient;
+import com.team15gijo.user.infrastructure.dto.UserFeignInfoResponseDto;
 import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpRequestDto;
 import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserSignUpRequestDto;
@@ -51,5 +54,17 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                 savedUser.getUserName(),
                 savedUser.getRegion(),
                 savedUser.getProfile());
+    }
+
+    @Override
+    public UserFeignInfoResponseDto getUserInfo(String identifier) {
+
+        UserEntity user = userRepository.findByEmail(identifier)
+                .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_EMAIL_NOT_FOUND));
+        return new UserFeignInfoResponseDto(
+                user.getId(),
+                user.getNickName(),
+                user.getRegion()
+        );
     }
 }
