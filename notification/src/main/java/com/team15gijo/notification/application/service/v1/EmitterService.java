@@ -25,9 +25,6 @@ public class EmitterService {
     private final EmitterRepository emitterRepository;
     private final RedisTemplate<String, String> redisTemplate;
 
-    // 로컬 메모리에 emitter 실제 객체 저장
-    private final Map<String, SseEmitter> localEmitters = new ConcurrentHashMap<>();
-
 //    public SseEmitter subscribe(Long userId) {
 //        String emitterId = userId + "_" + System.currentTimeMillis();
 //        SseEmitter emitter = new SseEmitter(TIMEOUT);
@@ -79,9 +76,9 @@ public class EmitterService {
         Set<String> oldEmitterIds = redisTemplate.opsForSet().members("sse:emitters:" + userId);
         if (!oldEmitterIds.isEmpty()) {
             for (String oldId : oldEmitterIds) {
-                SseEmitter oldEmitter = localEmitters.get(oldId);
+                SseEmitter oldEmitter = emitterRepository.get(oldId);
                 if (oldEmitter != null) oldEmitter.complete();
-                localEmitters.remove(oldId);
+                emitterRepository.delete(oldId);
             }
             redisTemplate.delete("sse:emitters:" + userId); // 기존 emitterId 모두 제거
         }
@@ -89,7 +86,7 @@ public class EmitterService {
 
         String emitterId = userId + "_" + System.currentTimeMillis();
         SseEmitter emitter = new SseEmitter(TIMEOUT);
-        localEmitters.put(emitterId, emitter);
+        emitterRepository.save(emitterId, emitter);
         // Redis에 emitterId 저장
         redisTemplate.opsForSet().add("sse:emitters:" + userId, emitterId);
         // TTL 설정
@@ -113,7 +110,7 @@ public class EmitterService {
         if (emitterIds.isEmpty()) return;
 
         for (String emitterId : emitterIds) {
-            SseEmitter emitter = localEmitters.get(emitterId);
+            SseEmitter emitter = emitterRepository.get(emitterId);
             if (emitter != null) {
                 try {
                     emitter.send(SseEmitter.event()
@@ -130,7 +127,7 @@ public class EmitterService {
                 } catch (IOException e) {
                     // 전송 중 클라이언트가 연결을 끊었거나, 네트워크 오류 등으로 문제가 생긴 경우
                     emitter.complete();  // 연결 종료 처리
-                    localEmitters.remove(emitterId);   // 로컬에서 제거
+                    emitterRepository.delete(emitterId);   // 로컬에서 제거
                     redisTemplate.opsForSet().remove("sse:emitters:" + userId, emitterId);  // Redis에서 제거
                 }
             }
@@ -149,7 +146,7 @@ public class EmitterService {
     }
 
     private void cleanupEmitter(Long userId, String emitterId) {
-        localEmitters.remove(emitterId);
+        emitterRepository.delete(emitterId);
         redisTemplate.opsForSet().remove("sse:emitters:" + userId, emitterId);
         redisTemplate.delete("sse:ttl:" + emitterId); // TTL key도 제거
     }
