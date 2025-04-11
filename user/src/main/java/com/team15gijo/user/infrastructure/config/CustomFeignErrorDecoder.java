@@ -4,7 +4,6 @@ import com.team15gijo.common.exception.CustomException;
 import com.team15gijo.user.application.exception.UserApplicationExceptionCode;
 import feign.Response;
 import feign.codec.ErrorDecoder;
-import jakarta.ws.rs.InternalServerErrorException;
 
 public class CustomFeignErrorDecoder implements ErrorDecoder {
 

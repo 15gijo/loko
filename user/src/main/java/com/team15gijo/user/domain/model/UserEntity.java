@@ -18,11 +18,11 @@ import org.hibernate.annotations.SQLRestriction;
 
 
 @Entity
-@Table(name = "p_user")
+@Table(name = "p_users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @SQLRestriction("deleted_at IS NULL")
-@SQLDelete(sql = "UPDATE p_user SET deleted_at = now(), deleted_by = updated_by WHERE user_id = ?")
+@SQLDelete(sql = "UPDATE p_users SET deleted_at = now(), deleted_by = updated_by WHERE user_id = ?")
 public class UserEntity extends BaseEntity {
 
     @Id
@@ -33,10 +33,10 @@ public class UserEntity extends BaseEntity {
     @Column(name = "username", nullable = false)
     private String userName;
 
-    @Column(name = "nickname", nullable = false)
+    @Column(name = "nickname", nullable = false, unique = true)
     private String nickName;
 
-    @Column(name = "email", nullable = false)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
     @Column(name = "profile")

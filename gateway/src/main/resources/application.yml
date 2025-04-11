@@ -5,16 +5,9 @@ spring:
     import: optional:file:./gateway/.env[.properties]
   cloud:
     gateway:
-      discovery:
-        locator:
-          enabled: false
-      routes:
-        - id: user-service
-          uri: lb://user-service
-          predicates:
-          - Path=/api/v1/users/**
-          filters:
-          - StripPrefix=0
+      mvc:
+        form-filter:
+          enabled: true
 
 
 server:

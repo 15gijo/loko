@@ -3,6 +3,7 @@ package com.team15gijo.user.infrastructure.persistence;
 import com.team15gijo.user.domain.model.UserEntity;
 import com.team15gijo.user.domain.repository.UserRepository;
 import com.team15gijo.user.infrastructure.persistence.jpa.UserJpaRepository;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -26,5 +27,11 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public UserEntity save(UserEntity createdUser) {
         return userJpaRepository.save(createdUser);
+    }
+
+    //내부 통신
+    @Override
+    public Optional<UserEntity> findByEmail(String identifier) {
+        return userJpaRepository.findByEmail(identifier);
     }
 }
