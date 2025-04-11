@@ -10,7 +10,6 @@ import com.team15gijo.chat.presentation.dto.v1.ChatRoomParticipantRequestDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatRoomParticipantResponseDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatRoomRequestDto;
 import com.team15gijo.common.dto.ApiResponse;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -162,6 +161,18 @@ public class ChatMessageController {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
         Page<ChatMessageDocument> chatMessages = chatMessageService.getMessagesByChatRoomId(chatRoomId, pageable);
         return ResponseEntity.ok(chatMessages);
+    }
+
+    /**
+     * 채팅방 메시지 상세 조회
+     */
+    @GetMapping("message/{chatRoomId}/{id}")
+    public ResponseEntity<ApiResponse<ChatMessageResponseDto>> getMessageById(
+        @PathVariable("chatRoomId") UUID chatRoomId,
+        @PathVariable("id") String id
+    ) {
+        ChatMessageResponseDto responseDto = chatMessageService.getMessageById(chatRoomId, id);
+        return ResponseEntity.ok(ApiResponse.success("메시지 조회 성공했습니다.", responseDto));
     }
 
     /**
