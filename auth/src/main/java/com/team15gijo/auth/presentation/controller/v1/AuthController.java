@@ -18,11 +18,11 @@ public class AuthController {
 
     private final AuthApplicationService authApplicationService;
 
-    @PostMapping("/login")
-    public ResponseEntity<ApiResponse<String>> login(
-            @Valid @RequestBody AuthLoginRequestDto authLoginRequestDto
-    ) {
-        authApplicationService.login(authLoginRequestDto);
-        return ResponseEntity.ok(ApiResponse.success("로그인 성공"));
-    }
+//    @PostMapping("/login")
+//    public ResponseEntity<ApiResponse<String>> login(
+//            @Valid @RequestBody AuthLoginRequestDto authLoginRequestDto
+//    ) {
+//        authApplicationService.login(authLoginRequestDto);
+//        return ResponseEntity.ok(ApiResponse.success("로그인 성공"));
+//    }
 }
