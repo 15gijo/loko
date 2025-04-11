@@ -10,6 +10,7 @@ import com.team15gijo.chat.presentation.dto.v1.ChatRoomParticipantRequestDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatRoomParticipantResponseDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatRoomRequestDto;
 import com.team15gijo.common.dto.ApiResponse;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -147,18 +148,31 @@ public class ChatMessageController {
     /**
      * mongoDB에서 메시지 페이징 조회 API
      */
+//    @GetMapping("/message/{chatRoomId}")
+//    public ResponseEntity<ApiResponse<Page<ChatMessageDocument>>> getMessagesByChatRoomId(
+//        @PathVariable("chatRoomId") UUID chatRoomId,
+//        @RequestParam(defaultValue = "0") int page,
+//        @RequestParam(defaultValue = "10") int size,
+//        @RequestParam(defaultValue = "sentAt") String sortField,
+//        @RequestParam(defaultValue = "asc") String sortDirection
+//    ) {
+//        Sort.Direction direction = sortDirection.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+//        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
+//        Page<ChatMessageDocument> chatMessages = chatMessageService.getMessagesByChatRoomId(chatRoomId, pageable);
+//        return ResponseEntity.ok(ApiResponse.success("채팅방의 메시지가 조회되었습니다.", chatMessages));
+//    }
+
+    /**
+     * chatRoomId의 이전 메시지 불러오기(조회)
+     * Page 객체 없이 전체 조회(sentAt ASC 정렬)
+     * index 에서 fetch 호출 시, forEach 메서드 에러 발생으로 ApiResponse 객체 사용X
+     */
     @GetMapping("/message/{chatRoomId}")
-    public ResponseEntity<ApiResponse<Page<ChatMessageDocument>>> getMessagesByChatRoomId(
-        @PathVariable("chatRoomId") UUID chatRoomId,
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size,
-        @RequestParam(defaultValue = "sentAt") String sortField,
-        @RequestParam(defaultValue = "asc") String sortDirection
+    public ResponseEntity<List<ChatMessageDocument>> getMessagesByChatRoomId(
+        @PathVariable("chatRoomId") UUID chatRoomId
     ) {
-        Sort.Direction direction = sortDirection.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
-        Page<ChatMessageDocument> chatMessages = chatMessageService.getMessagesByChatRoomId(chatRoomId, pageable);
-        return ResponseEntity.ok(ApiResponse.success("채팅방의 메시지가 조회되었습니다.", chatMessages));
+        List<ChatMessageDocument> chatMessages = chatMessageService.getMessagesByChatRoomId(chatRoomId);
+        return ResponseEntity.ok(chatMessages);
     }
 
     /**
