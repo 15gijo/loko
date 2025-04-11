@@ -1,28 +1,27 @@
-package com.team15gijo.feed.infrastructure.kafka.controller.v1;
+package com.team15gijo.post.infrastructure.kafka.controller.v1;
 
-import com.team15gijo.feed.infrastructure.kafka.dto.v1.FeedEventDto;
-import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostCreatedEventDto;
-import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostDeletedEventDto;
-import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostUpdatedEventDto;
-import com.team15gijo.feed.infrastructure.kafka.service.v1.ProducerTestService;
+import com.team15gijo.post.infrastructure.kafka.dto.v1.FeedEventDto;
+import com.team15gijo.post.infrastructure.kafka.dto.v1.PostCreatedEventDto;
+import com.team15gijo.post.infrastructure.kafka.dto.v1.PostDeletedEventDto;
+import com.team15gijo.post.infrastructure.kafka.dto.v1.PostUpdatedEventDto;
+import com.team15gijo.post.infrastructure.kafka.service.v1.ProducerService;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.UUID;
-
 @RestController
 @RequestMapping("api/v1/kafka/post/test")
 @RequiredArgsConstructor
 public class ProducerTestController {
 
-    private final ProducerTestService producerService;
+    private final ProducerService producerService;
 
     /**
-     * 게시글 생성/수정/삭제
+     * 게시글 생성/수정/삭제 테스트용 API
      * @param topic
      * @param key
      * @param message
