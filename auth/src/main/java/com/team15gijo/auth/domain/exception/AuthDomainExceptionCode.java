@@ -9,7 +9,9 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum AuthDomainExceptionCode implements ExceptionCode {
     ROLE_TYPE_NOT_FOUND(HttpStatus.NOT_FOUND, "유효 하지 않은 롤 입니다."),
-    LOGIN_TYPE_NOT_FOUND(HttpStatus.NOT_FOUND, "유효 하지 않은 로그인 타입 입니다.");
+    LOGIN_TYPE_NOT_FOUND(HttpStatus.NOT_FOUND, "유효 하지 않은 로그인 타입 입니다."),
+    USER_IDENTIFIER_NOT_FOUND(HttpStatus.NOT_FOUND, "유효 하지 않은 아이디 입니다."),
+    INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호가 일치 하지 않습니다.");
 
 
     private final HttpStatus httpStatus;

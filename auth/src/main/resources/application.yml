@@ -14,7 +14,7 @@ spring:
   jpa:
     database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: true
 
 
@@ -25,3 +25,11 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:19090/eureka/  # Eureka ?? URL
+
+jwt:
+  secret:
+    key: ${JWT_SECRET_KEY}
+  access-token:
+    expiration: ${ACCESS_TOKEN_EXPIRATION}
+  refresh-token:
+    expiration: ${REFRESH_TOKEN_EXPIRATION}

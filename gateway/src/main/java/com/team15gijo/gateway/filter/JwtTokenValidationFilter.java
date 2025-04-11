@@ -1,27 +1,26 @@
 package com.team15gijo.gateway.filter;
 
-import com.team15gijo.gateway.util.HeaderRequestWrapper;
 import com.team15gijo.gateway.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.function.HandlerFilterFunction;
+import org.springframework.web.servlet.function.HandlerFunction;
+import org.springframework.web.servlet.function.ServerRequest;
+import org.springframework.web.servlet.function.ServerResponse;
 
 @RequiredArgsConstructor
-public class JwtTokenValidationFilter extends OncePerRequestFilter {
+public class JwtTokenValidationFilter implements
+        HandlerFilterFunction<ServerResponse, ServerResponse> {
 
     private final JwtUtil jwtUtil;
 
     //유효성 제외 주소
     private static final List<String> excludedPaths = List.of(
-            "/auth-service",
-            "/user-service"
+            "/api/v1/auth/login",
+            "/api/v1/users/signup",
+            "/api/v1/internal/**"
     );
 
 
@@ -30,41 +29,44 @@ public class JwtTokenValidationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain) throws ServletException, IOException {
+    public ServerResponse filter(
+            ServerRequest request,
+            HandlerFunction<ServerResponse> next)
+            throws Exception {
 
-        String path = request.getRequestURI();
+        String path = request.path();
 
-        //유효성 검사 제외
+        //필터 제외
         if (isExcluded(path)) {
-            filterChain.doFilter(request, response);
-            return;
+            return next.handle(request);
         }
 
         //토큰 가져오기
-        String token = jwtUtil.extractToken(request);
+        String token = jwtUtil.extractToken(request.servletRequest());
         if (token == null) {
-//            throw new CustomException(CommonExceptionCode.UNAUTHORIZED_ACCESS);
-            throw new RuntimeException("Token is null");
+            return ServerResponse.status(401).body("토큰이 없습니다.");
         }
 
         //토큰 유효성 검사
         try {
             Claims claims = jwtUtil.parseToken(token);
             String userId = claims.getSubject();
+            String role = claims.get("role", String.class);
+            String nickname = claims.get("nickname", String.class);
+            String region = claims.get("region", String.class);
 
-            HttpServletRequest wrappedRequest = new HeaderRequestWrapper(request)
-                    .addHeader("X-User-Id", userId)
-                    .addHeader("X-User-Role", token);
-            //헤더 리턴
-            filterChain.doFilter(wrappedRequest, response);
+            //헤더 추가
+            ServerRequest mutated = ServerRequest.from(request)
+                    .header("X-User-Id", userId)
+                    .header("X-User-Role", role)
+                    .header("X-User-Nickname", nickname)
+                    .header("X-User-Region", region)
+                    .build();
 
+            return next.handle(mutated);
         } catch (JwtException e) {
 //            throw new CustomException(CommonExceptionCode.UNAUTHORIZED_ACCESS, e);
             throw new RuntimeException("Token is invalid", e);
         }
-
     }
-
 }
