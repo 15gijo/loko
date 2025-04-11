@@ -5,6 +5,8 @@ import com.team15gijo.post.application.service.v1.PostService;
 import com.team15gijo.post.domain.model.Post;
 import com.team15gijo.post.presentation.dto.v1.PostRequestDto;
 import com.team15gijo.post.presentation.dto.v1.PostResponseDto;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,11 +31,19 @@ public class PostController {
      */
     @PostMapping
     public ResponseEntity<ApiResponse<PostResponseDto>> createPost(
-            @RequestParam long userId,
-            @RequestParam String username,
-            @RequestParam String region,
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestHeader("X-User-Nickname") String username,
+            @RequestHeader("X-User-Region") String region,
             @RequestBody PostRequestDto request) {
-        Post created = postService.createPost(userId, username, region, request);
+
+        // URL 디코딩하여 원래의 한글 문자열로 복원
+        String decodedRegion = URLDecoder.decode(region, StandardCharsets.UTF_8);
+
+        System.out.println("수신된 헤더 X-User-Id: " + userId);
+        System.out.println("수신된 헤더 X-User-Nickname: " + username);
+        System.out.println("수신된 헤더 X-User-Region: " + decodedRegion);
+
+        Post created = postService.createPost(userId, username, decodedRegion, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("신규 게시글 등록 성공", PostResponseDto.from(created)));
     }
@@ -64,31 +74,37 @@ public class PostController {
     }
 
     /**
-     * 게시글 수정 엔드포인트 (내용 업데이트)
+     * 게시글 수정 엔드포인트 (내용 업데이트) - 현재 로그인 사용자의 X-User-Id를 추가로 받음
      */
     @PutMapping("/{postId}")
-    public ResponseEntity<ApiResponse<PostResponseDto>> updatePost(@PathVariable UUID postId,
+    public ResponseEntity<ApiResponse<PostResponseDto>> updatePost(
+            @PathVariable UUID postId,
+            @RequestHeader("X-User-Id") Long userId,
             @RequestBody PostRequestDto request) {
-        Post updated = postService.updatePost(postId, request);
+        Post updated = postService.updatePost(postId, request, userId);
         return ResponseEntity.ok(ApiResponse.success("게시글 수정 성공", PostResponseDto.from(updated)));
     }
 
     /**
-     * 게시글 삭제 엔드포인트
+     * 게시글 삭제 엔드포인트 - 현재 로그인 사용자의 X-User-Id를 추가로 받음
      */
     @DeleteMapping("/{postId}")
-    public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable UUID postId) {
-        postService.deletePost(postId);
+    public ResponseEntity<ApiResponse<Void>> deletePost(
+            @PathVariable UUID postId,
+            @RequestHeader("X-User-Id") Long userId) {
+        postService.deletePost(postId, userId);
         return ResponseEntity.ok(ApiResponse.success("게시글 삭제 성공", null));
     }
 
     /**
-     * 게시글에 해시태그 추가 엔드포인트
+     * 게시글에 해시태그 추가 엔드포인트 - 소유자 검증을 위해 X-User-Id를 추가로 받음 (옵션)
      */
     @PutMapping("/{postId}/hashtags")
-    public ResponseEntity<ApiResponse<PostResponseDto>> addHashtags(@PathVariable UUID postId,
+    public ResponseEntity<ApiResponse<PostResponseDto>> addHashtags(
+            @PathVariable UUID postId,
+            @RequestHeader("X-User-Id") Long userId,
             @RequestBody List<String> hashtags) {
-        Post updatedPost = postService.addHashtags(postId, hashtags);
+        Post updatedPost = postService.addHashtags(postId, hashtags, userId);
         return ResponseEntity.ok(ApiResponse.success("해시태그 추가 성공", PostResponseDto.from(updatedPost)));
     }
 
@@ -105,8 +121,14 @@ public class PostController {
      * 게시글 댓글 수 증가 엔드포인트 (댓글 서비스 등에서 호출)
      */
     @PostMapping("/{postId}/increment-comment")
-    public ResponseEntity<ApiResponse<Void>> AddCommentCount(@PathVariable UUID postId) {
+    public ResponseEntity<ApiResponse<Void>> addCommentCount(@PathVariable UUID postId) {
         postService.addCommentCount(postId);
         return ResponseEntity.ok(ApiResponse.success("댓글 수 증가 성공", null));
+    }
+
+    @PostMapping("/{postId}/decrement-comment")
+    public ResponseEntity<ApiResponse<Void>> minusCommentCount(@PathVariable UUID postId) {
+        postService.minusCommentCount(postId);
+        return ResponseEntity.ok(ApiResponse.success("댓글 수 감소 성공", null));
     }
 }

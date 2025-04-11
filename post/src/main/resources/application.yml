@@ -17,7 +17,7 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: true
     database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
   kafka:

@@ -14,6 +14,11 @@ public interface PostClient {
     @GetMapping("/api/v1/posts/{postId}/exists")
     ApiResponse<Boolean> exists(@PathVariable("postId") UUID postId);
 
+
     @PostMapping("/api/v1/posts/{postId}/increment-comment")
     ApiResponse<Void> addCommentCount(@PathVariable("postId") UUID postId);
+
+    @PostMapping("/api/v1/posts/{postId}/decrement-comment")
+    ApiResponse<Void> decreaseCommentCount(@PathVariable("postId") UUID postId);
+
 }

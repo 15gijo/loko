@@ -71,14 +71,19 @@ public class Post extends BaseEntity {
         this.postContent = newContent;
     }
 
-    // 조회수 증가 메서드 (setter 없이)
+    // 조회수 증가 메서드
     public void incrementViews() {
         this.views++;
     }
 
-    // 댓글 수 증가 메서드 (setter 없이)
+    // 댓글 수 증가 메서드
     public void incrementCommentCount() {
         this.commentCount++;
+    }
+
+    // 댓글 수 감소 메서드
+    public void decrementCommentCount() {
+        this.commentCount--;
     }
 
     // 새로운 게시글 생성하는 정적 팩토리 메서드
@@ -93,8 +98,6 @@ public class Post extends BaseEntity {
                 .likeCount(0)
                 .popularityScore(0.0)
                 .build();
-        post.setCreatedBy(userId);
-        post.setCreatedAt(LocalDateTime.now());
         return post;
     }
 }

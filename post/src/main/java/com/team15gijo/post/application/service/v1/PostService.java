@@ -49,32 +49,45 @@ public class PostService {
         return postRepository.save(post);
     }
 
-
     /**
-     * 게시글 수정 (내용 업데이트)
+     * 게시글 수정 (내용 업데이트) - 수정: 현재 로그인한 사용자(userId)가 게시글 소유자인지 확인
      */
-    public Post updatePost(UUID postId, PostRequestDto request) {
+    public Post updatePost(UUID postId, PostRequestDto request, long userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
+
+        if (post.getUserId() != userId) {
+            throw new PostDomainException(PostDomainExceptionCode.NOT_OWNER);
+        }
+
         post.updateContent(request.getPostContent());
         return postRepository.save(post);
     }
 
     /**
-     * 게시글 삭제 (Soft Delete)
+     * 게시글 삭제 (Soft Delete) - 삭제: 현재 로그인한 사용자(userId)가 게시글 소유자인지 확인
      */
-    public void deletePost(UUID postId) {
+    public void deletePost(UUID postId, long userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
+
+        if (post.getUserId() != userId) {
+            throw new PostDomainException(PostDomainExceptionCode.NOT_OWNER);
+        }
         postRepository.delete(post);
     }
 
     /**
-     * 게시글에 해시태그 추가
+     * 게시글에 해시태그 추가 - 보통은 소유자 검증이 필요할 수 있음(선택 사항)
      */
-    public Post addHashtags(UUID postId, List<String> hashtags) {
+    public Post addHashtags(UUID postId, List<String> hashtags, long userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
+
+        if (post.getUserId() != userId) {
+            throw new PostDomainException(PostDomainExceptionCode.NOT_OWNER);
+        }
+
         for (String hashtagName : hashtags) {
             Hashtag hashtag = hashtagRepository.findByHashtagName(hashtagName)
                     .orElseGet(() -> {
@@ -104,6 +117,15 @@ public class PostService {
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
         // 도메인 메서드를 통해 댓글 수 증가
         post.incrementCommentCount();
+        postRepository.save(post);
+    }
+
+    @Transactional
+    public void minusCommentCount(UUID postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
+        // 도메인 메서드를 통해 댓글 수 증가
+        post.decrementCommentCount();
         postRepository.save(post);
     }
 }
