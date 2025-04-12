@@ -1,18 +1,13 @@
 package com.team15gijo.search.application.service.v1;
 
 import com.team15gijo.search.application.dto.v1.CursorResultDto;
-import com.team15gijo.search.infrastructure.client.post.PostClient;
+import com.team15gijo.search.infrastructure.client.FeignClientService;
 import com.team15gijo.search.infrastructure.client.post.PostSearchResponseDto;
-import com.team15gijo.search.infrastructure.client.user.UserClient;
 import com.team15gijo.search.infrastructure.client.user.UserSearchResponseDto;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.common.protocol.types.Field.Str;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,8 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class SearchServiceImpl implements SearchService {
 
-    private final UserClient userClient;
-    private final PostClient postClient;
+
+    private final FeignClientService clientService;
 
 
     @Override
@@ -32,7 +27,7 @@ public class SearchServiceImpl implements SearchService {
             String region,
             Long lastUserId,
             int size) {
-        List<UserSearchResponseDto> users = userClient.searchUsers(keyword, region, lastUserId, size).getData();
+        List<UserSearchResponseDto> users = clientService.searchUsers(keyword, region, lastUserId, size).getData();
         boolean hasNext = users.size() == size;
         Long nextCursor = hasNext ? users.get(users.size() - 1).getUserId() : null;
 
@@ -50,8 +45,7 @@ public class SearchServiceImpl implements SearchService {
             String region,
             LocalDateTime lastCreatedAt,
             int size) {
-        List<PostSearchResponseDto> posts = postClient
-                .searchPosts(keyword, region, lastCreatedAt, size)
+        List<PostSearchResponseDto> posts = clientService.searchPosts(keyword, region, lastCreatedAt, size)
                 .getData();
 
         boolean hasNext = posts.size() == size;
