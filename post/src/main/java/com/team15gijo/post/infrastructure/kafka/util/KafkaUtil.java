@@ -1,6 +1,8 @@
 package com.team15gijo.post.infrastructure.kafka.util;
 
 import com.team15gijo.post.domain.model.Post;
+import com.team15gijo.post.infrastructure.kafka.dto.v1.CommentCreatedEventDto;
+import com.team15gijo.post.infrastructure.kafka.dto.v1.CommentDeletedEventDto;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.EventType;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.FeedEventDto;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.PostCreatedEventDto;
@@ -34,6 +36,8 @@ public class KafkaUtil {
             case POST_UPDATED -> PostUpdatedEventDto.from(post);
             case POST_DELETED -> PostDeletedEventDto.from(post);
             case POST_VIEWED -> PostViewedEventDto.from(post);
+            case COMMENT_CREATED -> CommentCreatedEventDto.from(post);
+            case COMMENT_DELETED -> CommentDeletedEventDto.from(post);
             default -> null;
         };
     }

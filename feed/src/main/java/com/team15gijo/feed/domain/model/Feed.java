@@ -3,16 +3,22 @@ package com.team15gijo.feed.domain.model;
 import com.team15gijo.common.base.BaseEntity;
 import com.team15gijo.feed.infrastructure.converter.StringListConverter;
 import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostUpdatedEventDto;
-import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostViewedEventDto;
-import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.SQLRestriction;
-
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "p_feeds")
@@ -62,5 +68,9 @@ public class Feed extends BaseEntity {
 
     public void updateFeedPopularityScore(double score) {
         this.popularityScore = score;
+    }
+
+    public void updateFeedCommentCount(int commentCount) {
+        this.commentCount = commentCount;
     }
 }

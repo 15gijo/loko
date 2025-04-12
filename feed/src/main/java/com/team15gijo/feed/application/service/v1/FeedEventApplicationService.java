@@ -3,6 +3,7 @@ package com.team15gijo.feed.application.service.v1;
 import com.team15gijo.feed.domain.model.Feed;
 import com.team15gijo.feed.domain.repository.FeedRepository;
 import com.team15gijo.feed.infrastructure.kafka.dto.v1.CommentCreatedEventDto;
+import com.team15gijo.feed.infrastructure.kafka.dto.v1.CommentDeletedEventDto;
 import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostCreatedEventDto;
 import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostDeletedEventDto;
 import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostUpdatedEventDto;
@@ -73,6 +74,29 @@ public class FeedEventApplicationService implements FeedEventService {
     public void handlePostCommented(CommentCreatedEventDto dto) {
         log.info("💬 POST_COMMENTED received: {}", dto.toString());
         // TODO: 댓글 수 증가 처리
+        Feed feed = feedRepository.findById(dto.getPostId()).orElse(null);
+        if (feed == null) {
+            log.warn("Feed not found for postId: {}", dto.getPostId());
+            return;
+        }
+        feed.updateFeedCommentCount(dto.getCommentCount());
+        feedRepository.save(feed);
+        updatePopularityScore(dto.getPostId()); //인기 점수 갱신
+        log.info("Feed 댓글 수 수정 완료 - postId: {}", feed.getPostId());
+    }
+
+    public void handlePostCommentDeleted(CommentDeletedEventDto dto) {
+        log.info("💬 POST_COMMENTED received: {}", dto.toString());
+        // TODO: 댓글 수 감소 처리
+        Feed feed = feedRepository.findById(dto.getPostId()).orElse(null);
+        if (feed == null) {
+            log.warn("Feed not found for postId: {}", dto.getPostId());
+            return;
+        }
+        feed.updateFeedCommentCount(dto.getCommentCount());
+        feedRepository.save(feed);
+        updatePopularityScore(dto.getPostId()); //인기 점수 갱신
+        log.info("Feed 댓글 수 수정 완료 - postId: {}", feed.getPostId());
     }
 
     /**

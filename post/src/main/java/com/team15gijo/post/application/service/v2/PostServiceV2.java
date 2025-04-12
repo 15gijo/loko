@@ -124,6 +124,19 @@ public class PostServiceV2 {
         // 도메인 메서드를 통해 댓글 수 증가
         post.incrementCommentCount();
         postRepository.save(post);
+        // kafka 이벤트 발행
+        kafkaUtil.sendKafkaEvent(EventType.COMMENT_CREATED, post, FEED_EVENTS_TOPIC);
+    }
+
+    @Transactional
+    public void minusCommentCount(UUID postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
+        // 도메인 메서드를 통해 댓글 수 증가
+        post.decrementCommentCount();
+        postRepository.save(post);
+        // kafka 이벤트 발행
+        kafkaUtil.sendKafkaEvent(EventType.COMMENT_DELETED, post, FEED_EVENTS_TOPIC);
     }
 
 }

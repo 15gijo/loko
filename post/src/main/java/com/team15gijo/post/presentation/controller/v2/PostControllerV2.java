@@ -116,4 +116,10 @@ public class PostControllerV2 {
         postService.addCommentCount(postId);
         return ResponseEntity.ok(ApiResponse.success("댓글 수 증가 성공", null));
     }
+
+    @PostMapping("/{postId}/decrement-comment")
+    public ResponseEntity<ApiResponse<Void>> minusCommentCount(@PathVariable UUID postId) {
+        postService.minusCommentCount(postId);
+        return ResponseEntity.ok(ApiResponse.success("댓글 수 감소 성공", null));
+    }
 }
