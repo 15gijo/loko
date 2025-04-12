@@ -85,8 +85,25 @@ public class FeedService {
             ApiResponse<PostFeedPageResponseDto> response = getRecentFeedsByRegion(cursor, pageSize, region);
             return response;
         }
+    }
 
+    public ApiResponse<PostFeedPageResponseDto> getPopularFeedsByRegion(Double cursor, int pageSize, String region) {
+        // TODO: 요청한 유저의 지역 가져오기 (token or user-service 요청)
+//        String token = "";
+//        String region = getRegionFromToken(token); //임시 지역
 
+        if (cursor == null) {
+            cursor = Double.MAX_VALUE;
+        }
+
+        List<Feed> feeds = feedRepository
+                .findByRegionAndPopularityScoreBeforeOrderByPopularityScoreDesc(region, cursor, PageRequest.of(0, pageSize));
+
+        List<PostFeedResponseDto> postFeedResponsDtos = feeds.stream()
+                .map(PostFeedResponseDto::from)
+                .toList();
+
+        return ApiResponse.success("피드 조회 성공", PostFeedPageResponseDto.of(postFeedResponsDtos));
     }
 
 
@@ -94,4 +111,6 @@ public class FeedService {
         // TODO: token 혹은 header에서 값 가져오기
         return "송파구";
     }
+
+
 }

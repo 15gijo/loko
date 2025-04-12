@@ -59,4 +59,8 @@ public class Feed extends BaseEntity {
     public void updateFeedViews(int views) {
         this.views = views;
     }
+
+    public void updateFeedPopularityScore(double score) {
+        this.popularityScore = score;
+    }
 }

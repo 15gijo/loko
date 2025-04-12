@@ -48,4 +48,17 @@ public class FeedController {
         ApiResponse<PostFeedPageResponseDto> response = feedService.getRecentCachedFeedByRegion(cursor, pageSize, region);
         return ResponseEntity.ok().body(response);
     }
+
+    /**
+     * 지역 기반 인기순 피드 조회 - 기본
+     */
+    @GetMapping("/popular/base")
+    public ResponseEntity<ApiResponse<PostFeedPageResponseDto>> getPopularFeedBase(
+            @RequestParam(required = false) Double cursor,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false, defaultValue = "송파구") String region
+    ) {
+        ApiResponse<PostFeedPageResponseDto> response = feedService.getPopularFeedsByRegion(cursor, pageSize, region);
+        return ResponseEntity.ok().body(response);
+    }
 }
