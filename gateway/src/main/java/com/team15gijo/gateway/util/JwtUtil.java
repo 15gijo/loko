@@ -7,10 +7,11 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
-import jakarta.servlet.http.HttpServletRequest;
+
 import java.security.Key;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
 
 @Component
 public class JwtUtil {
@@ -29,10 +30,17 @@ public class JwtUtil {
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String extractToken(HttpServletRequest request) {
-        String header = request.getHeader("Authorization");
-        if (header != null && header.startsWith("Bearer ")) {
-            return header.substring(7).trim();
+//    public String extractToken(HttpServletRequest request) {
+//        String header = request.getHeader("Authorization");
+//        if (header != null && header.startsWith("Bearer ")) {
+//            return header.substring(7).trim();
+//        }
+//        return null;
+//    }
+    public String extractToken(ServerWebExchange exchange) {
+        String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
         }
         return null;
     }

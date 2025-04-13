@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,28 +30,18 @@ public class NotificationController {
      */
     @GetMapping
     public ResponseEntity<List<NotificationResponseDto>> getUnreadNotifications(
-            HttpServletRequest request) {
-//        Long userId = extractUserIdFromRequest(request);
-        Long userId = 1L;
+            @RequestHeader("X-User-Id") Long userId) {
         return ResponseEntity.ok(notificationService.getUnreadNotifications(userId));
     }
-
 
 
     /**
      *   알림 읽음 처리
      */
     @PatchMapping ("/{notificationId}/read")
-    public void markAsRead(@PathVariable UUID notificationId, HttpServletRequest request) {
-//        Long userId = extractUserIdFromRequest(request);
-        Long userId = 1L;
+    public void markAsRead(@PathVariable UUID notificationId, @RequestHeader("X-User-Id") Long userId) {
         notificationService.updateIsChecked(notificationId, userId);
     }
-
-//    private Long extractUserIdFromRequest(HttpServletRequest request) {
-//        String token = request.getHeader("Authorization");
-//        return JwtUtils.extractUserId(token); // 구현 필요
-//    }
 
 
     /**

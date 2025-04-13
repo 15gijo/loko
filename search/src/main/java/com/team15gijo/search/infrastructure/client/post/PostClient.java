@@ -1,6 +1,7 @@
 package com.team15gijo.search.infrastructure.client.post;
 
 import com.team15gijo.common.dto.ApiResponse;
+import com.team15gijo.search.infrastructure.config.FeignConfig;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -11,7 +12,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@FeignClient(name = "post-service")
+@FeignClient(name = "post-service", configuration = FeignConfig.class)
 public interface PostClient {
 
     @GetMapping("/internal/api/v1/posts/search")
