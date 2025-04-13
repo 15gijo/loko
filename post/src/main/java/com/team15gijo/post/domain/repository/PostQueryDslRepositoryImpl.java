@@ -1,20 +1,22 @@
 package com.team15gijo.post.domain.repository;
 
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.team15gijo.post.domain.model.Post;
 import com.team15gijo.post.domain.model.QHashtag;
 import com.team15gijo.post.domain.model.QPost;
 import java.time.LocalDateTime;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
-import org.springframework.util.StringUtils;
+import org.springframework.stereotype.Repository;
 
-@RequiredArgsConstructor
+@Repository
 public class PostQueryDslRepositoryImpl implements PostQueryDslRepository {
 
     private final JPAQueryFactory queryFactory;
+
+    public PostQueryDslRepositoryImpl(JPAQueryFactory queryFactory) {
+        this.queryFactory = queryFactory;
+    }
 
     @Override
     public List<Post> searchPosts(String keyword, String region, LocalDateTime cursor, int size) {
@@ -33,8 +35,7 @@ public class PostQueryDslRepositoryImpl implements PostQueryDslRepository {
         builder.and(keywordBuilder);
 
         return queryFactory
-                .selectDistinct(post)
-                .from(post)
+                .selectFrom(post)
                 .leftJoin(post.hashtags, hashtag)
                 .where(builder)
                 .orderBy(post.createdAt.desc())

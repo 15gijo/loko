@@ -8,6 +8,6 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public interface SearchService {
-    CursorResultDto<UserSearchResponseDto> searchUsers(String keyword, String region, Long lastUserId, int size);
+    CursorResultDto<UserSearchResponseDto> searchUsers(String keyword, Long userId, String nickname, String region, Long lastUserId, int size);
     CursorResultDto<PostSearchResponseDto> searchPosts(String keyword, String region, LocalDateTime lastCreatedAt, int size);
 }

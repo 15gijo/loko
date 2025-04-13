@@ -24,10 +24,12 @@ public class SearchServiceImpl implements SearchService {
     @Override
     public CursorResultDto<UserSearchResponseDto> searchUsers(
             String keyword,
+            Long userId,
+            String nickname,
             String region,
             Long lastUserId,
             int size) {
-        List<UserSearchResponseDto> users = clientService.searchUsers(keyword, region, lastUserId, size).getData();
+        List<UserSearchResponseDto> users = clientService.searchUsers(keyword, userId, nickname, region, lastUserId, size).getData();
         boolean hasNext = users.size() == size;
         Long nextCursor = hasNext ? users.get(users.size() - 1).getUserId() : null;
 

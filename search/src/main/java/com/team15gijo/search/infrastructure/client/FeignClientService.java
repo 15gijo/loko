@@ -24,14 +24,18 @@ public class FeignClientService {
     @CircuitBreaker(name = "userClient", fallbackMethod = "searchUsersFallback")
     public ApiResponse<List<UserSearchResponseDto>> searchUsers(
             String keyword,
+            Long userId,
+            String nickname,
             String region,
             Long lastUserId,
             int size) {
-        return userClient.searchUsers(keyword, region, lastUserId, size);
+        return userClient.searchUsers(keyword, userId, nickname, region, lastUserId, size);
     }
 
     public ApiResponse<List<UserSearchResponseDto>> searchUsersFallback(
             String keyword,
+            Long userId,
+            String nickname,
             String region,
             Long lastUserId,
             int size,
