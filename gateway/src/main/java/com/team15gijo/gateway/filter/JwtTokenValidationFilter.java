@@ -19,8 +19,7 @@ public class JwtTokenValidationFilter implements
     //유효성 제외 주소
     private static final List<String> excludedPaths = List.of(
             "/api/v1/auth/login",
-            "/api/v1/users/signup",
-            "/api/v1/internal/**"
+            "/api/v1/users/signup"
     );
 
 

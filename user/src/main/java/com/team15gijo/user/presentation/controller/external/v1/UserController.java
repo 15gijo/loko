@@ -1,4 +1,4 @@
-package com.team15gijo.user.presentation.controller.v1;
+package com.team15gijo.user.presentation.controller.external.v1;
 
 import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.user.application.service.UserApplicationService;
@@ -29,4 +29,8 @@ public class UserController {
         UserSignUpResponseDto userSignUpResponseDto = userApplicatoinService.createUser(userSignUpRequestDto);
         return ResponseEntity.ok(ApiResponse.success("회원가입 성공", userSignUpResponseDto));
     }
+
+    //유저 단건 조회
+
+    //유저 전체 조회 - 마스터
 }
