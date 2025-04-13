@@ -5,14 +5,13 @@ import com.team15gijo.search.application.dto.v1.CursorResultDto;
 import com.team15gijo.search.application.service.v1.SearchService;
 import com.team15gijo.search.infrastructure.client.post.PostSearchResponseDto;
 import com.team15gijo.search.infrastructure.client.user.UserSearchResponseDto;
-import jakarta.servlet.http.HttpServletRequest;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -48,13 +47,16 @@ public class SearchController {
 
     @GetMapping("/posts")
     public ResponseEntity<ApiResponse<CursorResultDto<PostSearchResponseDto>>> searchPost(
-            @RequestParam String keyword,
+            @RequestParam(name = "keyword") String keyword,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastCreatedAt,
             @RequestParam(defaultValue = "10") int size,
-            @RequestHeader("X-User-Id") Long userId,
-            @RequestHeader("X-User-Nickname") String nickname,
+//            @RequestHeader("X-User-Id") Long userId,
+//            @RequestHeader("X-User-Nickname") String nickname,
             @RequestHeader("X-User-Region") String encodedRegion) {
         String region = URLDecoder.decode(encodedRegion, StandardCharsets.UTF_8);
+        String decodedKeyword = URLDecoder.decode(keyword, StandardCharsets.UTF_8);
+        System.out.println(keyword);
+        System.out.println(decodedKeyword);
         return ResponseEntity.ok(ApiResponse.success("검색 성공", searchService.searchPosts(keyword, region, lastCreatedAt, size)));
     }
 }

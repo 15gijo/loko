@@ -1,6 +1,8 @@
 package com.team15gijo.search.infrastructure.client;
 
 import com.team15gijo.common.dto.ApiResponse;
+import com.team15gijo.common.exception.CustomException;
+import com.team15gijo.search.domain.exception.SearchDomainExceptionCode;
 import com.team15gijo.search.infrastructure.client.post.PostClient;
 import com.team15gijo.search.infrastructure.client.post.PostSearchResponseDto;
 import com.team15gijo.search.infrastructure.client.user.UserClient;
@@ -28,13 +30,14 @@ public class FeignClientService {
         return userClient.searchUsers(keyword, region, lastUserId, size);
     }
 
-    public ApiResponse<List<UserSearchResponseDto>> searchUsersFallback(String keyword,
+    public ApiResponse<List<UserSearchResponseDto>> searchUsersFallback(
+            String keyword,
             String region,
             Long lastUserId,
             int size,
             Throwable t) {
         log.error("User Search Feign Client 호출 실패 (Fallback 처리): {}", t.getMessage());
-        return null;
+        throw new CustomException(SearchDomainExceptionCode.USER_SERVICE_UNAVAILABLE);
     }
 
     @CircuitBreaker(name = "postClient", fallbackMethod = "searchPostsFallback")
@@ -53,7 +56,7 @@ public class FeignClientService {
             int size,
             Throwable t) {
         log.error("Post Search Feign Client 호출 실패 (Fallback 처리): {}", t.getMessage());
-        return null;
+        throw new CustomException(SearchDomainExceptionCode.POST_SERVICE_UNAVAILABLE);
     }
 
 }

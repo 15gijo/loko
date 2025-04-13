@@ -5,6 +5,7 @@ import com.team15gijo.post.domain.repository.PostRepository;
 import com.team15gijo.post.presentation.dto.v1.PostFeedPageResponseDto;
 import com.team15gijo.post.presentation.dto.v1.PostFeedResponseDto;
 import com.team15gijo.post.presentation.dto.v1.PostSearchResponseDto;
+import java.util.HashSet;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -44,8 +45,8 @@ public class InternalPostService {
             lastCreatedAt = LocalDateTime.now();
         }
 
-        posts = postRepository.findPostByKeywordAfter(keyword, region, lastCreatedAt, PageRequest.of(0, size));
-
+        posts = postRepository.searchPosts(keyword, region, lastCreatedAt, size);
+        System.out.println(posts.size());
         return posts.stream()
                 .map(PostSearchResponseDto::from)
                 .toList();
