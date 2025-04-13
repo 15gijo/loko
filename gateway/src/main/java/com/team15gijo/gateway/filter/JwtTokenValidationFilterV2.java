@@ -66,11 +66,12 @@ public class JwtTokenValidationFilterV2 implements GlobalFilter {
 
             System.out.println("➡ region: " + region);
 
+            String encodedNickname = URLEncoder.encode(nickname, StandardCharsets.UTF_8);
             String encodedRegion = URLEncoder.encode(region, StandardCharsets.UTF_8);
 
             ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                     .header("X-User-Id", userId)
-                    .header("X-User-Nickname", nickname)
+                    .header("X-User-Nickname", encodedNickname)
                     .header("X-User-Region", encodedRegion)
                     .build();
 
