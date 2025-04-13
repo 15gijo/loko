@@ -1,9 +1,10 @@
 package com.team15gijo.chat.application.service.impl.v1;
 
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.CHAT_ROOM_INDIVIDUAL_NUMBER_LIMIT;
-import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.CHAT_ROOM_MESSAGE_DISCREPANCY;
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.CHAT_ROOM_NOT_FOUND;
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.CHAT_ROOM_USER_ID_NOT_FOUND;
+import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.MESSAGE_ID_NOT_FOUND;
+import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.MESSAGE_NOT_FOUND_FOR_CHAT_ROOM;
 
 import com.team15gijo.chat.application.dto.v1.ChatRoomResponseDto;
 import com.team15gijo.chat.domain.model.ChatMessageDocument;
@@ -289,6 +290,7 @@ public class ChatMessageService {
 
     /**
      * 소켓 연결 중단 시, redis 삭제 호출
+     * TODO: Redis 키를 SessionID로, value는 senderId, chatRoomId로 변경
      */
     @Transactional(readOnly = true)
     public Boolean deleteRedisSenderId(Long senderId) {
@@ -303,11 +305,12 @@ public class ChatMessageService {
     }
 
     /**
-     * mongoDB에서 채팅방(chatRoomId) 이전 메시지 불러오기(조회)
+     * mongoDB 에서 채팅방(chatRoomId) 이전 메시지 불러오기(조회)
      * Page 전체 조회(sentAt ASC 정렬)
      */
     @Transactional(readOnly = true)
-    public Page<ChatMessageDocument> getMessagesByChatRoomId(UUID chatRoomId, Pageable pageable) {
+    public Page<ChatMessageDocument> getMessagesByChatRoomId(UUID chatRoomId, Long senderId, Pageable pageable) {
+        checkRoomIdAndUserId(chatRoomId, senderId);
         /*
           chatRoomId가 UUID 타입으로 mongoDB 에서 바이너리 형태로 저장되어
           쿼리에서 바이너리 데이터를 직접 비교하고 인덱싱, 조회가 제대로 되지 않음
@@ -318,6 +321,11 @@ public class ChatMessageService {
             .map(ChatMessageDocument::get_id)
             .toList();
         log.info("idList {}", idList);
+
+        if(idList.isEmpty()) {
+            log.error("채팅방에 해당하는 메시지 내역이 존재하지 않습니다.");
+            throw new CustomException(MESSAGE_NOT_FOUND_FOR_CHAT_ROOM);
+        }
 
         Query query = Query.query(Criteria.where("_id").in(idList))
             .with(pageable);
@@ -330,17 +338,20 @@ public class ChatMessageService {
 
     /**
      * 채팅방 메시지 상세 조회
-     * chatRoomId의 메시지 id가 아닌 경우 에러 발생
+     * chatRoomId에 속하는 참여자는 메시지 고유 ID로 메시지 상세 조회 모두 가능
      */
     @Transactional(readOnly = true)
-    public ChatMessageResponseDto getMessageById(UUID chatRoomId, String id) {
+    public ChatMessageResponseDto getMessageById(UUID chatRoomId, String id, Long userId) {
+        checkRoomIdAndUserId(chatRoomId, userId);
+
         Query query = Query.query(Criteria.where("_id").is(id));
         ChatMessageDocument responseDocument = mongoTemplate.findOne(query, ChatMessageDocument.class);
 
-        if(!Objects.requireNonNull(responseDocument).getChatRoomId().equals(chatRoomId)) {
-            log.error("chatRoomId: {} 해당 채팅방의 id:{} 메시지가 아닙니다.", chatRoomId, id);
-            throw new CustomException(CHAT_ROOM_MESSAGE_DISCREPANCY);
+        if(responseDocument == null) {
+            log.error("chatRoomId: {} 해당 채팅방의 id:{} 메시지가 존재하지 않습니다.", chatRoomId, id);
+            throw new CustomException(MESSAGE_ID_NOT_FOUND);
         }
+
         return responseDocument.toResponse();
     }
 
@@ -348,6 +359,7 @@ public class ChatMessageService {
      * "/ws-stomp" 경로로 소켓 연결 시, 채팅방에 참여한 user가 Redis 캐시 조회하여 있는 경우 소켓 연결 중단
      * 서버 리셋 후, 다시 소켓 연결하면 재접속 가능
      * 웹 소켓 연결 시, redis senderId(key)-sessionId(value) 캐시 저장
+     * -> TODO: Redis 키를 SessionID로, value는 senderId, chatRoomId로 변경
      * 이전 메시지 조회로 채팅방에 처음 입장한 경우, 입장 메시지 전송
      */
     public void connectChatRoom(
@@ -413,6 +425,20 @@ public class ChatMessageService {
         chatMessageRepository.save(chatMessage);
 
         return chatMessage.toResponse();
+    }
+
+    private void checkRoomIdAndUserId(UUID chatRoomId, Long userId) {
+        // 채팅방 유무 검증
+        ChatRoom chatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
+            .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
+
+        // 채팅방 참여자만 해당 메시지 조회 가능
+        boolean isParticipant = chatRoom.getChatRoomParticipants().stream()
+            .anyMatch(participant -> participant.getUserId().equals(userId));
+
+        if(!isParticipant) {
+            throw new CustomException(CHAT_ROOM_USER_ID_NOT_FOUND);
+        }
     }
 
 }

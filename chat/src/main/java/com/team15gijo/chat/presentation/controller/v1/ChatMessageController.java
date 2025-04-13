@@ -138,7 +138,7 @@ public class ChatMessageController {
         @PathVariable("chatRoomId") UUID chatRoomId
     ) {
         Map<String, Boolean> response = chatMessageService.validateChatRoomId(chatRoomId);
-        return ResponseEntity.ok(ApiResponse.success("chatRoomId 유효성 검증 성고하였습니다.", response));
+        return ResponseEntity.ok(ApiResponse.success("chatRoomId 유효성 검증 성공하였습니다.", response));
     }
 
     /**
@@ -156,6 +156,7 @@ public class ChatMessageController {
 
     /**
      * 소켓 연결 중단 시, redis 삭제 API 호출
+     * TODO: Redis 키를 SessionID로, value는 senderId, chatRoomId로 변경
      */
     @GetMapping("/redis/delete/{senderId}")
     public ResponseEntity<ApiResponse<Boolean>> deleteRedisSenderId(
@@ -170,9 +171,10 @@ public class ChatMessageController {
      * Page 전체 조회(sentAt ASC 정렬)
      * index 에서 fetch 호출 시, forEach 메서드 에러 발생으로 ApiResponse 객체 사용X
      */
-    @GetMapping("/message/{chatRoomId}")
+    @GetMapping("message/page/{chatRoomId}/{senderId}")
     public ResponseEntity<Page<ChatMessageDocument>> getMessagesByChatRoomId(
         @PathVariable("chatRoomId") UUID chatRoomId,
+        @PathVariable("senderId") Long senderId,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "30") int size,
         @RequestParam(defaultValue = "sentAt") String sortField,
@@ -180,19 +182,21 @@ public class ChatMessageController {
     ) {
         Sort.Direction direction = sortDirection.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
-        Page<ChatMessageDocument> chatMessages = chatMessageService.getMessagesByChatRoomId(chatRoomId, pageable);
+        Page<ChatMessageDocument> chatMessages = chatMessageService.getMessagesByChatRoomId(chatRoomId, senderId, pageable);
         return ResponseEntity.ok(chatMessages);
     }
 
     /**
      * 채팅방 메시지 상세 조회
+     * chatRoomId에 속하는 참여자는 메시지 고유 ID로 메시지 상세 조회 모두 가능
      */
     @GetMapping("message/{chatRoomId}/{id}")
     public ResponseEntity<ApiResponse<ChatMessageResponseDto>> getMessageById(
         @PathVariable("chatRoomId") UUID chatRoomId,
-        @PathVariable("id") String id
+        @PathVariable("id") String id,
+        @RequestHeader("X-User-Id") Long userId
     ) {
-        ChatMessageResponseDto responseDto = chatMessageService.getMessageById(chatRoomId, id);
+        ChatMessageResponseDto responseDto = chatMessageService.getMessageById(chatRoomId, id, userId);
         return ResponseEntity.ok(ApiResponse.success("메시지 조회 성공했습니다.", responseDto));
     }
 
