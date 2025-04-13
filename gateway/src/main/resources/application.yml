@@ -5,13 +5,42 @@ spring:
     import: optional:file:./gateway/.env[.properties]
   cloud:
     gateway:
-      mvc:
-        form-filter:
-          enabled: true
+      routes: # Spring Cloud Gateway의 라우팅 설정
+        - id: post-service  # 라우트 식별자
+          uri: lb://post-service  # 'order-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
+          predicates:
+            - Path=/api/v1/posts/**  # /order/** 경로로 들어오는 요청을 이 라우트로 처리
+        - id: user-service  # 라우트 식별자
+          uri: lb://user-service  # 'product-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
+          predicates:
+            - Path=/api/v1/users/**  # /product/** 경로로 들어오는 요청을 이 라우트로 처리
+        - id: auth-service  # 라우트 식별자
+          uri: lb://auth-service  # 'auth-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
+          predicates:
+            - Path=/api/v1/auth/**  # /auth/signIn 경로로 들어오는 요청을 이 라우트로 처리
+        - id: search-service  # 라우트 식별자
+          uri: lb://search-service  # 'auth-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
+          predicates:
+            - Path=/api/v1/search/**  # /auth/signIn 경로로 들어오는 요청을 이 라우트로 처리
+      discovery:
+        locator:
+          enabled: true  # 서비스 디스커버리를 통해 동적으로 라우트를 생성하도록 설정
+
+#      mvc:
+#        form-filter:
+#          enabled: true
+
 
 
 server:
   port: 19091
+  tomcat:
+    uri-encoding: UTF-8
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
 
 eureka:
   client:
