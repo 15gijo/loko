@@ -22,7 +22,7 @@ public class PostQueryDslRepositoryImpl implements PostQueryDslRepository {
         QHashtag hashtag = QHashtag.hashtag;
 
         BooleanBuilder builder = new BooleanBuilder();
-//        builder.and(post.region.eq(region));
+        builder.and(post.region.eq(region));
         builder.and(post.createdAt.lt(cursor));
 
         BooleanBuilder keywordBuilder = new BooleanBuilder();

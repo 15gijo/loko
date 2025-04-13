@@ -3,17 +3,26 @@ package com.team15gijo.gateway.filter;
 import com.team15gijo.gateway.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 //@RequiredArgsConstructor
+@Component
 public class JwtTokenValidationFilterV2 implements GlobalFilter {
 
-    private final JwtUtil jwtUtil = new JwtUtil();
+    private final JwtUtil jwtUtil;
+
+    public JwtTokenValidationFilterV2(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
 
     //유효성 제외 주소
     private static final List<String> excludedPaths = List.of(
@@ -48,33 +57,26 @@ public class JwtTokenValidationFilterV2 implements GlobalFilter {
         //토큰 유효성 검사
         try {
             Claims claims = jwtUtil.parseToken(token);
+            System.out.println("✅ JWT Claims: " + claims);
+
             String userId = claims.getSubject();
             String role = claims.get("role", String.class);
             String nickname = claims.get("nickname", String.class);
             String region = claims.get("region", String.class);
 
-            /**
-             * 한글이 깨져서 인코딩 해주었습니다. post 에서는 디코딩해서 db에 저장하였습니다.
-             */
-//            String encodedRegion = URLEncoder.encode(region, StandardCharsets.UTF_8.toString());
+            System.out.println("➡ region: " + region);
 
+            String encodedRegion = URLEncoder.encode(region, StandardCharsets.UTF_8);
 
-
-            //헤더 추가
-//            ServerRequest mutated = ServerRequest.from(request)
-//                    .header("X-User-Id", userId)
-//                    .header("X-User-Role", role)
-//                    .header("X-User-Nickname", nickname)
-//                    .header("X-User-Region", region)
-//                    .param("keyword", URLEncoder.encode("한국", StandardCharsets.UTF_8.toString()))
-//                    .build();
-            exchange.getRequest().mutate()
+            ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                     .header("X-User-Id", userId)
                     .header("X-User-Nickname", nickname)
-                    .header("X-User-Region", region)
+                    .header("X-User-Region", encodedRegion)
                     .build();
 
-            return chain.filter(exchange);
+            ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
+
+            return chain.filter(mutatedExchange);
         } catch (JwtException e) {
 //            throw new CustomException(CommonExceptionCode.UNAUTHORIZED_ACCESS, e);
             throw new RuntimeException("Token is invalid", e);
