@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -39,10 +38,10 @@ public class SearchController {
             @RequestHeader("X-User-Id") Long userId,
             @RequestHeader("X-User-Nickname") String encodedNickname,
             @RequestHeader("X-User-Region") String encodedRegion) {
-        // URL 디코딩하여 원래의 한글 문자열로 복원
+        log.info("유저 검색 시작");
         String region = URLDecoder.decode(encodedRegion, StandardCharsets.UTF_8);
         String nickname = URLDecoder.decode(encodedNickname, StandardCharsets.UTF_8);
-        return ResponseEntity.ok(ApiResponse.success("검색 성공", searchService.searchUsers(keyword, userId, nickname, region, lastUserId, size)));
+        return ResponseEntity.ok(ApiResponse.success("유저 검색 성공", searchService.searchUsers(keyword, userId, nickname, region, lastUserId, size)));
     }
 
 
@@ -52,9 +51,8 @@ public class SearchController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastCreatedAt,
             @RequestParam(defaultValue = "10") int size,
             @RequestHeader("X-User-Region") String encodedRegion) {
+        log.info("게시글 검색 시작");
         String region = URLDecoder.decode(encodedRegion, StandardCharsets.UTF_8);
-        System.out.println(keyword);
-        System.out.println(region);
-        return ResponseEntity.ok(ApiResponse.success("검색 성공", searchService.searchPosts(keyword, region, lastCreatedAt, size)));
+        return ResponseEntity.ok(ApiResponse.success("게시글 검색 성공", searchService.searchPosts(keyword, region, lastCreatedAt, size)));
     }
 }
