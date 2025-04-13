@@ -48,9 +48,10 @@ public class InternalPostController {
             @RequestParam String region,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastCreatedAt,
             @RequestParam(defaultValue = "10") int size) {
-
-        List<PostSearchResponseDto> posts = internalPostService.searchPost(keyword, region, lastCreatedAt, size);
         System.out.println(keyword);
+        System.out.println(region);
+        List<PostSearchResponseDto> posts = internalPostService.searchPost(keyword, region, lastCreatedAt, size);
+
         return ApiResponse.success("게시글 검색 성공", posts);
     }
 

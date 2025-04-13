@@ -54,9 +54,8 @@ public class SearchController {
 //            @RequestHeader("X-User-Nickname") String nickname,
             @RequestHeader("X-User-Region") String encodedRegion) {
         String region = URLDecoder.decode(encodedRegion, StandardCharsets.UTF_8);
-        String decodedKeyword = URLDecoder.decode(keyword, StandardCharsets.UTF_8);
         System.out.println(keyword);
-        System.out.println(decodedKeyword);
+        System.out.println(region);
         return ResponseEntity.ok(ApiResponse.success("검색 성공", searchService.searchPosts(keyword, region, lastCreatedAt, size)));
     }
 }
