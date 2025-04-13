@@ -3,6 +3,7 @@ package com.team15gijo.feed.domain.model;
 import com.team15gijo.common.base.BaseEntity;
 import com.team15gijo.feed.infrastructure.converter.StringListConverter;
 import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostUpdatedEventDto;
+import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostViewedEventDto;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
@@ -53,5 +54,9 @@ public class Feed extends BaseEntity {
         this.popularityScore = dto.getPopularityScore();
         this.createdAtOrigin = dto.getCreatedAt();
         this.deletedAtOrigin = dto.getDeletedAt();
+    }
+
+    public void updateFeedViews(int views) {
+        this.views = views;
     }
 }

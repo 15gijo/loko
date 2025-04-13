@@ -43,14 +43,16 @@ public class InternalPostController {
      *  게시글 검색
      */
     @GetMapping("/search")
-    public ResponseEntity<ApiResponse<List<PostSearchResponseDto>>> searchPosts(
-            @RequestParam String keyword,
+    public ApiResponse<List<PostSearchResponseDto>> searchPosts(
+            @RequestParam(name = "keyword") String keyword,
             @RequestParam String region,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastCreatedAt,
             @RequestParam(defaultValue = "10") int size) {
-
+        System.out.println(keyword);
+        System.out.println(region);
         List<PostSearchResponseDto> posts = internalPostService.searchPost(keyword, region, lastCreatedAt, size);
-        return ResponseEntity.ok(ApiResponse.success("게시글 검색 성공", posts));
+
+        return ApiResponse.success("게시글 검색 성공", posts);
     }
 
 

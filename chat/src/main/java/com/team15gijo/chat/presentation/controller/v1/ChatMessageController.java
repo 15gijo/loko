@@ -145,20 +145,34 @@ public class ChatMessageController {
     }
 
     /**
-     * mongoDB에서 메시지 페이징 조회 API
+     * mongoDB 에서 메시지 페이징 조회(이전 메시지 불러오기) API
+     * Page 전체 조회(sentAt ASC 정렬)
+     * index 에서 fetch 호출 시, forEach 메서드 에러 발생으로 ApiResponse 객체 사용X
      */
     @GetMapping("/message/{chatRoomId}")
-    public ResponseEntity<ApiResponse<Page<ChatMessageDocument>>> getMessagesByChatRoomId(
+    public ResponseEntity<Page<ChatMessageDocument>> getMessagesByChatRoomId(
         @PathVariable("chatRoomId") UUID chatRoomId,
         @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "30") int size,
         @RequestParam(defaultValue = "sentAt") String sortField,
         @RequestParam(defaultValue = "asc") String sortDirection
     ) {
         Sort.Direction direction = sortDirection.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
         Page<ChatMessageDocument> chatMessages = chatMessageService.getMessagesByChatRoomId(chatRoomId, pageable);
-        return ResponseEntity.ok(ApiResponse.success("채팅방의 메시지가 조회되었습니다.", chatMessages));
+        return ResponseEntity.ok(chatMessages);
+    }
+
+    /**
+     * 채팅방 메시지 상세 조회
+     */
+    @GetMapping("message/{chatRoomId}/{id}")
+    public ResponseEntity<ApiResponse<ChatMessageResponseDto>> getMessageById(
+        @PathVariable("chatRoomId") UUID chatRoomId,
+        @PathVariable("id") String id
+    ) {
+        ChatMessageResponseDto responseDto = chatMessageService.getMessageById(chatRoomId, id);
+        return ResponseEntity.ok(ApiResponse.success("메시지 조회 성공했습니다.", responseDto));
     }
 
     /**

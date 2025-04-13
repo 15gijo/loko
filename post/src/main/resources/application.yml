@@ -1,5 +1,10 @@
 server:
   port: 19101
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
 
 spring:
   cloud:
@@ -20,7 +25,14 @@ spring:
       ddl-auto: update
     show-sql: true
     database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
-
+    properties:
+      hibernate:
+        format_sql: true
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 eureka:
   client:
     service-url:
@@ -36,3 +48,8 @@ management:
   tracing:
     sampling:
       probability: 1.0
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

@@ -21,8 +21,7 @@ public class CommentService {
     private final PostClient postClient;  // Feign Client 주입
 
     /**
-     * 댓글 생성: 게시글 존재 여부를 검증한 후 댓글을 생성하고,
-     * 게시글에 댓글 수 증가를 호출
+     * 댓글 생성: 게시글 존재 여부를 검증한 후 댓글 생성 및 게시글의 댓글 수 증가 호출
      */
     public Comment createComment(long userId, String username, UUID postId, CommentRequestDto request) {
         // Feign Client 호출로 게시글 존재 여부 확인
@@ -31,7 +30,6 @@ public class CommentService {
             throw new CommentDomainException(CommentDomainExceptionCode.POST_NOT_FOUND);
         }
 
-        // Comment 엔티티의 정적 팩토리 메서드를 활용하여 댓글 생성
         Comment comment = Comment.createComment(postId, userId, username, request.getCommentContent(), request.getParentCommentId());
         Comment savedComment = commentRepository.save(comment);
 
@@ -49,21 +47,34 @@ public class CommentService {
     }
 
     /**
-     * 댓글 수정 (내용 업데이트)
+     * 댓글 수정 (내용 업데이트) - 현재 로그인한 사용자(userId)가 댓글 소유자인지 확인
      */
-    public Comment updateComment(UUID commentId, CommentRequestDto request) {
+    public Comment updateComment(UUID commentId, CommentRequestDto request, long userId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CommentDomainException(CommentDomainExceptionCode.COMMENT_NOT_FOUND));
+
+        if (comment.getUserId() != userId) {
+            throw new CommentDomainException(CommentDomainExceptionCode.NOT_OWNER);
+        }
+
         comment.updateContent(request.getCommentContent());
         return commentRepository.save(comment);
     }
 
     /**
-     * 댓글 삭제
+     * 댓글 삭제 - 현재 로그인한 사용자(userId)가 댓글 소유자인지 확인
      */
-    public void deleteComment(UUID commentId) {
+    public void deleteComment(UUID commentId, long userId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CommentDomainException(CommentDomainExceptionCode.COMMENT_NOT_FOUND));
+
+        if (comment.getUserId() != userId) {
+            throw new CommentDomainException(CommentDomainExceptionCode.NOT_OWNER);
+        }
+
         commentRepository.delete(comment);
+
+        // 댓글 삭제 후 게시글 댓글 수 감소 처리
+        postClient.decreaseCommentCount(comment.getPostId());
     }
 }

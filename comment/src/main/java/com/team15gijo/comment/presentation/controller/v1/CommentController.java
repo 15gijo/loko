@@ -13,23 +13,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
-
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/comments")
 public class CommentController {
 
     private final CommentService commentService;
 
     /**
      * 댓글 생성 엔드포인트
-     * (userId와 username은 추후 인증 로직 도입 시 JWT 등으로 대체)
      */
-    @PostMapping("/posts/{postId}/comments")
+    @PostMapping("/{postId}")
     public ResponseEntity<ApiResponse<Comment>> createComment(
             @PathVariable UUID postId,
-            @RequestParam long userId,
-            @RequestParam String username,
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestHeader("X-User-Nickname") String username,
             @RequestBody CommentRequestDto request) {
         Comment created = commentService.createComment(userId, username, postId, request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -39,34 +37,36 @@ public class CommentController {
     /**
      * 댓글 목록 조회 (페이징)
      */
-    @GetMapping("/posts/{postId}/comments")
+    @GetMapping("/{postId}")
     public ResponseEntity<ApiResponse<Page<Comment>>> getCommentsByPostId(
             @PathVariable UUID postId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
-        // 페이지 번호를 0-indexed로 변환
         Pageable pageable = PageRequest.of(page - 1, size);
         Page<Comment> comments = commentService.getCommentsByPostId(postId, pageable);
         return ResponseEntity.ok(ApiResponse.success("댓글 목록 조회 성공.", comments));
     }
 
     /**
-     * 댓글 수정 엔드포인트 (내용 업데이트)
+     * 댓글 수정 엔드포인트 (내용 업데이트) - 현재 로그인 사용자의 X-User-Id를 추가로 받음
      */
-    @PutMapping("/comments/{commentId}")
+    @PutMapping("/{commentId}")
     public ResponseEntity<ApiResponse<Comment>> updateComment(
             @PathVariable UUID commentId,
+            @RequestHeader("X-User-Id") Long userId,
             @RequestBody CommentRequestDto request) {
-        Comment updated = commentService.updateComment(commentId, request);
+        Comment updated = commentService.updateComment(commentId, request, userId);
         return ResponseEntity.ok(ApiResponse.success("댓글이 성공적으로 수정되었습니다.", updated));
     }
 
     /**
-     * 댓글 삭제 엔드포인트
+     * 댓글 삭제 엔드포인트 - 현재 로그인 사용자의 X-User-Id를 추가로 받음
      */
-    @DeleteMapping("/comments/{commentId}")
-    public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable UUID commentId) {
-        commentService.deleteComment(commentId);
+    @DeleteMapping("/{commentId}")
+    public ResponseEntity<ApiResponse<Void>> deleteComment(
+            @PathVariable UUID commentId,
+            @RequestHeader("X-User-Id") Long userId) {
+        commentService.deleteComment(commentId, userId);
         return ResponseEntity.ok(ApiResponse.success("댓글이 성공적으로 삭제되었습니다.", null));
     }
 }

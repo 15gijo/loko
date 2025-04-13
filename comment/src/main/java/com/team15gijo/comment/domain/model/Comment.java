@@ -64,8 +64,6 @@ public class Comment extends BaseEntity {
                 .commentContent(commentContent)
                 .parentCommentId(parentCommentId)
                 .build();
-        comment.setCreatedBy(userId);
-        comment.setCreatedAt(LocalDateTime.now());
         return comment;
     }
 

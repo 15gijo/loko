@@ -28,7 +28,8 @@ public class ChatMessageDocument {
             .id(_id)
             .senderId(senderId)
             .senderNickname(senderNickname)
-            .message(messageContent)
+            .connectionType(connectionType)
+            .messageContent(messageContent)
             .sentAt(sentAt)
             .readStatus(readStatus).build();
     }

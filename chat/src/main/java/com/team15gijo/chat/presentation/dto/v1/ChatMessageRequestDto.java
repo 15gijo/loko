@@ -11,5 +11,5 @@ import lombok.ToString;
 public class ChatMessageRequestDto {
     private UUID chatRoomId;
     private Long senderId;
-    private String message;
+    private String messageContent;
 }
