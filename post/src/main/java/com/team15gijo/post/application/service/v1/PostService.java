@@ -25,6 +25,7 @@ public class PostService {
     /**
      * 게시글 생성
      */
+    @Transactional
     public Post createPost(long userId, String username, String region, PostRequestDto request) {
         Post post = Post.createPost(userId, username, region, request.getPostContent());
         return postRepository.save(post);
@@ -52,6 +53,7 @@ public class PostService {
     /**
      * 게시글 수정 (내용 업데이트) - 수정: 현재 로그인한 사용자(userId)가 게시글 소유자인지 확인
      */
+    @Transactional
     public Post updatePost(UUID postId, PostRequestDto request, long userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
@@ -67,6 +69,7 @@ public class PostService {
     /**
      * 게시글 삭제 (Soft Delete) - 삭제: 현재 로그인한 사용자(userId)가 게시글 소유자인지 확인
      */
+    @Transactional
     public void deletePost(UUID postId, long userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
