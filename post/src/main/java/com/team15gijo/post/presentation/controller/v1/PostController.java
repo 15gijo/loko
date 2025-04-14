@@ -1,5 +1,6 @@
 package com.team15gijo.post.presentation.controller.v1;
 
+import com.team15gijo.common.annotation.RoleGuard;
 import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.post.application.service.v1.PostService;
 import com.team15gijo.post.domain.model.Post;
@@ -29,6 +30,7 @@ public class PostController {
     /**
      * 게시글 생성 엔드포인트
      */
+    @RoleGuard(min = "USER")
     @PostMapping
     public ResponseEntity<ApiResponse<PostResponseDto>> createPost(
             @RequestHeader("X-User-Id") Long userId,
@@ -51,6 +53,7 @@ public class PostController {
     /**
      * 게시글 목록 조회 (페이징 및 정렬)
      */
+    @RoleGuard(min = "USER")
     @GetMapping
     public ResponseEntity<ApiResponse<Page<PostResponseDto>>> getPosts(
             @RequestParam(defaultValue = "0") int page,
@@ -67,6 +70,7 @@ public class PostController {
     /**
      * 게시글 상세 조회 시 조회수 증가 (views 증가)
      */
+    @RoleGuard(min = "USER")
     @GetMapping("/{postId}")
     public ResponseEntity<ApiResponse<PostResponseDto>> getPostById(@PathVariable UUID postId) {
         Post post = postService.getPostById(postId);
@@ -76,6 +80,7 @@ public class PostController {
     /**
      * 게시글 수정 엔드포인트 (내용 업데이트) - 현재 로그인 사용자의 X-User-Id를 추가로 받음
      */
+    @RoleGuard(min = "USER")
     @PutMapping("/{postId}")
     public ResponseEntity<ApiResponse<PostResponseDto>> updatePost(
             @PathVariable UUID postId,
@@ -88,6 +93,7 @@ public class PostController {
     /**
      * 게시글 삭제 엔드포인트 - 현재 로그인 사용자의 X-User-Id를 추가로 받음
      */
+    @RoleGuard(min = "USER")
     @DeleteMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> deletePost(
             @PathVariable UUID postId,
@@ -99,6 +105,7 @@ public class PostController {
     /**
      * 게시글에 해시태그 추가 엔드포인트 - 소유자 검증을 위해 X-User-Id를 추가로 받음 (옵션)
      */
+    @RoleGuard(min = "USER")
     @PutMapping("/{postId}/hashtags")
     public ResponseEntity<ApiResponse<PostResponseDto>> addHashtags(
             @PathVariable UUID postId,
@@ -111,6 +118,7 @@ public class PostController {
     /**
      * 게시글 존재 여부 확인 엔드포인트 (Feign Client 호출용)
      */
+    @RoleGuard(min = "USER")
     @GetMapping("/{postId}/exists")
     public ResponseEntity<ApiResponse<Boolean>> exists(@PathVariable UUID postId) {
         boolean exists = postService.exists(postId);
@@ -120,12 +128,14 @@ public class PostController {
     /**
      * 게시글 댓글 수 증가 엔드포인트 (댓글 서비스 등에서 호출)
      */
+    @RoleGuard(min = "USER")
     @PostMapping("/{postId}/increment-comment")
     public ResponseEntity<ApiResponse<Void>> addCommentCount(@PathVariable UUID postId) {
         postService.addCommentCount(postId);
         return ResponseEntity.ok(ApiResponse.success("댓글 수 증가 성공", null));
     }
 
+    @RoleGuard(min = "USER")
     @PostMapping("/{postId}/decrement-comment")
     public ResponseEntity<ApiResponse<Void>> minusCommentCount(@PathVariable UUID postId) {
         postService.minusCommentCount(postId);
