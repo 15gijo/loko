@@ -24,7 +24,7 @@ spring:
             - Path=/api/v1/search/**  # /auth/signIn 경로로 들어오는 요청을 이 라우트로 처리
       discovery:
         locator:
-          enabled: true  # 서비스 디스커버리를 통해 동적으로 라우트를 생성하도록 설정
+          enabled: true  # 서비스 디스커버리를 통해 동적으로 라우트를 생성하도록 설정, 나중에 끄자
 
 #      mvc:
 #        form-filter:
@@ -34,13 +34,7 @@ spring:
 
 server:
   port: 19091
-  tomcat:
-    uri-encoding: UTF-8
-  servlet:
-    encoding:
-      charset: UTF-8
-      enabled: true
-      force: true
+
 
 eureka:
   client:
