@@ -40,6 +40,11 @@ public class UserRepositoryImpl implements UserRepository {
         return userJpaRepository.findEmailById(userId);
     }
 
+    @Override
+    public void updateCreatedBy(Long id) {
+        userJpaRepository.updateCreatedById(id);
+    }
+
     //내부 통신
     @Override
     public Optional<UserEntity> findByEmail(String identifier) {

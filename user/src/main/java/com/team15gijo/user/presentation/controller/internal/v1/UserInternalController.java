@@ -48,7 +48,7 @@ public class UserInternalController {
 
     //post -> user
     //유저 조건 전체 폐이징 조회
-    @GetMapping("/api/v1/users/search")
+    @GetMapping("/post/search")
     public ApiResponse<Page<UserSearchResponseDto>> searchUsers(@RequestParam String keyword) {
         return null;
     }

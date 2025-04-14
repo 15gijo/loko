@@ -18,4 +18,6 @@ public interface UserRepository {
     Optional<UserEntity> findById(Long userId);
 
     Optional<String> findEmailById(Long userId);
+
+    void updateCreatedBy(Long id);
 }
