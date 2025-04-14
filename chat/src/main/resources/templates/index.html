@@ -80,6 +80,7 @@
                   alert("서버 응답이 비어있어 이전 메시지 불러오기 실패했습니다.");
                 }
               })
+              // TODO: 이전 메시지 내역이 없는 경우는 error alert 표시안되게 처리!
               .catch(error => {
                 console.error("MongoDB 메시지 조회 실패: " + error);
                 alert("MongoDB 메시지 조회 실패로 이전 메시지 불러오기 실패했습니다.");

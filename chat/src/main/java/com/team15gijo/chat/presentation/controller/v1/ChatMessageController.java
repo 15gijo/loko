@@ -26,6 +26,7 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -110,6 +111,23 @@ public class ChatMessageController {
             message = chatRoomId + " 채팅방 및 참여자 모두가 삭제되었습니다.";
         } else {
             message = userId + "의 " + chatRoomId + " 채팅방이 비활성화 되었습니다.";
+        }
+        return ResponseEntity.ok(ApiResponse.success(message, result));
+    }
+
+    /**
+     * TODO: 채팅 메시지 삭제 테스트 이후 삭제 예정
+     */
+    @DeleteMapping("/message/{chatRoomId}")
+    public ResponseEntity<ApiResponse<Boolean>> deleteChatMessage(
+        @PathVariable("chatRoomId") UUID chatRoomId,
+        @RequestHeader("X-User-Id") Long userId) {
+        log.info("chatRoomId ={}", chatRoomId);
+        Boolean result = chatMessageService.deleteChatMessage(chatRoomId, userId);
+
+        String message = "";
+        if(result) {
+            message = chatRoomId + " 채팅방의 메시지가 모두 삭제되었습니다.";
         }
         return ResponseEntity.ok(ApiResponse.success(message, result));
     }

@@ -80,7 +80,7 @@ public class ChatMessageService {
         //TODO: User feign client 유효성 검사 구현 후, 연결 확인
         // 채팅방 생성 시, 상대방 계정 조회(nickname 으로 존재유무 판단)
         // 상대방과 본인 userId를 모두 추출하여 채팅방 참여자 생성하기!
-        String receiverNickname = requestDto.getReceiverNickname();
+//        String receiverNickname = requestDto.getReceiverNickname();
 //        Long getUserIdByNickname = feignClientService.fetchUserIdByNickname(receiverNickname);
 //        if(getUserIdByNickname == null) {
 //            throw new CustomException(USER_NICK_NAME_NOT_EXIST);
@@ -96,7 +96,7 @@ public class ChatMessageService {
         Set<ChatRoomParticipant> participantsSet = new HashSet<>();
         participantsSet.add(addParticipants);
 
-//        // 초대받은 참여자의 채팅방 참여자 생성 및 저장
+        // 초대받은 참여자의 채팅방 참여자 생성 및 저장
 //        ChatRoomParticipant invitedParticipant = ChatRoomParticipant.builder()
 //            .userId(getUserIdByNickname)
 //            .activation(Boolean.TRUE)
@@ -255,6 +255,40 @@ public class ChatMessageService {
     }
 
     /**
+     * TODO: 채팅 메시지 삭제 테스트 이후 삭제 예정
+     */
+    public Boolean deleteChatMessage(UUID chatRoomId, Long userId) {
+        log.info("[deleteChatMessage] chatRoomId = {}", chatRoomId);
+        log.info("[deleteChatMessage] userId = {}", userId);
+
+        ChatRoom findChatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
+            .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
+
+        List<Long> userIdForParticipants = findChatRoom.getChatRoomParticipants().stream()
+            .map(ChatRoomParticipant::getUserId)
+            .toList();
+
+        for(Long participantId : userIdForParticipants) {
+            checkRoomIdAndUserId(chatRoomId, participantId);
+
+            // 채팅방의 메시지 조회
+            List<ChatMessageDocument> chatMessages = chatMessageRepository.findByChatRoomIdAndSenderId(chatRoomId, participantId);
+
+            if(chatMessages.isEmpty()) {
+                log.error("채팅방에 해당하는 메시지 내역이 존재하지 않습니다.");
+                throw new CustomException(MESSAGE_NOT_FOUND_FOR_CHAT_ROOM);
+            }
+
+            // 메시지 소프트 삭제
+            chatMessages.forEach(chatMessage -> {
+                chatMessage.softDelete(userId);
+                chatMessageRepository.save(chatMessage);
+            });
+        }
+        return true;
+    }
+
+    /**
      * 소켓 연결 시 사용되는
      * 채팅방 ID 유효성 검증
      */
@@ -311,26 +345,18 @@ public class ChatMessageService {
     @Transactional(readOnly = true)
     public Page<ChatMessageDocument> getMessagesByChatRoomId(UUID chatRoomId, Long senderId, Pageable pageable) {
         checkRoomIdAndUserId(chatRoomId, senderId);
-        /*
-          chatRoomId가 UUID 타입으로 mongoDB 에서 바이너리 형태로 저장되어
-          쿼리에서 바이너리 데이터를 직접 비교하고 인덱싱, 조회가 제대로 되지 않음
-          고유 id 값을 추출하여 데이터 조회
-         */
-        List<String> idList = chatMessageRepository.findAll().stream()
-            .filter(chatMessage -> chatMessage.getChatRoomId().equals(chatRoomId))
-            .map(ChatMessageDocument::get_id)
-            .toList();
-        log.info("idList {}", idList);
 
-        if(idList.isEmpty()) {
-            log.error("채팅방에 해당하는 메시지 내역이 존재하지 않습니다.");
-            throw new CustomException(MESSAGE_NOT_FOUND_FOR_CHAT_ROOM);
-        }
-
-        Query query = Query.query(Criteria.where("_id").in(idList))
-            .with(pageable);
+        // 삭제되지 않은 메시지만 조회
+        Query query = Query.query(
+            Criteria.where("chatRoomId").is(chatRoomId)
+                .and("deletedAt").is(null)
+        ).with(pageable);
 
         long total = mongoTemplate.count(query, ChatMessageDocument.class);
+        if(total == 0) {
+            log.error("채팅방에 해당하는 메시지 내역이 존재하지 않습니다.");
+        }
+
         List<ChatMessageDocument> messageDocumentList = mongoTemplate.find(query, ChatMessageDocument.class);
 
         return new PageImpl<>(messageDocumentList, pageable, total);
