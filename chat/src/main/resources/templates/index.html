@@ -13,6 +13,9 @@
       chatRoomId = document.getElementById('chatRoomId').value;
       senderId = parseInt(document.getElementById('senderId').value);
 
+      // TODO: 인증 헤더에서 닉네임 추출
+      const nickname = getNicknameFromHeader(); // 닉네임 추출 함수 호출
+
       // 채팅방 ID 유효성 검증 API 호출
       fetch(`/api/v1/chats/validate/${chatRoomId}`)
         .then(response => response.json())
@@ -100,6 +103,11 @@
         console.error("API 호출 실패: " + error);
         alert('채팅방의 사용자 ID 유효성 검증 실패. 서버 오류를 확인해주세요.');
       });
+    }
+
+    // TODO: 인증 헤더에서 닉네임 추출 함수
+    function getNicknameFromHeader() {
+      // X-User-Nickname 헤더 값 추출
     }
 
     function disconnect() {
