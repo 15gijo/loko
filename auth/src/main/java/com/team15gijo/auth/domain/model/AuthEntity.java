@@ -1,7 +1,6 @@
 package com.team15gijo.auth.domain.model;
 
 import com.team15gijo.common.model.base.BaseEntity;
-import com.team15gijo.common.model.role.UserRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -30,6 +29,9 @@ public class AuthEntity extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "auth_id", nullable = false, updatable = false)
     private UUID id;
+
+    @Column(name = "user_id")
+    private Long userId;
 
     @Column(name = "nickname", nullable = false, updatable = false)
     private String nickname;
