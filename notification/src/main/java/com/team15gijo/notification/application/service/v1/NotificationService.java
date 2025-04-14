@@ -5,8 +5,10 @@ import com.team15gijo.notification.application.dto.v1.NotificationResponseDto;
 import com.team15gijo.notification.domain.exception.NotificationDomainExceptionCode;
 import com.team15gijo.notification.domain.model.Notification;
 import com.team15gijo.notification.domain.repository.NotificationRepository;
+import com.team15gijo.notification.infrastructure.client.FeignClientService;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,9 +21,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final FeignClientService feignClientService;
 
     @Transactional(readOnly = true)
-    public List<NotificationResponseDto> getUnreadNotifications(Long userId) {
+    public List<NotificationResponseDto> getUnreadNotifications(Long userId, String nickname) {
+        // 사용자 확인
+        Long nicknameUserId = feignClientService.getUserIdByNickname(nickname);
+        log.info("nicknameUserId : {},  userId : {}", nicknameUserId, userId);
+        if (!Objects.equals(userId, nicknameUserId)) {
+            throw new CustomException(NotificationDomainExceptionCode.INVALID_USER);
+        }
+
         try {
             List<Notification> notifications = notificationRepository.findByReceiverAndIsCheckedFalse(userId);
 
@@ -41,7 +51,12 @@ public class NotificationService {
     }
 
     @Transactional
-    public void updateIsChecked(UUID notificationId, Long userId) {
+    public void updateIsChecked(UUID notificationId, Long userId, String nickname) {
+        // 사용자 확인
+        Long nicknameUserId = feignClientService.getUserIdByNickname(nickname);
+        if (!Objects.equals(userId, nicknameUserId)) {
+            throw new CustomException(NotificationDomainExceptionCode.INVALID_USER);
+        }
         Notification notification = notificationRepository.findByNotificationIdAndReceiver(notificationId, userId)
                 .orElseThrow(() -> new CustomException(NotificationDomainExceptionCode.NOT_EXIST));
         notification.updateIsChecked();

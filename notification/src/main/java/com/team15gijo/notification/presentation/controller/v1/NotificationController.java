@@ -1,5 +1,7 @@
 package com.team15gijo.notification.presentation.controller.v1;
 
+import com.team15gijo.common.annotation.RoleGuard;
+import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.common.exception.CustomException;
 import com.team15gijo.notification.application.dto.v1.NotificationResponseDto;
 import com.team15gijo.notification.application.service.v1.NotificationService;
@@ -33,31 +35,28 @@ public class NotificationController {
     /**
      *  미확인 알림 목록 조회
      */
+    @RoleGuard(min = "USER")
     @GetMapping
-    public ResponseEntity<List<NotificationResponseDto>> getUnreadNotifications(
+    public ResponseEntity<ApiResponse<List<NotificationResponseDto>>> getUnreadNotifications(
             @RequestHeader("X-User-Id") Long userId,
             @RequestHeader("X-User-Nickname") String encodedNickname) {
         log.info("미확인 알림 조회 요청 userId : {}", userId);
         String nickname = URLDecoder.decode(encodedNickname, StandardCharsets.UTF_8);
-        if (userId == null) {
-            throw new CustomException(NotificationDomainExceptionCode.INVALID_USER);
-        }
-        return ResponseEntity.ok(notificationService.getUnreadNotifications(userId));
+        return ResponseEntity.ok(ApiResponse.success("미확인 알림 조회 성공", notificationService.getUnreadNotifications(userId, nickname)));
     }
 
 
     /**
      *   알림 읽음 처리
      */
+    @RoleGuard(min = "USER")
     @PatchMapping ("/{notificationId}/read")
-    public void updateIsChecked(@PathVariable UUID notificationId,
+    public ResponseEntity<ApiResponse<String>> updateIsChecked(@PathVariable UUID notificationId,
             @RequestHeader("X-User-Id") Long userId,
             @RequestHeader("X-User-Nickname") String encodedNickname) {
         log.info("알림 읽음 처리 요청 userId : {}", userId);
         String nickname = URLDecoder.decode(encodedNickname, StandardCharsets.UTF_8);
-        if (userId == null) {
-            throw new CustomException(NotificationDomainExceptionCode.INVALID_USER);
-        }
-        notificationService.updateIsChecked(notificationId, userId);
+        notificationService.updateIsChecked(notificationId, userId, nickname);
+        return ResponseEntity.ok(ApiResponse.success("알림 읽음 처리 성공"));
     }
 }
