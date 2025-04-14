@@ -71,4 +71,19 @@ public class FeedController {
         ApiResponse<PostFeedPageResponseDto> response = feedService.getPopularFeedsByRegion(cursor, pageSize, decodedRegion);
         return ResponseEntity.ok().body(response);
     }
+
+    /**
+     * 지역 기반 인기순 피드 조회 - 캐싱
+     */
+    @RoleGuard(min = "USER")
+    @GetMapping("/popular/cache")
+    public ResponseEntity<ApiResponse<PostFeedPageResponseDto>> getPopularFeedCache(
+            @RequestParam(required = false) Double cursor,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestHeader("X-User-Region") String region
+    ) throws JsonProcessingException {
+        String decodedRegion = URLDecoder.decode(region, StandardCharsets.UTF_8);
+        ApiResponse<PostFeedPageResponseDto> response = feedService.getPopularCachedFeedsByRegion(cursor, pageSize, decodedRegion);
+        return ResponseEntity.ok().body(response);
+    }
 }
