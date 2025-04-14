@@ -16,6 +16,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(roleGuardInterceptor)
+            .addPathPatterns("/api/v1/chats/**")
                 .addPathPatterns("/api/v1/users/**");
     }
 }

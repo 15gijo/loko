@@ -69,11 +69,11 @@ public class ChatMessageService {
      */
     public ChatRoomResponseDto createChatRoom(
         ChatRoomRequestDto requestDto,
-        Long userId,
-        String nickname
+        Long userId
     ) {
         log.info("userId = {}", userId);
-        log.info("nickname = {}", nickname);
+
+        // TODO: user에서 userId가 존재하는지 검증
 
         /* 채팅방 생성 시, 상대방 계정 조회(nickname 으로 존재유무 판단)
          * 상대방과 본인 userId를 모두 추출하여 채팅방 참여자 생성
@@ -238,7 +238,10 @@ public class ChatMessageService {
      * 채팅방 ID에 해당하는 senderId(userId) 유효성 검증
      */
     @Transactional(readOnly = true)
-    public Map<String, Boolean> validateSenderId(UUID chatRoomId, Long senderId) {
+    public Map<String, Boolean> validateSenderId(
+        UUID chatRoomId,
+        Long senderId
+    ) {
         ChatRoom chatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
             .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
 
@@ -274,6 +277,7 @@ public class ChatMessageService {
      */
     @Transactional(readOnly = true)
     public Page<ChatMessageDocument> getMessagesByChatRoomId(UUID chatRoomId, Long senderId, Pageable pageable) {
+        // 채팅방 id 및 userId 유효성 검증
         checkRoomIdAndUserId(chatRoomId, senderId);
 
         // 삭제되지 않은 메시지만 조회
@@ -298,6 +302,7 @@ public class ChatMessageService {
      */
     @Transactional(readOnly = true)
     public ChatMessageResponseDto getMessageById(UUID chatRoomId, String id, Long userId) {
+        // 채팅방 id 및 userId 유효성 검증
         checkRoomIdAndUserId(chatRoomId, userId);
 
         Query query = Query.query(Criteria.where("_id").is(id));
@@ -371,7 +376,7 @@ public class ChatMessageService {
         ChatMessageDocument chatMessage = ChatMessageDocument.builder()
             .senderId(requestDto.getSenderId())
             // TODO: 인증 헤더로 전달된 nickname 사용
-//            .senderNickname("닉네임1")
+//            .senderNickname(nickname)
             .chatRoomId(requestDto.getChatRoomId())
             .connectionType(ConnectionType.CHAT)
             .chatMessageType(ChatMessageType.TEXT)
