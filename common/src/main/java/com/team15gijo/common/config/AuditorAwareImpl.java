@@ -22,7 +22,9 @@ public class AuditorAwareImpl implements AuditorAware<Long> {
         try {
             RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
             if (!(requestAttributes instanceof ServletRequestAttributes)) {
-                throw new CustomException(CommonExceptionCode.AUDITOR_NON_MVC_REQUEST);
+//                throw new CustomException(CommonExceptionCode.AUDITOR_NON_MVC_REQUEST);
+                log.warn("🟡 AuditorAware: 비동기 컨텍스트 감지, Optional.empty 반환");
+                return Optional.empty(); // ⭐ Kafka나 Scheduler에서 호출될 경우
             }
 
             ServletRequestAttributes servletRequestAttributes = (ServletRequestAttributes) requestAttributes;
