@@ -46,8 +46,9 @@ public class PostControllerV2 {
 
         // URL 디코딩하여 원래의 한글 문자열로 복원
         String decodedRegion = URLDecoder.decode(region, StandardCharsets.UTF_8);
+        String decodedUsername = URLDecoder.decode(username, StandardCharsets.UTF_8);
 
-        Post created = postService.createPost(userId, username, region, request);
+        Post created = postService.createPost(userId, decodedUsername, decodedRegion, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("신규 게시글 등록 성공", PostResponseDtoV2.from(created)));
     }

@@ -1,6 +1,7 @@
 package com.team15gijo.feed.presentation.controller.v1;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.team15gijo.common.annotation.RoleGuard;
 import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.feed.application.service.v1.FeedDeprecatedService;
 import com.team15gijo.feed.presentation.dto.v1.PostFeedPageResponseDto;
@@ -25,6 +26,7 @@ public class FeedDeprecatedController {
      * 지역 기반 최신순 피드 조회 - 기본
      * GET /api/v1/feeds/recent/base?cursor=2024-04-07T10:00:00Z&pageSize=10
      */
+    @RoleGuard(min = "USER")
     @GetMapping("/recent/base")
     public ResponseEntity<ApiResponse<PostFeedPageResponseDto>> getRecentFeedBase(
             @RequestParam(required = false)
@@ -39,6 +41,7 @@ public class FeedDeprecatedController {
     /**
      * 지역 기반 최신순 피드 조회 - 캐싱 설정
      */
+    @RoleGuard(min = "USER")
     @GetMapping("/recent/cache")
     public ResponseEntity<ApiResponse<PostFeedPageResponseDto>> getRecentFeedCache(
             @RequestParam(required = false)

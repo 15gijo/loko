@@ -1,6 +1,6 @@
 package com.team15gijo.feed.domain.model;
 
-import com.team15gijo.common.base.BaseEntity;
+import com.team15gijo.common.model.base.BaseEntity;
 import com.team15gijo.feed.infrastructure.converter.StringListConverter;
 import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostUpdatedEventDto;
 import jakarta.persistence.Column;
