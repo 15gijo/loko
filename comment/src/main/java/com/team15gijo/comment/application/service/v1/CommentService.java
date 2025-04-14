@@ -12,7 +12,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.util.UUID;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +23,6 @@ public class CommentService {
     /**
      * 댓글 생성: 게시글 존재 여부를 검증한 후 댓글 생성 및 게시글의 댓글 수 증가 호출
      */
-    @Transactional
     public Comment createComment(long userId, String username, UUID postId, CommentRequestDto request) {
         // Feign Client 호출로 게시글 존재 여부 확인
         ApiResponse<Boolean> existsResponse = postClient.exists(postId);
@@ -51,7 +49,6 @@ public class CommentService {
     /**
      * 댓글 수정 (내용 업데이트) - 현재 로그인한 사용자(userId)가 댓글 소유자인지 확인
      */
-    @Transactional
     public Comment updateComment(UUID commentId, CommentRequestDto request, long userId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CommentDomainException(CommentDomainExceptionCode.COMMENT_NOT_FOUND));
@@ -67,7 +64,6 @@ public class CommentService {
     /**
      * 댓글 삭제 - 현재 로그인한 사용자(userId)가 댓글 소유자인지 확인
      */
-    @Transactional
     public void deleteComment(UUID commentId, long userId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CommentDomainException(CommentDomainExceptionCode.COMMENT_NOT_FOUND));
