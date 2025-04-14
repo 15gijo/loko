@@ -6,5 +6,7 @@ public enum EventType {
     POST_DELETED,
     POST_VIEWED,
     POST_LIKED, //추가 예정
-    POST_UNLIKED //추가 예정
+    POST_UNLIKED, //추가 예정
+    COMMENT_CREATED,
+    COMMENT_DELETED
 }

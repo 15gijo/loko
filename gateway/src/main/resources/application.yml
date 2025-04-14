@@ -9,7 +9,7 @@ spring:
         - id: post-service  # 라우트 식별자
           uri: lb://post-service  # 'post-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
           predicates:
-            - Path=/api/v1/posts/**  # /posts/** 경로로 들어오는 요청을 이 라우트로 처리
+            - Path=/api/v1/posts/**, /api/v2/posts/**  # /posts/** 경로로 들어오는 요청을 이 라우트로 처리
         - id: comment-service  # 라우트 식별자
           uri: lb://comment-service  # 'comment-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
           predicates:
@@ -26,6 +26,10 @@ spring:
           uri: lb://search-service  # 'auth-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
           predicates:
             - Path=/api/v1/search/**  # /auth/signIn 경로로 들어오는 요청을 이 라우트로 처리
+        - id: feed-service
+          uri: lb://feed-service
+          predicates:
+            - Path=/api/v1/feeds/**
       discovery:
         locator:
           enabled: true  # 서비스 디스커버리를 통해 동적으로 라우트를 생성하도록 설정, 나중에 끄자
