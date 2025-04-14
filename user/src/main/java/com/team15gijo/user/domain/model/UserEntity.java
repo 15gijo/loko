@@ -1,6 +1,6 @@
 package com.team15gijo.user.domain.model;
 
-import com.team15gijo.common.base.BaseEntity;
+import com.team15gijo.common.model.base.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

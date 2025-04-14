@@ -29,9 +29,27 @@ public class UserRepositoryImpl implements UserRepository {
         return userJpaRepository.save(createdUser);
     }
 
+    @Override
+    public Optional<UserEntity> findById(Long userId) {
+        return userJpaRepository.findById(userId);
+    }
+
+    //내부 통신
+    @Override
+    public Optional<String> findEmailById(Long userId) {
+        return userJpaRepository.findEmailById(userId);
+    }
+
     //내부 통신
     @Override
     public Optional<UserEntity> findByEmail(String identifier) {
         return userJpaRepository.findByEmail(identifier);
     }
+
+    //내부 통신
+    @Override
+    public Optional<Long> findIdByNickName(String nickname) {
+        return userJpaRepository.findIdByNickName(nickname);
+    }
+
 }
