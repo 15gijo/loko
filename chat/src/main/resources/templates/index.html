@@ -49,9 +49,9 @@
               console.log('소켓 Connected: ' + frame);
 
               // connect 엔드포인트로 메시지 전송하여 Redis 저장
-              stompClient.send("/app/chat/connect/" + chatRoomId + "/" + senderId, {}, JSON.stringify({
-                "message" : senderId + "님이 입장하였습니다."
-              }));
+              stompClient.send("/app/chat/connect/" + chatRoomId + "/" + senderId, {},
+                senderId + "님이 입장하였습니다."
+              );
 
               // connect 에서 오류 메시지 구독
               stompClient.subscribe('/topic/chat/errors/' + senderId, function (message) {
@@ -63,26 +63,31 @@
 
               // 처음 채팅방 입장 메시지 구독
               stompClient.subscribe('/topic/chat/enter/' + chatRoomId, function (message) {
-                showEnterMessage((JSON.parse(message.body)));
+                showMessage(JSON.parse(message.body));
               });
 
-              // TODO: 재접속 시 MongoDB 메시지 조회 API 호출
-              // -> postman 정상 작성하나, fetch PageImpl JSON 직렬화 불가로 불러오기 실패
-              fetch(`/api/v1/chats/messages/${chatRoomId}`)
+              // 재접속 시 MongoDB 메시지 조회 API 호출
+              // fetch PageImpl JSON 응답
+              fetch(`/api/v1/chats/message/${chatRoomId}`)
               .then(response => response.json())
               .then(messages => {
-                messages.forEach(message => {
-                  showMessage(JSON.parse(message.body));
-                });
+                if(messages) {
+                  messages.content.forEach(message => {
+                    showMessage(message);
+                  });
+                } else {
+                  console.error("서버 응답 값이 없습니다.");
+                  alert("서버 응답이 비어있어 이전 메시지 불러오기 실패했습니다.");
+                }
               })
               .catch(error => {
                 console.error("MongoDB 메시지 조회 실패: " + error);
-                alert("이전 메시지 불러오기 실패했습니다.");
+                alert("MongoDB 메시지 조회 실패로 이전 메시지 불러오기 실패했습니다.");
               });
 
               // 실시간 채팅 메시지 전송 구독
               stompClient.subscribe('/topic/chat/' + chatRoomId, function (message) {
-                showMessage(message.body);
+                showMessage((JSON.parse(message.body)));
               });
             }, function (error) {
               console.error("소켓 Connection error: ", error);
@@ -119,6 +124,7 @@
       }
     }
 
+    // 메시지 전송 함수
     function sendMessage() {
       // 웹소켓 연결 시에만 메시지 전송 가능
       if(isConnected) {
@@ -127,7 +133,7 @@
         stompClient.send("/app/chat/" + chatRoomId, {}, JSON.stringify({ // messageMapping 경로 사용
           'chatRoomId': chatRoomId,
           'senderId': senderId,
-          'message': message
+          'messageContent': message
         }), {}, function (error) {
           console.error("메시지 전송 실패: " + error);
           alert("메시지 전송 실패: " + error.header.error);
@@ -138,18 +144,21 @@
       }
     }
 
-    function showEnterMessage(message) {
-      const messages = document.getElementById('messages');
-      const p = document.createElement('p');
-      p.textContent = message.message;
-      messages.appendChild(p);
-    }
-
+    // 메시지 표시
     function showMessage(message) {
       const messages = document.getElementById('messages');
       const p = document.createElement('p');
-      p.textContent = message.senderId + ': ' + message.message
-          + ' - ' + message.sentAt;
+      if(message.connectionType === "ENTER") {
+        // 첫 입장 메시지 형식
+        p.textContent = message.messageContent;
+      } else if(message.connectionType === "CHAT") {
+        // 채팅 메시지 형식
+        p.textContent = message.senderId + ': ' + message.messageContent
+            + ' - ' + message.sentAt;
+      } else {
+        // TODO: 퇴장 시 메시지 처리 예정
+        p.textContent = message.messageContent;
+      }
       messages.appendChild(p);
     }
   </script>
@@ -157,7 +166,7 @@
 <body>
 <div>
   <label>Chatroom ID:</label>
-  <input type="text" id="chatRoomId" value="1f46fcd1-e676-402e-8703-2183be76b021" />
+  <input type="text" id="chatRoomId" value="e8685f8b-0c31-4ac7-8a95-fc3a8c6d0c9c" />
 </div>
 <div>
   <label>SenderId:</label>

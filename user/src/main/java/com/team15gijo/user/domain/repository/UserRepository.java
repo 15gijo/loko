@@ -12,4 +12,10 @@ public interface UserRepository {
     UserEntity save(UserEntity createdUser);
 
     Optional<UserEntity> findByEmail(String identifier);
+
+    Optional<Long> findIdByNickName(String nickname);
+
+    Optional<UserEntity> findById(Long userId);
+
+    Optional<String> findEmailById(Long userId);
 }
