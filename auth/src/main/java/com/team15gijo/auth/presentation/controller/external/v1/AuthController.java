@@ -1,4 +1,4 @@
-package com.team15gijo.auth.presentation.controller.v1;
+package com.team15gijo.auth.presentation.controller.external.v1;
 
 import com.team15gijo.auth.application.service.AuthApplicationService;
 import com.team15gijo.auth.presentation.dto.v1.AssignAdminRequestDto;
