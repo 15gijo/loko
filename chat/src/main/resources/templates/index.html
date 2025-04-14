@@ -64,11 +64,6 @@
                 stompClient.disconnect();
               });
 
-              // 처음 채팅방 입장 메시지 구독
-              stompClient.subscribe('/topic/chat/enter/' + chatRoomId, function (message) {
-                showMessage(JSON.parse(message.body));
-              });
-
               // 재접속 시 MongoDB 메시지 조회 API 호출
               // fetch PageImpl JSON 응답
               fetch(`/api/v1/chats/message/page/${chatRoomId}/${senderId}`)
@@ -92,6 +87,11 @@
               // 실시간 채팅 메시지 전송 구독
               stompClient.subscribe('/topic/chat/' + chatRoomId, function (message) {
                 showMessage((JSON.parse(message.body)));
+              });
+
+              // 처음 채팅방 입장 메시지 구독
+              stompClient.subscribe('/topic/chat/enter/' + chatRoomId, function (message) {
+                showMessage(JSON.parse(message.body));
               });
             }, function (error) {
               console.error("소켓 Connection error: ", error);

@@ -206,8 +206,8 @@ public class ChatMessageService {
         // 모든 채팅방 참여자가 비활성화 상태면 채팅방 및 참여자 소프트삭제 처리
         if(allParticipantsNonactive) {
             log.info("[exitChatRoom] 모든 채팅방 참여자 비활성화 상태");
-            chatRoomRepository.delete(chatRoom);
             chatRoomParticipantRepository.deleteAll(chatRoomParticipants);
+            chatRoomRepository.delete(chatRoom);
 
             // 채팅방 모든 참여자 userId 메시지 소프트 삭제 메소드
             deleteChatMessageForChatRoomId(chatRoomId, userId);
@@ -362,8 +362,15 @@ public class ChatMessageService {
                 log.info("[Redis 캐싱] cacheKey={} 과 value={} 저장", cacheKey, value);
 
                 // mongoDB에서 userId와 chatRoomId에 대한 메시지 유무로 처음인지 판단하고 입장 메시지 전송
-                List<ChatMessageDocument> messageDocumentList = chatMessageRepository.findByChatRoomIdAndSenderId(chatRoomId, senderId);
-                if(messageDocumentList.isEmpty()) {
+                Query query = Query.query(
+                    Criteria.where("chatRoomId").is(chatRoomId)
+                        .and("senderId").is(senderId)
+                        .and("deletedAt").is(null));
+
+                long messageCount = mongoTemplate.count(query, ChatMessageDocument.class);
+                log.info(">> messageCount={}", messageCount);
+
+                if(messageCount == 0) {
                     // chatRoomId에서 senderId가 보낸 메시지가 없는 경우, mongoDB 메시지 저장
                     ChatMessageDocument firstMessage = ChatMessageDocument.builder()
                         .chatRoomId(chatRoomId)
@@ -373,10 +380,14 @@ public class ChatMessageService {
                         .messageContent(message)
                         .sentAt(LocalDateTime.now())
                         .build();
-                    chatMessageRepository.save(firstMessage);
-
-                    // 처음 채팅방 접속으로 입장 메시지 전송
-                    messagingTemplate.convertAndSend("/topic/chat/enter/" + chatRoomId, firstMessage);
+                    try {
+                        // 처음 채팅방 접속으로 입장 메시지 전송
+                        ChatMessageDocument savedMessage = chatMessageRepository.save(firstMessage);
+                        log.info("[mongoDB 저장 성공] message={}", savedMessage.toString());
+                        messagingTemplate.convertAndSend("/topic/chat/enter/" + chatRoomId, savedMessage);
+                    } catch (Exception e) {
+                        log.error("[mongoDB 저장 실패] message={}", firstMessage, e);
+                    }
                 }
             }
         }
@@ -386,6 +397,7 @@ public class ChatMessageService {
      * stomp 메시지 브로커를 통한 메시지 전송
      */
     public ChatMessageResponseDto sendMessage(ChatMessageRequestDto requestDto) {
+        log.info("sendMessage requestDto={}", requestDto);
         // 메시지 저장 및 전달
         ChatMessageDocument chatMessage = ChatMessageDocument.builder()
             .senderId(requestDto.getSenderId())
@@ -398,6 +410,7 @@ public class ChatMessageService {
             .sentAt(LocalDateTime.now())
             .build();
         chatMessageRepository.save(chatMessage);
+        log.info("chatMessageContent={}", chatMessage.getMessageContent());
 
         return chatMessage.toResponse();
     }
@@ -422,7 +435,12 @@ public class ChatMessageService {
         log.info(">> 메시지 소프트 삭제 시작");
 
         // 채팅방의 모든 메시지 조회
-        List<ChatMessageDocument> chatMessages = chatMessageRepository.findByChatRoomId(chatRoomId);
+        Query query = Query.query(
+            Criteria.where("chatRoomId").is(chatRoomId)
+                .and("deletedAt").is(null));
+
+
+        List<ChatMessageDocument> chatMessages = mongoTemplate.find(query, ChatMessageDocument.class);
         log.info("chatMessages.size() = {}", chatMessages.size());
 
         if (chatMessages.isEmpty()) {

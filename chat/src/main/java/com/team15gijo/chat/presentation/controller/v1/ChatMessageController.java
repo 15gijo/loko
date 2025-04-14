@@ -25,7 +25,6 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -107,7 +106,6 @@ public class ChatMessageController {
      */
     @RoleGuard(min = "USER")
     @PatchMapping("/rooms/{chatRoomId}")
-    @ResponseBody
     public ResponseEntity<ApiResponse<Boolean>> exitChatRoom(
         @PathVariable("chatRoomId") UUID chatRoomId,
         @RequestHeader("X-User-Id") Long userId) {
