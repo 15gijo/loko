@@ -15,9 +15,9 @@ public enum Role {
     }
 
     public static Role fromRoleName(String roleName) {
-        for (Role roles : Role.values()) {
-            if (roles.roleName.equalsIgnoreCase(roleName)) {
-                return roles;
+        for (Role role : Role.values()) {
+            if (role.roleName.equalsIgnoreCase(roleName)) {
+                return role;
             }
         }
         throw new CustomException(AuthDomainExceptionCode.ROLE_TYPE_NOT_FOUND);

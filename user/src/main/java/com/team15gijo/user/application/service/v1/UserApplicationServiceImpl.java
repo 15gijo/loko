@@ -4,16 +4,21 @@ import com.team15gijo.common.exception.CustomException;
 import com.team15gijo.user.application.service.UserApplicationService;
 import com.team15gijo.user.domain.exception.UserDomainExceptionCode;
 import com.team15gijo.user.domain.model.UserEntity;
+import com.team15gijo.user.domain.model.UserStatus;
 import com.team15gijo.user.domain.repository.UserRepository;
 import com.team15gijo.user.domain.service.UserDomainService;
 import com.team15gijo.user.infrastructure.client.AuthServiceClient;
 import com.team15gijo.user.infrastructure.dto.UserFeignInfoResponseDto;
 import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpRequestDto;
 import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpResponseDto;
+import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
+import com.team15gijo.user.presentation.dto.v1.UserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserSignUpRequestDto;
 import com.team15gijo.user.presentation.dto.v1.UserSignUpResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,7 +48,8 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                         .loginTypeName("PASSWORD")
                         .build();
 
-        AuthSignUpResponseDto authSignUpResponseDto = authServiceClient.signUp(authSignUpRequsetDto);
+        AuthSignUpResponseDto authSignUpResponseDto = authServiceClient.signUp(
+                authSignUpRequsetDto);
 
         //유저 DB save
         UserEntity savedUser = userRepository.save(createdUser);
@@ -57,14 +63,54 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     }
 
     @Override
+    public AdminUserReadResponseDto getUserForAdmin(Long userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_NOT_FOUND));
+        return AdminUserReadResponseDto.from(user);
+    }
+
+    @Override
+    public Page<AdminUserReadResponseDto> searchUsersForAdmin(Long userId, String username,
+            String nickname, String email, UserStatus userStatus, String region,
+            Pageable pageable) {
+        return null;
+    }
+
+    @Override
+    public UserReadResponseDto getUser(Long userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_NOT_FOUND));
+        return UserReadResponseDto.from(user);
+    }
+
+    @Override
+    public String getEmailByUserId(Long userId) {
+        String email = userRepository.findEmailById(userId)
+                .orElseThrow(
+                        () -> new CustomException(UserDomainExceptionCode.USER_EMAIL_NOT_FOUND));
+        return email;
+    }
+
+    //internal
+    @Override
     public UserFeignInfoResponseDto getUserInfo(String identifier) {
 
         UserEntity user = userRepository.findByEmail(identifier)
-                .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_EMAIL_NOT_FOUND));
+                .orElseThrow(
+                        () -> new CustomException(UserDomainExceptionCode.USER_NOT_FOUND));
         return new UserFeignInfoResponseDto(
                 user.getId(),
                 user.getNickName(),
                 user.getRegion()
         );
     }
+
+    //internal
+    @Override
+    public Long getUserIdByNickname(String nickname) {
+        Long userId = userRepository.findIdByNickName(nickname)
+                .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_ID_NOT_FOUND));
+        return userId;
+    }
+
 }

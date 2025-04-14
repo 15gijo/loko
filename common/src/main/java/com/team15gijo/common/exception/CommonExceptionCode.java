@@ -17,7 +17,8 @@ public enum CommonExceptionCode implements ExceptionCode {
     FORBIDDEN_ACCESS(HttpStatus.FORBIDDEN, "인가되지 않은 사용자입니다."), //토큰은 존재, 역할 문제
     REQUEST_TIMEOUT(HttpStatus.REQUEST_TIMEOUT, "요청 시간이 초과되었습니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "토큰이 만료되었습니다."),
-    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
+    ROLE_TYPE_NOT_FOUND(HttpStatus.NOT_FOUND, "유효 하지 않은 롤 입니다.");
 
     private final HttpStatus httpStatus;
     private final String message;
