@@ -18,7 +18,9 @@ public enum CommonExceptionCode implements ExceptionCode {
     REQUEST_TIMEOUT(HttpStatus.REQUEST_TIMEOUT, "요청 시간이 초과되었습니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "토큰이 만료되었습니다."),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
-    ROLE_TYPE_NOT_FOUND(HttpStatus.NOT_FOUND, "유효 하지 않은 롤 입니다.");
+    ROLE_TYPE_NOT_FOUND(HttpStatus.NOT_FOUND, "유효 하지 않은 롤 입니다."),
+    AUDITOR_NON_MVC_REQUEST(HttpStatus.UNAUTHORIZED, "디스패처서블릿 요청이 아닙니다."),
+    AUDITOR_HEADER_NOT_FOUND(HttpStatus.UNAUTHORIZED, "Auditor 헤더를 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String message;
