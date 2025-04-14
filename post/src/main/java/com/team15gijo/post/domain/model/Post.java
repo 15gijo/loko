@@ -1,6 +1,6 @@
 package com.team15gijo.post.domain.model;
 
-import com.team15gijo.common.base.BaseEntity;
+import com.team15gijo.common.model.base.BaseEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;
