@@ -11,6 +11,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChatRoomParticipantRequestDto {
-    private Long userId;
     private UUID chatRoomId;
 }

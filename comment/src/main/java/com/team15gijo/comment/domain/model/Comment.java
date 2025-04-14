@@ -1,6 +1,7 @@
 package com.team15gijo.comment.domain.model;
 
-import com.team15gijo.common.base.BaseEntity;
+
+import com.team15gijo.common.model.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;

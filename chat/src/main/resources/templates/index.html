@@ -68,7 +68,7 @@
 
               // 재접속 시 MongoDB 메시지 조회 API 호출
               // fetch PageImpl JSON 응답
-              fetch(`/api/v1/chats/message/${chatRoomId}`)
+              fetch(`/api/v1/chats/message/page/${chatRoomId}/${senderId}`)
               .then(response => response.json())
               .then(messages => {
                 if(messages) {
@@ -80,6 +80,7 @@
                   alert("서버 응답이 비어있어 이전 메시지 불러오기 실패했습니다.");
                 }
               })
+              // TODO: 이전 메시지 내역이 없는 경우는 error alert 표시안되게 처리!
               .catch(error => {
                 console.error("MongoDB 메시지 조회 실패: " + error);
                 alert("MongoDB 메시지 조회 실패로 이전 메시지 불러오기 실패했습니다.");
@@ -138,6 +139,8 @@
           console.error("메시지 전송 실패: " + error);
           alert("메시지 전송 실패: " + error.header.error);
         });
+        // 메시지 전송 후, 입력 필드 초기화
+        document.getElementById('message').value = '';
       } else {
         console.log("웹소켓 연결이 중단되어 메시지 전송이 불가");
         alert("웹소켓 연결이 중단되어 메시지 전송이 불가합니다. ");
