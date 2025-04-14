@@ -7,6 +7,7 @@ import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.MESSA
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.MESSAGE_NOT_FOUND_FOR_CHAT_ROOM;
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.USER_NICK_NAME_NOT_EXIST;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team15gijo.chat.application.dto.v1.ChatRoomResponseDto;
 import com.team15gijo.chat.domain.model.ChatMessageDocument;
 import com.team15gijo.chat.domain.model.ChatMessageType;
@@ -27,7 +28,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -58,7 +58,10 @@ public class ChatMessageService {
 
     private final FeignClientService feignClientService;
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    private static final String REDIS_KEY_SESSION_ID_PREFIX = "session-id:";
+
     private final SimpMessagingTemplate messagingTemplate;
     private final MongoTemplate mongoTemplate;
 
@@ -258,15 +261,23 @@ public class ChatMessageService {
     /**
      * 소켓 연결 중단 시, redis 삭제 호출
      * TODO: Redis 키를 SessionID로, value는 senderId, chatRoomId로 변경
+     * Redis 키를 SessionID로, value(senderId, chatRoomId)로 변경
      */
     @Transactional(readOnly = true)
-    public Boolean deleteRedisSenderId(Long senderId) {
-        if(redisTemplate.hasKey(String.valueOf(senderId))) {
-            log.info("소켓 연결 해지로 senderId {}의 Redis 캐시 삭제", senderId);
-            redisTemplate.delete(String.valueOf(senderId));
+    public Boolean deleteRedisSenderId(
+        String sessionId
+    ) {
+        log.info("sessionId = {}", sessionId);
+
+        String cacheKey = REDIS_KEY_SESSION_ID_PREFIX + sessionId;
+        log.info("cacheKey: {}", cacheKey);
+
+        if(redisTemplate.hasKey(cacheKey)) {
+            log.info("소켓 연결 해지로 cacheKey의 sessionId={}인 Redis 캐시 삭제", sessionId);
+            redisTemplate.delete(cacheKey);
             return true;
         } else {
-            log.info("senderId {}에 해당하는 Redis 캐시가 존재하지 않음", senderId);
+            log.info("senderId {}에 해당하는 Redis 캐시가 존재하지 않음", sessionId);
             return false;
         }
     }
@@ -320,7 +331,7 @@ public class ChatMessageService {
      * "/ws-stomp" 경로로 소켓 연결 시, 채팅방에 참여한 user가 Redis 캐시 조회하여 있는 경우 소켓 연결 중단
      * 서버 리셋 후, 다시 소켓 연결하면 재접속 가능
      * 웹 소켓 연결 시, redis senderId(key)-sessionId(value) 캐시 저장
-     * -> TODO: Redis 키를 SessionID로, value는 senderId, chatRoomId로 변경
+     * Redis 키를 SessionID로, value(senderId, chatRoomId)로 변경
      * 이전 메시지 조회로 채팅방에 처음 입장한 경우, 입장 메시지 전송
      */
     public void connectChatRoom(
@@ -333,19 +344,26 @@ public class ChatMessageService {
             // 세션 ID 가져오기
             String sessionId = headerAccessor.getSessionId();
             log.info("connectChatRoom sessionId: {}", sessionId);
+            String cacheKey = REDIS_KEY_SESSION_ID_PREFIX + sessionId;
+            log.info("cacheKey: {}", cacheKey);
 
-            // Redis에 senderId가 이미 존재하는지 확인
-            if(redisTemplate.hasKey(senderId.toString())) {
+            // Redis에 sessionId가 이미 존재하는지 확인
+            if(redisTemplate.hasKey(cacheKey)) {
                 // 이미 존재하는 경우, 중복 연결 차단 메시지 전송 및 senderId가 연결된 소켓 연결 중단
-                log.warn("senderId {} 가 이미 존재하여 중복 연결이 차단됨", senderId);
-                redisTemplate.delete(senderId.toString());
+                log.warn("sessionId {} 가 이미 존재하여 중복 연결이 차단됨", sessionId);
+                redisTemplate.delete(cacheKey);
                 messagingTemplate.convertAndSend("/topic/chat/errors/" + senderId,
                     "중복 로그인으로 인해 연결이 거부되었습니다. 해당 채팅방에 다시 접속해주세요.");
             } else {
-                // 존재하지 않은 경우, Redis에 key(senderId)와 value(sessionId) 저장
-                redisTemplate.opsForValue().set(String.valueOf(senderId),
-                    Objects.requireNonNull(sessionId), 1, TimeUnit.DAYS);
-                log.info("senderId {} 과 sessionId {} Redis 저장", senderId, sessionId);
+                // 존재하지 않은 경우, Redis에 senderId, chatRoomId 저장
+                Map<String, Object> value = new HashMap<>();
+                value.put("chatRoomId", chatRoomId);
+                value.put("senderId", senderId);
+
+                redisTemplate.opsForHash().putAll(cacheKey, value);
+                redisTemplate.expire(cacheKey, 1, TimeUnit.DAYS);
+
+                log.info("[REDIS_KEY_SESSION_ID_PREFIX Redis 캐싱] cacheKey={} 과 value={} 저장", cacheKey, value);
 
                 // mongoDB에서 userId와 chatRoomId에 대한 메시지 유무로 처음인지 판단하고 입장 메시지 전송
                 List<ChatMessageDocument> messageDocumentList = chatMessageRepository.findByChatRoomIdAndSenderId(chatRoomId, senderId);

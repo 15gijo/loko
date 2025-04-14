@@ -151,11 +151,13 @@ public class ChatMessageController {
      * 소켓 연결 중단 시, redis 삭제 API 호출
      * TODO: Redis 키를 SessionID로, value는 senderId, chatRoomId로 변경
      */
-    @GetMapping("/redis/delete/{senderId}")
+    @GetMapping("/redis/delete/{sessionId}")
     public ResponseEntity<ApiResponse<Boolean>> deleteRedisSenderId(
-        @PathVariable("senderId") Long senderId
+        @PathVariable("sessionId") String sessionId
     ) {
-        Boolean response = chatMessageService.deleteRedisSenderId(senderId);
+        log.info(">> sessionId {}", sessionId);
+
+        Boolean response = chatMessageService.deleteRedisSenderId(sessionId);
         return ResponseEntity.ok(ApiResponse.success("Redis 캐시 삭제 성공하였습니다.", response));
     }
 
@@ -197,6 +199,7 @@ public class ChatMessageController {
 
     /**
      * "/ws-stomp" 경로로 소켓 연결 시, 쿼리파라미터 senderId를 추출하여 Redis 캐시 저장
+     * Redis 키를 SessionID로, value(senderId, chatRoomId)로 변경
      * @param headerAccessor
      */
     @MessageMapping("/chat/connect/{chatRoomId}/{senderId}")
@@ -207,6 +210,8 @@ public class ChatMessageController {
         SimpMessageHeaderAccessor headerAccessor,
         String message
     ) {
+        log.info(">> headerAccessor {}", headerAccessor);
+        log.info(">> 채팅방 연결 message {}", message);
         chatMessageService.connectChatRoom(chatRoomId, senderId, headerAccessor, message);
     }
 
