@@ -5,6 +5,7 @@ import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.CHAT_
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.CHAT_ROOM_USER_ID_NOT_FOUND;
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.MESSAGE_ID_NOT_FOUND;
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.MESSAGE_NOT_FOUND_FOR_CHAT_ROOM;
+import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.USER_NICK_NAME_NOT_EXIST;
 
 import com.team15gijo.chat.application.dto.v1.ChatRoomResponseDto;
 import com.team15gijo.chat.domain.model.ChatMessageDocument;
@@ -19,8 +20,6 @@ import com.team15gijo.chat.domain.repository.ChatRoomRepository;
 import com.team15gijo.chat.infrastructure.client.v1.FeignClientService;
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageRequestDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageResponseDto;
-import com.team15gijo.chat.presentation.dto.v1.ChatRoomParticipantRequestDto;
-import com.team15gijo.chat.presentation.dto.v1.ChatRoomParticipantResponseDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatRoomRequestDto;
 import com.team15gijo.common.exception.CustomException;
 import java.time.LocalDateTime;
@@ -46,7 +45,6 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 @Slf4j
 @Service
@@ -77,14 +75,17 @@ public class ChatMessageService {
         log.info("userId = {}", userId);
         log.info("nickname = {}", nickname);
 
-        //TODO: User feign client 유효성 검사 구현 후, 연결 확인
-        // 채팅방 생성 시, 상대방 계정 조회(nickname 으로 존재유무 판단)
-        // 상대방과 본인 userId를 모두 추출하여 채팅방 참여자 생성하기!
-//        String receiverNickname = requestDto.getReceiverNickname();
-//        Long getUserIdByNickname = feignClientService.fetchUserIdByNickname(receiverNickname);
-//        if(getUserIdByNickname == null) {
-//            throw new CustomException(USER_NICK_NAME_NOT_EXIST);
-//        }
+        /* 채팅방 생성 시, 상대방 계정 조회(nickname 으로 존재유무 판단)
+         * 상대방과 본인 userId를 모두 추출하여 채팅방 참여자 생성
+         */
+        String receiverNickname = requestDto.getReceiverNickname();
+        log.info("receiverNickname = {}", receiverNickname);
+
+        Long getUserIdByNickname = feignClientService.fetchUserIdByNickname(receiverNickname);
+
+        if(getUserIdByNickname == null) {
+            throw new CustomException(USER_NICK_NAME_NOT_EXIST);
+        }
 
         // 채팅방 생성하는 당사자의 참여자 생성 및 저장
         ChatRoomParticipant addParticipants = ChatRoomParticipant.builder()
@@ -97,12 +98,12 @@ public class ChatMessageService {
         participantsSet.add(addParticipants);
 
         // 초대받은 참여자의 채팅방 참여자 생성 및 저장
-//        ChatRoomParticipant invitedParticipant = ChatRoomParticipant.builder()
-//            .userId(getUserIdByNickname)
-//            .activation(Boolean.TRUE)
-//            .build();
-//        chatRoomParticipantRepository.save(invitedParticipant);
-//        participantsSet.add(invitedParticipant);
+        ChatRoomParticipant invitedParticipant = ChatRoomParticipant.builder()
+            .userId(getUserIdByNickname)
+            .activation(Boolean.TRUE)
+            .build();
+        chatRoomParticipantRepository.save(invitedParticipant);
+        participantsSet.add(invitedParticipant);
 
         // 채팅방 생성 및 저장
         ChatRoom chatRoom = ChatRoom.builder()
@@ -214,44 +215,6 @@ public class ChatMessageService {
         } else {
             return false;
         }
-    }
-
-    /**
-     * 채팅방에 상대방 참여자 입장(접속) -> 채팅방 생성과 동시에 참여자 전원 채팅방참여자 생성 구현함
-     * 그러나, User feign client로 상대방 닉네임으로 userId 조회하여 참여자 등록 전까지
-     * TODO: 현재 참여자 등록으로 테스트 진행 예정 -> 최종 구현 이후 삭제 예정
-     * @param request(userId, chatRoomId)
-     * @return
-     */
-    public ChatRoomParticipantResponseDto addChatParticipant(
-        ChatRoomParticipantRequestDto request,
-        @RequestHeader("X-User-Id") Long userId,
-        @RequestHeader("X-User-Nickname") String nickname
-    ) {
-        log.info("userId = {}", userId);
-        log.info("nickname = {}", nickname);
-
-        ChatRoom findChatRoom = chatRoomRepository.findByChatRoomId(request.getChatRoomId())
-            .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
-
-        ChatRoomParticipant participant = ChatRoomParticipant.builder()
-            .userId(userId)
-            .activation(Boolean.TRUE)
-            .build();
-        ChatRoomParticipant savedParticipant = chatRoomParticipantRepository.save(participant);
-
-        Set<ChatRoomParticipant> participantSet = findChatRoom.getChatRoomParticipants();
-        participantSet.add(participant);
-
-        // 채팅방 생성 및 저장
-        ChatRoom chatRoom = ChatRoom.builder()
-            .chatRoomId(request.getChatRoomId())
-            .chatRoomType(findChatRoom.getChatRoomType())
-            .chatRoomParticipants(participantSet)
-            .build();
-        chatRoomRepository.save(chatRoom);
-
-        return savedParticipant.toResponse();
     }
 
     /**

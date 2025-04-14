@@ -1,11 +1,15 @@
 package com.team15gijo.chat.infrastructure.client.v1.user;
 
-import java.util.UUID;
+import com.team15gijo.chat.infrastructure.config.FeignConfig;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "user-service", url = "http://localhost:19092/api/v1/users")
+@FeignClient(name = "user-service"
+    , url = "http://localhost:19093/internal/api/v1/users"
+    , contextId = "userClient"
+    , configuration = FeignConfig.class
+)
 public interface UserClient {
 
     /**

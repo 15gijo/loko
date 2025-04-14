@@ -133,21 +133,6 @@ public class ChatMessageController {
     }
 
     /**
-     * 채팅방에 상대방 참여자 입장(접속)
-     * TODO: 채팅방 생성 및 메시지 전송 테스트용(feign client 연결되면 삭제 예정)
-     */
-    @PostMapping("/rooms/participants")
-    @ResponseBody
-    public ResponseEntity<ApiResponse<ChatRoomParticipantResponseDto>> addChatParticipant(
-        @RequestBody ChatRoomParticipantRequestDto request,
-        @RequestHeader("X-User-Id") Long userId,
-        @RequestHeader("X-User-Nickname") String nickname
-    ) {
-        ChatRoomParticipantResponseDto response = chatMessageService.addChatParticipant(request, userId, nickname);
-        return ResponseEntity.ok(ApiResponse.success("채팅방 참여자가 추가되었습니다.", response));
-    }
-
-    /**
      * 소켓 연결 시 사용되는 엔드포인트
      * 채팅방 ID 유효성 검증 API
      */
