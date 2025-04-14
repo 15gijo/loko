@@ -88,9 +88,14 @@ public class PostServiceV2 {
     /**
      * 게시글에 해시태그 추가
      */
-    public Post addHashtags(UUID postId, List<String> hashtags) {
+    public Post addHashtags(UUID postId, List<String> hashtags, long userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
+
+        if (post.getUserId() != userId) {
+            throw new PostDomainException(PostDomainExceptionCode.NOT_OWNER);
+        }
+
         for (String hashtagName : hashtags) {
             Hashtag hashtag = hashtagRepository.findByHashtagName(hashtagName)
                     .orElseGet(() -> {

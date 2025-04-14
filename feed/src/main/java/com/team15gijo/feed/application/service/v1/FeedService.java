@@ -33,10 +33,6 @@ public class FeedService {
      */
     public ApiResponse<PostFeedPageResponseDto> getRecentFeedsByRegion(LocalDateTime cursor, int pageSize, String region) {
 
-        // TODO: 요청한 유저의 지역 가져오기 (token or user-service 요청)
-//        String token = "";
-//        String region = getRegionFromToken(token); //임시 지역
-
         if (cursor == null) {
             cursor = LocalDateTime.now();
         }
@@ -56,9 +52,6 @@ public class FeedService {
      * 동일 지역 정보를 가진 피드 최신순 조회 (cache)
      */
     public ApiResponse<PostFeedPageResponseDto> getRecentCachedFeedByRegion(LocalDateTime cursor, int pageSize, String region) throws JsonProcessingException {
-        // TODO: 요청한 유저의 지역 가져오기 (token or user-service 요청)
-//        String token = "";
-//        String region = getRegionFromToken(token); //임시 지역
 
         log.info("getRecentFeedCache called, region: {}", region);
         if(cursor == null) { //최초 요청만 캐싱
@@ -88,9 +81,6 @@ public class FeedService {
     }
 
     public ApiResponse<PostFeedPageResponseDto> getPopularFeedsByRegion(Double cursor, int pageSize, String region) {
-        // TODO: 요청한 유저의 지역 가져오기 (token or user-service 요청)
-//        String token = "";
-//        String region = getRegionFromToken(token); //임시 지역
 
         if (cursor == null) {
             cursor = Double.MAX_VALUE;
@@ -99,18 +89,11 @@ public class FeedService {
         List<Feed> feeds = feedRepository
                 .findByRegionAndPopularityScoreBeforeOrderByPopularityScoreDesc(region, cursor, PageRequest.of(0, pageSize));
 
-        List<PostFeedResponseDto> postFeedResponsDtos = feeds.stream()
+        List<PostFeedResponseDto> postFeedResponseDtos = feeds.stream()
                 .map(PostFeedResponseDto::from)
                 .toList();
 
-        return ApiResponse.success("피드 조회 성공", PostFeedPageResponseDto.of(postFeedResponsDtos));
+        return ApiResponse.success("피드 조회 성공", PostFeedPageResponseDto.of(postFeedResponseDtos));
     }
-
-
-    private String getRegionFromToken(String token) {
-        // TODO: token 혹은 header에서 값 가져오기
-        return "송파구";
-    }
-
 
 }
