@@ -14,7 +14,7 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
     properties:
       org.hibernate:

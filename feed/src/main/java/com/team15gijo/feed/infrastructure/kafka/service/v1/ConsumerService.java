@@ -51,6 +51,10 @@ public class ConsumerService {
                 CommentCreatedEventDto dto = objectMapper.treeToValue(rootNode, CommentCreatedEventDto.class);
                 feedEventService.handlePostCommented(dto);
             }
+            case COMMENT_DELETED -> {
+                CommentDeletedEventDto dto = objectMapper.treeToValue(rootNode, CommentDeletedEventDto.class);
+                feedEventService.handlePostCommentDeleted(dto);
+            }
             default -> log.warn("Unknown event type: {}", type);
         }
     }

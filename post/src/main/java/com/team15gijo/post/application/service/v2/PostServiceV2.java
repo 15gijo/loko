@@ -88,9 +88,14 @@ public class PostServiceV2 {
     /**
      * 게시글에 해시태그 추가
      */
-    public Post addHashtags(UUID postId, List<String> hashtags) {
+    public Post addHashtags(UUID postId, List<String> hashtags, long userId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
+
+        if (post.getUserId() != userId) {
+            throw new PostDomainException(PostDomainExceptionCode.NOT_OWNER);
+        }
+
         for (String hashtagName : hashtags) {
             Hashtag hashtag = hashtagRepository.findByHashtagName(hashtagName)
                     .orElseGet(() -> {
@@ -124,6 +129,19 @@ public class PostServiceV2 {
         // 도메인 메서드를 통해 댓글 수 증가
         post.incrementCommentCount();
         postRepository.save(post);
+        // kafka 이벤트 발행
+        kafkaUtil.sendKafkaEvent(EventType.COMMENT_CREATED, post, FEED_EVENTS_TOPIC);
+    }
+
+    @Transactional
+    public void minusCommentCount(UUID postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
+        // 도메인 메서드를 통해 댓글 수 증가
+        post.decrementCommentCount();
+        postRepository.save(post);
+        // kafka 이벤트 발행
+        kafkaUtil.sendKafkaEvent(EventType.COMMENT_DELETED, post, FEED_EVENTS_TOPIC);
     }
 
 }

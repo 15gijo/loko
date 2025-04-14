@@ -1,6 +1,8 @@
 package com.team15gijo.notification.application.service.v1;
 
+import com.team15gijo.common.exception.CustomException;
 import com.team15gijo.notification.application.dto.v1.NotificationResponseDto;
+import com.team15gijo.notification.domain.exception.NotificationDomainExceptionCode;
 import com.team15gijo.notification.domain.model.NotificationStatus;
 import com.team15gijo.notification.domain.model.NotificationType;
 import com.team15gijo.notification.domain.repository.EmitterRepository;
@@ -13,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -73,40 +76,46 @@ public class EmitterService {
 
     public SseEmitter subscribe(Long userId) {
         // 기존 emitter 정리
-        Set<String> oldEmitterIds = redisTemplate.opsForSet().members("sse:emitters:" + userId);
-        if (!oldEmitterIds.isEmpty()) {
-            for (String oldId : oldEmitterIds) {
-                SseEmitter oldEmitter = emitterRepository.get(oldId);
-                if (oldEmitter != null) oldEmitter.complete();
-                emitterRepository.delete(oldId);
+        try {
+            Set<String> oldEmitterIds = redisTemplate.opsForSet().members("sse:emitters:" + userId);
+            if (!oldEmitterIds.isEmpty()) {
+                for (String oldId : oldEmitterIds) {
+                    SseEmitter oldEmitter = emitterRepository.get(oldId);
+                    if (oldEmitter != null) oldEmitter.complete();
+                    emitterRepository.delete(oldId);
+                }
+                redisTemplate.delete("sse:emitters:" + userId); // 기존 emitterId 모두 제거
             }
-            redisTemplate.delete("sse:emitters:" + userId); // 기존 emitterId 모두 제거
+
+            String emitterId = userId + "_" + System.currentTimeMillis();
+            SseEmitter emitter = new SseEmitter(TIMEOUT);
+            emitterRepository.save(emitterId, emitter);
+            // Redis에 emitterId 저장
+            redisTemplate.opsForSet().add("sse:emitters:" + userId, emitterId);
+            // TTL 설정
+            redisTemplate.opsForValue()
+                    .set("sse:ttl:" + emitterId, "", TIMEOUT, TimeUnit.MILLISECONDS);
+
+            emitter.onCompletion(() -> {
+                cleanupEmitter(userId, emitterId);
+            });
+
+            emitter.onTimeout(() -> {
+                cleanupEmitter(userId, emitterId);
+            });
+
+            // 연결 확인용
+            sendToClient(emitter, "CONNECT", "SSE 연결 완료");
+            return emitter;
+        } catch (Exception e) {
+            log.error("❌ SSE 구독 중 오류 발생: {}", e.getMessage(), e);
+            throw new CustomException(NotificationDomainExceptionCode.SCRIBE_FAIL);
         }
-
-
-        String emitterId = userId + "_" + System.currentTimeMillis();
-        SseEmitter emitter = new SseEmitter(TIMEOUT);
-        emitterRepository.save(emitterId, emitter);
-        // Redis에 emitterId 저장
-        redisTemplate.opsForSet().add("sse:emitters:" + userId, emitterId);
-        // TTL 설정
-        redisTemplate.opsForValue().set("sse:ttl:" + emitterId, "", TIMEOUT, TimeUnit.MILLISECONDS);
-
-        emitter.onCompletion(() -> {
-            cleanupEmitter(userId, emitterId);
-        });
-
-        emitter.onTimeout(() -> {
-            cleanupEmitter(userId, emitterId);
-        });
-
-        // 연결 확인용
-        sendToClient(emitter, "CONNECT", "SSE 연결 완료");
-        return emitter;
     }
 
-    public void send(Long userId, NotificationType type, String content, String eventId, UUID notificationId) {
-        Set<String> emitterIds = redisTemplate.opsForSet().members("sse:emitters:" + userId);
+    public void send(Long receiverId, NotificationType type, String content, String eventId, UUID notificationId) {
+        log.info("📡 SSE 전송 대상 receiverId = {}, eventId = {}", receiverId, eventId);
+        Set<String> emitterIds = redisTemplate.opsForSet().members("sse:emitters:" + receiverId);
         if (emitterIds.isEmpty()) return;
 
         for (String emitterId : emitterIds) {
@@ -126,10 +135,13 @@ public class EmitterService {
                     );
                 } catch (IOException e) {
                     // 전송 중 클라이언트가 연결을 끊었거나, 네트워크 오류 등으로 문제가 생긴 경우
+                    log.error("❌ 메세지 전송 중 오류 발생: {}", e.getMessage(), e);
                     emitter.complete();  // 연결 종료 처리
                     emitterRepository.delete(emitterId);   // 로컬에서 제거
-                    redisTemplate.opsForSet().remove("sse:emitters:" + userId, emitterId);  // Redis에서 제거
+                    redisTemplate.opsForSet().remove("sse:emitters:" + receiverId, emitterId);  // Redis에서 제거
                 }
+            } else {
+                log.warn("emitterId가 존재하지 않습니다.");
             }
         }
     }

@@ -7,7 +7,7 @@ import com.team15gijo.auth.domain.model.LoginType;
 import com.team15gijo.auth.domain.model.Role;
 import com.team15gijo.auth.domain.repository.AuthRepository;
 import com.team15gijo.auth.domain.service.AuthDomainService;
-import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpRequestDto;
+import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpRequestCommand;
 import com.team15gijo.common.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,16 +21,23 @@ public class AuthDomainServiceImpl implements AuthDomainService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public AuthEntity createAuth(AuthSignUpRequestDto authSignUpRequestDto) {
+    public AuthEntity createAuth(AuthSignUpRequestCommand authSignUpRequestCommand) {
+        //중복 확인
+        boolean isExists = authRepository.existsByIdentifierAndLoginType(
+                authSignUpRequestCommand.getIdentifier(), authSignUpRequestCommand.getLoginType());
+        if (isExists) {
+            throw new CustomException(AuthDomainExceptionCode.AUTH_IS_DUPLICATED);
+        }
+
         //비밀번호 암호화
-        String encodedPassword = passwordEncoder.encode(authSignUpRequestDto.getPassword());
+        String encodedPassword = passwordEncoder.encode(authSignUpRequestCommand.getPassword());
 
         //로그인 타입 및 인증 엔티티 생성
         AuthEntity createdAuth = AuthEntity.builder()
-                .nickname(authSignUpRequestDto.getNickname())
+                .nickname(authSignUpRequestCommand.getNickname())
                 .password(encodedPassword)
-                .identifier(authSignUpRequestDto.getIdentifier())
-                .loginType(LoginType.fromLoginTypeName(authSignUpRequestDto.getLoginTypeName()))
+                .identifier(authSignUpRequestCommand.getIdentifier())
+                .loginType(authSignUpRequestCommand.getLoginType())
                 .role(Role.USER)
                 .build();
 

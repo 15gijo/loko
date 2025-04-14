@@ -46,7 +46,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("회원가입 성공", userSignUpResponseDto));
     }
 
-    //유저 단건 조회 - 마스터
+    //유저 단건 조회 - 관리자
     @RoleGuard(value = "ADMIN")
     @GetMapping("/admin/{userId}")
     public ResponseEntity<ApiResponse<AdminUserReadResponseDto>> getUserForAdmin(
@@ -89,7 +89,7 @@ public class UserController {
             ) String region,
             @PageableDefault(
                     size = 10,
-                    page = 0,
+                    page = 1,
                     sort = {"createdAt", "updatedAt"},
                     direction = Direction.ASC
             ) Pageable pageable
@@ -107,7 +107,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("유저 전체 검색 성공", adminUserReadResponseDtoPage));
     }
 
-    //    //내 정보 조회 - 유저
+    //내 정보 조회 - 유저
     @RoleGuard(min = "USER")
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserReadResponseDto>> getUser(

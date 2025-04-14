@@ -10,11 +10,12 @@ import com.team15gijo.user.domain.service.UserDomainService;
 import com.team15gijo.user.infrastructure.client.AuthServiceClient;
 import com.team15gijo.user.infrastructure.dto.UserFeignInfoResponseDto;
 import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpRequestDto;
-import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpResponseDto;
+import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpUpdateUserIdRequestDto;
 import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserSignUpRequestDto;
 import com.team15gijo.user.presentation.dto.v1.UserSignUpResponseDto;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -38,7 +39,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
 
         //유저 생성
         UserEntity createdUser = userDomainService.createUser(userSignUpRequestDto);
-        log.info("유저 서비스 created user: {}", createdUser);
+
         //인증 서버로 회원가입 알림
         AuthSignUpRequestDto authSignUpRequsetDto =
                 AuthSignUpRequestDto.builder()
@@ -48,11 +49,18 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                         .loginTypeName("PASSWORD")
                         .build();
 
-        AuthSignUpResponseDto authSignUpResponseDto = authServiceClient.signUp(
-                authSignUpRequsetDto);
+        UUID authId = authServiceClient.signUp(authSignUpRequsetDto);
 
         //유저 DB save
         UserEntity savedUser = userRepository.save(createdUser);
+
+        //유저 createdBy 업데이트
+        userRepository.updateCreatedBy(savedUser.getId());
+
+        //인증 서버로 userId 알림
+        AuthSignUpUpdateUserIdRequestDto authSignUpUpdateUserIdRequestDto = new AuthSignUpUpdateUserIdRequestDto(
+                authId, savedUser.getId());
+        authServiceClient.updateId(authSignUpUpdateUserIdRequestDto);
 
         return new UserSignUpResponseDto(
                 savedUser.getEmail(),

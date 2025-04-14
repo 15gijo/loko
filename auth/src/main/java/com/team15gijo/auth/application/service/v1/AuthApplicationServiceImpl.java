@@ -11,17 +11,18 @@ import com.team15gijo.auth.domain.repository.AuthRepository;
 import com.team15gijo.auth.domain.service.AuthDomainService;
 import com.team15gijo.auth.infrastructure.client.UserServiceClient;
 import com.team15gijo.auth.infrastructure.dto.v1.UserFeignInfoResponseDto;
+import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpRequestCommand;
 import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpRequestDto;
-import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpResponseDto;
+import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpUpdateUserIdRequestDto;
 import com.team15gijo.auth.infrastructure.jwt.JwtAdminProvider;
 import com.team15gijo.auth.presentation.dto.v1.AssignAdminRequestDto;
 import com.team15gijo.auth.presentation.dto.v1.AuthLoginRequestDto;
 import com.team15gijo.common.exception.CommonExceptionCode;
 import com.team15gijo.common.exception.CustomException;
 import io.jsonwebtoken.Claims;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,17 +39,17 @@ public class AuthApplicationServiceImpl implements AuthApplicationService {
 
     @Override
     @Transactional
-    public AuthSignUpResponseDto signUp(AuthSignUpRequestDto authSignUpRequestDto) {
-        log.info("signup-auth authSignUpRequestDto={}", authSignUpRequestDto);
-        AuthEntity createdAuth = authDomainService.createAuth(authSignUpRequestDto);
+    public UUID signUp(AuthSignUpRequestDto authSignUpRequestDto) {
+        AuthSignUpRequestCommand authSignUpRequestCommand = AuthSignUpRequestCommand.from(
+                authSignUpRequestDto);
+        AuthEntity createdAuth = authDomainService.createAuth(authSignUpRequestCommand);
         authRepository.save(createdAuth);
-        return new AuthSignUpResponseDto("회원 가입 성공", String.valueOf(HttpStatus.CREATED.value()));
+        return createdAuth.getId();
     }
 
     @Override
     @Transactional
     public AuthLoginResponseCommand login(AuthLoginRequestDto authLoginRequestDto) {
-        log.info("login-auth authLoginRequestDto={}", authLoginRequestDto);
 
         //인증 조회
         AuthEntity auth = authRepository.findByIdentifier(authLoginRequestDto.identifier())
@@ -108,5 +109,13 @@ public class AuthApplicationServiceImpl implements AuthApplicationService {
 
         auth.updateRole(Role.ADMIN);
 //        authRepository.save(auth);
+    }
+
+    @Override
+    @Transactional
+    public void signUpUpdateUserId(
+            AuthSignUpUpdateUserIdRequestDto authSignUpUpdateUserIdRequestDto) {
+        authRepository.updateUserMeta(authSignUpUpdateUserIdRequestDto.userId(),
+                authSignUpUpdateUserIdRequestDto.authId());
     }
 }

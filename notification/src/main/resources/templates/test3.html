@@ -9,8 +9,11 @@
 <ul id="log"></ul>
 
 <script>
-  const userId = 1;  // 테스트할 유저 ID
-  const baseUrl = "http://localhost:19098";
+
+  const userId = prompt("🔐 유저 ID를 입력하세요", "1");
+  const token = prompt("🔑 JWT 토큰을 입력하세요");
+
+  const baseUrl = "http://localhost:19091";
   const logContainer = document.getElementById("log");
 
   // ✅ 알림 목록 렌더링 함수
@@ -25,7 +28,7 @@
       fetch(`${baseUrl}/api/v1/notifications/${id}/read`, {
         method: "PATCH",
         headers: {
-          "X-User-Id": userId
+          "Authorization": `Bearer ${token}`
         }
       })
       .then(response => {
@@ -45,52 +48,55 @@
     logContainer.appendChild(li);
   }
 
-  // ✅ SSE 연결 (with header)
-  fetch(`${baseUrl}/api/v1/sse/subscribe`, {
-    headers: {
-      "X-User-Id": userId
-    }
-  }).then(() => {
-    const eventSource = new EventSource(`${baseUrl}/api/v1/sse/subscribe?X-User-Id=${userId}`);
+  // ✅ SSE 연결 (Authorization 헤더는 fetch로 연결 불가 → fallback)
+  const eventSource = new EventSource(`http://localhost:19098/api/v1/sse/subscribe?userId=${userId}`);
 
-    eventSource.onopen = () => {
-      console.log("✅ SSE 연결 성공");
+  eventSource.onopen = () => {
+    console.log("✅ SSE 연결 성공");
 
-      // 미확인 알림 목록 조회
-      fetch(`${baseUrl}/api/v1/notifications`, {
-        headers: {
-          "X-User-Id": userId
-        }
-      })
-      .then(res => res.json())
-      .then(data => {
-        data.forEach(notification => renderNotification(notification));
-      })
-      .catch(err => {
-        console.error("❌ 미확인 알림 불러오기 실패", err);
-      });
-    };
-
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      renderNotification(data, true);
-    };
-
-    eventSource.addEventListener("CONNECT", (event) => {
-      const li = document.createElement("li");
-      li.textContent = "[CONNECT] SSE 연결됨";
-      logContainer.appendChild(li);
+    // 미확인 알림 목록 조회
+    fetch(`${baseUrl}/api/v1/notifications`, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    })
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`요청 실패: ${res.status}`);
+      }
+      return res.json();
+    })
+    .then(response => {
+      const notifications = response.data;
+      if (!Array.isArray(notifications)) {
+        throw new Error("응답 데이터가 배열이 아닙니다");
+      }
+      notifications.forEach(notification => renderNotification(notification));
+    })
+    .catch(err => {
+      console.error("❌ 미확인 알림 불러오기 실패", err);
     });
+  };
 
-    eventSource.addEventListener("NEW", (event) => {
-      const data = JSON.parse(event.data);
-      renderNotification(data, true);
-    });
+  eventSource.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    renderNotification(data, true);
+  };
 
-    eventSource.onerror = (event) => {
-      console.error("❌ SSE 연결 오류", event);
-    };
+  eventSource.addEventListener("CONNECT", (event) => {
+    const li = document.createElement("li");
+    li.textContent = "[CONNECT] SSE 연결됨";
+    logContainer.appendChild(li);
   });
+
+  eventSource.addEventListener("NEW", (event) => {
+    const data = JSON.parse(event.data);
+    renderNotification(data, true);
+  });
+
+  eventSource.onerror = (event) => {
+    console.error("❌ SSE 연결 오류", event);
+  };
 </script>
 </body>
 </html>

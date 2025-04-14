@@ -22,7 +22,8 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class FeedService {
-    private static final String redisKeyPrefix = "feed:recent:region:";
+    private static final String REDIS_RECENT_KEY_PREFIX = "feed:recent:region:";
+    private static final String REDIS_POPULAR_KEY_PREFIX = "feed:popular:region:";
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
@@ -32,10 +33,6 @@ public class FeedService {
      * 동일 지역 정보를 가진 피드 최신순 조회 (DB)
      */
     public ApiResponse<PostFeedPageResponseDto> getRecentFeedsByRegion(LocalDateTime cursor, int pageSize, String region) {
-
-        // TODO: 요청한 유저의 지역 가져오기 (token or user-service 요청)
-//        String token = "";
-//        String region = getRegionFromToken(token); //임시 지역
 
         if (cursor == null) {
             cursor = LocalDateTime.now();
@@ -56,14 +53,11 @@ public class FeedService {
      * 동일 지역 정보를 가진 피드 최신순 조회 (cache)
      */
     public ApiResponse<PostFeedPageResponseDto> getRecentCachedFeedByRegion(LocalDateTime cursor, int pageSize, String region) throws JsonProcessingException {
-        // TODO: 요청한 유저의 지역 가져오기 (token or user-service 요청)
-//        String token = "";
-//        String region = getRegionFromToken(token); //임시 지역
 
         log.info("getRecentFeedCache called, region: {}", region);
         if(cursor == null) { //최초 요청만 캐싱
             // 캐시 조회
-            String cacheKey = redisKeyPrefix + region;
+            String cacheKey = REDIS_RECENT_KEY_PREFIX + region;
             String cachedValue = (String) redisTemplate.opsForValue().get(cacheKey);
 
             // 캐시 hit
@@ -85,13 +79,51 @@ public class FeedService {
             ApiResponse<PostFeedPageResponseDto> response = getRecentFeedsByRegion(cursor, pageSize, region);
             return response;
         }
-
-
     }
 
+    public ApiResponse<PostFeedPageResponseDto> getPopularFeedsByRegion(Double cursor, int pageSize, String region) {
 
-    private String getRegionFromToken(String token) {
-        // TODO: token 혹은 header에서 값 가져오기
-        return "송파구";
+        if (cursor == null) {
+            cursor = Double.MAX_VALUE;
+        }
+
+        List<Feed> feeds = feedRepository
+                .findByRegionAndPopularityScoreBeforeOrderByPopularityScoreDesc(region, cursor, PageRequest.of(0, pageSize));
+
+        List<PostFeedResponseDto> postFeedResponseDtos = feeds.stream()
+                .map(PostFeedResponseDto::from)
+                .toList();
+
+        return ApiResponse.success("피드 조회 성공", PostFeedPageResponseDto.of(postFeedResponseDtos));
+    }
+
+    public ApiResponse<PostFeedPageResponseDto> getPopularCachedFeedsByRegion(Double cursor, int pageSize, String region)
+            throws JsonProcessingException {
+        log.info("getPopularFeedCache called, region: {}", region);
+        if(cursor == null) { //최초 요청만 캐싱
+            // 캐시 조회
+            String cacheKey = REDIS_POPULAR_KEY_PREFIX + region;
+            String cachedValue = (String) redisTemplate.opsForValue().get(cacheKey);
+
+            // 캐시 hit
+            if (cachedValue != null) {
+                PostFeedPageResponseDto dto = objectMapper.readValue(cachedValue, PostFeedPageResponseDto.class);
+                log.info("Popular feed cache hit: {}", dto);
+                return ApiResponse.success("캐시에서 피드 조회 성공", dto);
+            }
+
+            // 캐시 hit x
+            log.info("Recent feed cache miss");
+            ApiResponse<PostFeedPageResponseDto> response = getPopularFeedsByRegion(cursor, pageSize, region);
+            if (Objects.equals(response.getStatus(), "SUCCESS")) {
+                String value = objectMapper.writeValueAsString(response.getData());
+                redisTemplate.opsForValue().set(cacheKey, value, Duration.ofSeconds(60));
+            }
+            return response;
+        } else {
+            ApiResponse<PostFeedPageResponseDto> response = getPopularFeedsByRegion(cursor, pageSize, region);
+            return response;
+        }
+
     }
 }
