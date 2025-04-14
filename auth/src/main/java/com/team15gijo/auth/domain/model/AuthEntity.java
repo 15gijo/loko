@@ -1,6 +1,7 @@
 package com.team15gijo.auth.domain.model;
 
-import com.team15gijo.common.base.BaseEntity;
+import com.team15gijo.common.model.base.BaseEntity;
+import com.team15gijo.common.model.role.UserRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -59,5 +60,9 @@ public class AuthEntity extends BaseEntity {
         this.identifier = identifier;
         this.loginType = loginType;
         this.role = role;
+    }
+
+    public void updateRole(Role userRole) {
+        this.role = userRole;
     }
 }
