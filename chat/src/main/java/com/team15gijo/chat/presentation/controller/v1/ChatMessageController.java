@@ -116,23 +116,6 @@ public class ChatMessageController {
     }
 
     /**
-     * TODO: 채팅 메시지 삭제 테스트 이후 삭제 예정
-     */
-    @DeleteMapping("/message/{chatRoomId}")
-    public ResponseEntity<ApiResponse<Boolean>> deleteChatMessage(
-        @PathVariable("chatRoomId") UUID chatRoomId,
-        @RequestHeader("X-User-Id") Long userId) {
-        log.info("chatRoomId ={}", chatRoomId);
-        Boolean result = chatMessageService.deleteChatMessage(chatRoomId, userId);
-
-        String message = "";
-        if(result) {
-            message = chatRoomId + " 채팅방의 메시지가 모두 삭제되었습니다.";
-        }
-        return ResponseEntity.ok(ApiResponse.success(message, result));
-    }
-
-    /**
      * 소켓 연결 시 사용되는 엔드포인트
      * 채팅방 ID 유효성 검증 API
      */

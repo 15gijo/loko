@@ -165,7 +165,7 @@ public class ChatMessageService {
      * 채팅방 퇴장(비활성화) -> 삭제(Batch 또는 비동기 처리)
      * -> 1:1 채팅방에서 1명의 사용자 퇴장(채팅방 참여자 비활성화로 변경)
      * -> 채팅방의 모든 참여자 퇴장 시, 채팅방/채팅방 참여자/채팅 메시지 소프트 삭제 처리
-     * TODO: 마지막 참여자 activation false 변경 안됨 & 메시지 소프트 삭제 처리 필요
+     * TODO: 마지막 참여자 activation false 변경 안됨
      */
     public boolean exitChatRoom(UUID chatRoomId, Long userId) {
         log.info("[exitChatRoom] chatRoomId = {}", chatRoomId);
@@ -209,46 +209,13 @@ public class ChatMessageService {
             chatRoomRepository.delete(chatRoom);
             chatRoomParticipantRepository.deleteAll(chatRoomParticipants);
 
-            // TODO: 채팅방 참여자 userId 1명의 메시지만 삭제됨 + 상대방 userId 메시지도 삭제 처리
+            // 채팅방 모든 참여자 userId 메시지 소프트 삭제 메소드
+            deleteChatMessageForChatRoomId(chatRoomId, userId);
 
             return true;
         } else {
             return false;
         }
-    }
-
-    /**
-     * TODO: 채팅 메시지 삭제 테스트 이후 삭제 예정
-     */
-    public Boolean deleteChatMessage(UUID chatRoomId, Long userId) {
-        log.info("[deleteChatMessage] chatRoomId = {}", chatRoomId);
-        log.info("[deleteChatMessage] userId = {}", userId);
-
-        ChatRoom findChatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
-            .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
-
-        List<Long> userIdForParticipants = findChatRoom.getChatRoomParticipants().stream()
-            .map(ChatRoomParticipant::getUserId)
-            .toList();
-
-        for(Long participantId : userIdForParticipants) {
-            checkRoomIdAndUserId(chatRoomId, participantId);
-
-            // 채팅방의 메시지 조회
-            List<ChatMessageDocument> chatMessages = chatMessageRepository.findByChatRoomIdAndSenderId(chatRoomId, participantId);
-
-            if(chatMessages.isEmpty()) {
-                log.error("채팅방에 해당하는 메시지 내역이 존재하지 않습니다.");
-                throw new CustomException(MESSAGE_NOT_FOUND_FOR_CHAT_ROOM);
-            }
-
-            // 메시지 소프트 삭제
-            chatMessages.forEach(chatMessage -> {
-                chatMessage.softDelete(userId);
-                chatMessageRepository.save(chatMessage);
-            });
-        }
-        return true;
     }
 
     /**
@@ -416,6 +383,7 @@ public class ChatMessageService {
         return chatMessage.toResponse();
     }
 
+    // 채팅방 id 및 userId 유효성 검증
     private void checkRoomIdAndUserId(UUID chatRoomId, Long userId) {
         // 채팅방 유무 검증
         ChatRoom chatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
@@ -430,4 +398,25 @@ public class ChatMessageService {
         }
     }
 
+    // 채팅방의 메시지 소프트 삭제
+    public void deleteChatMessageForChatRoomId(UUID chatRoomId, Long userId) {
+        log.info(">> 메시지 소프트 삭제 시작");
+
+        // 채팅방의 모든 메시지 조회
+        List<ChatMessageDocument> chatMessages = chatMessageRepository.findByChatRoomId(chatRoomId);
+        log.info("chatMessages.size() = {}", chatMessages.size());
+
+        if (chatMessages.isEmpty()) {
+            log.error("채팅방에 해당하는 메시지 내역이 존재하지 않습니다.");
+            throw new CustomException(MESSAGE_NOT_FOUND_FOR_CHAT_ROOM);
+        }
+
+        // 메시지 소프트 삭제
+        chatMessages.forEach(chatMessage -> {
+            log.info("[소프트삭제 처리]chatMessage.getSenderId() = {}", chatMessage.getSenderId());
+            chatMessage.softDelete(userId);
+            chatMessageRepository.save(chatMessage);
+        });
+        log.info(">> 메시지 소프트 삭제 완료 : 채팅방 삭제에 따른 채팅방/참여자/메시지 삭제 완료");
+    }
 }
