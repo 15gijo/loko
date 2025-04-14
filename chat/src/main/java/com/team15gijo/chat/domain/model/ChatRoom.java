@@ -1,7 +1,7 @@
 package com.team15gijo.chat.domain.model;
 
 import com.team15gijo.chat.application.dto.v1.ChatRoomResponseDto;
-import com.team15gijo.common.base.BaseEntity;
+import com.team15gijo.common.model.base.BaseEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -45,9 +45,9 @@ public class ChatRoom extends BaseEntity {
 
     public ChatRoomResponseDto toResponse() {
         return ChatRoomResponseDto.builder()
-            .chatRoomId(chatRoomId)
-            .chatRoomType(chatRoomType)
-            .chatRoomParticipants(chatRoomParticipants)
-            .build();
+                .chatRoomId(chatRoomId)
+                .chatRoomType(chatRoomType)
+                .chatRoomParticipants(chatRoomParticipants)
+                .build();
     }
 }
