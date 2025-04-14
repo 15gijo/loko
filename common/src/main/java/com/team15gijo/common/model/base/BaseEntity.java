@@ -1,4 +1,4 @@
-package com.team15gijo.common.base;
+package com.team15gijo.common.model.base;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;

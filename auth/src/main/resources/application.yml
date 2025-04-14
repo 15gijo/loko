@@ -33,3 +33,7 @@ jwt:
     expiration: ${ACCESS_TOKEN_EXPIRATION}
   refresh-token:
     expiration: ${REFRESH_TOKEN_EXPIRATION}
+
+  admin:
+    secret:
+      key: ${JWT_ADMIN_SECRET_KEY}
