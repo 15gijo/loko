@@ -45,9 +45,9 @@ public class ChatRoom extends BaseEntity {
 
     public ChatRoomResponseDto toResponse() {
         return ChatRoomResponseDto.builder()
-            .chatRoomId(chatRoomId)
-            .chatRoomType(chatRoomType)
-            .chatRoomParticipants(chatRoomParticipants)
-            .build();
+                .chatRoomId(chatRoomId)
+                .chatRoomType(chatRoomType)
+                .chatRoomParticipants(chatRoomParticipants)
+                .build();
     }
 }

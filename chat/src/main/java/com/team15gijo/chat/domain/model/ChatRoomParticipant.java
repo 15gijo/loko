@@ -35,10 +35,10 @@ public class ChatRoomParticipant extends BaseEntity {
 
     public ChatRoomParticipantResponseDto toResponse() {
         return ChatRoomParticipantResponseDto.builder()
-            .id(id)
-            .userId(userId)
-            .activation(activation)
-            .build();
+                .id(id)
+                .userId(userId)
+                .activation(activation)
+                .build();
     }
 
     public void nonActivate() {

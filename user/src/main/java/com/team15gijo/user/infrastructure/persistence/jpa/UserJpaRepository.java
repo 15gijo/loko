@@ -13,6 +13,7 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, Long> {
 
     Optional<UserEntity> findByEmail(String identifier);
 
+    @Query("SELECT u.id FROM UserEntity u WHERE u.nickName = :nickName")
     Optional<Long> findIdByNickName(String nickName);
 
     @Query("SELECT u.email FROM UserEntity u WHERE u.id = :id")
