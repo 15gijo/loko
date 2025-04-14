@@ -8,7 +8,6 @@
     let stompClient = null;
     let chatRoomId = null;
     let isConnected = false;
-    let sessionId = null;
 
     function connect() {
       chatRoomId = document.getElementById('chatRoomId').value;
@@ -51,10 +50,6 @@
             stompClient.connect({}, function (frame) {
               isConnected = true;
               console.log('소켓 Connected: ' + frame);
-
-              // sessionId 추출 및 저장
-              sessionId = frame.headers['simp-session'];
-              console.log("헤더에서 sessionId 추출" + sessionId);
 
               // connect 엔드포인트로 메시지 전송하여 Redis 저장
               stompClient.send("/app/chat/connect/" + chatRoomId + "/" + senderId, {},
@@ -117,16 +112,15 @@
 
     function disconnect() {
       if (stompClient !== null) {
-        console.log("[sessionId] 추출 = " + sessionId);
         // 연결 중단 시, redis 삭제 API 호출
-        fetch(`/api/v1/chats/redis/delete/${sessionId}`)
+        fetch(`/api/v1/chats/redis/delete/${chatRoomId}/${senderId}`)
           .then(response => response.json())
           .then(data => {
             if(data.data) {
               // Redis 캐시 삭제 성공
               console.log("소켓 Disconnected");
             } else {
-              console.log("sessionId=" + sessionId + "에 저장된 캐시가 없습니다.");
+              console.log(chatRoomId + ":" + senderId + "로 저장된 cacheKey가 없습니다.");
             }
             isConnected = false;
             alert('채팅방 연결 종료하였습니다. 다시 연결해주세요!');
@@ -134,7 +128,7 @@
           })
           .catch(error => {
             console.error("API 호출 실패: " + error);
-            alert('senderId:세션 ID 캐시 삭제 실패');
+            alert('Redis 캐시 삭제 실패');
           });
       }
     }
