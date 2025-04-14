@@ -5,16 +5,16 @@ import com.team15gijo.post.domain.repository.PostRepository;
 import com.team15gijo.post.presentation.dto.v1.PostFeedPageResponseDto;
 import com.team15gijo.post.presentation.dto.v1.PostFeedResponseDto;
 import com.team15gijo.post.presentation.dto.v1.PostSearchResponseDto;
-import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j(topic = "게시글 Internal Service")
 @RequiredArgsConstructor
 public class InternalPostService {
 
@@ -43,9 +43,9 @@ public class InternalPostService {
         if (lastCreatedAt == null) {
             lastCreatedAt = LocalDateTime.now();
         }
-
-        posts = postRepository.findPostByKeywordAfter(keyword, region, lastCreatedAt, PageRequest.of(0, size));
-
+        log.info("게시글 검색 QueryDsl 시작");
+        posts = postRepository.searchPosts(keyword, region, lastCreatedAt, size);
+        log.info("게시글 검색 QueryDsl 종료");
         return posts.stream()
                 .map(PostSearchResponseDto::from)
                 .toList();

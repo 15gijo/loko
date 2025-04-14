@@ -11,24 +11,30 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface PostRepository extends JpaRepository<Post, UUID> {
+public interface PostRepository extends JpaRepository<Post, UUID>, PostQueryDslRepository {
     List<Post> findByRegionAndCreatedAtBeforeOrderByCreatedAtDesc(String region, LocalDateTime cursor, PageRequest of);
 
     /**
      *  검색에서 쓰는 쿼리
      */
     @Query("""
-        SELECT p FROM Post p
-        LEFT JOIN FETCH p.hashtags
+        SELECT DISTINCT p FROM Post p
+        LEFT JOIN p.hashtags h
         WHERE p.region = :region
-          AND (p.username LIKE %:keyword% OR p.postContent LIKE %:keyword%)
+          AND (
+                LOWER(p.username) LIKE LOWER(:keyword)
+             OR LOWER(p.postContent) LIKE LOWER(:keyword)
+          )
           AND p.createdAt < :cursor
         ORDER BY p.createdAt DESC
     """)
-    List<Post> findPostByKeywordAfter(
+    List<Post> findPostByKeyword(
             @Param("keyword") String keyword,
             @Param("region") String region,
             @Param("cursor") LocalDateTime cursor,
             Pageable pageable
     );
+
+
+
 }
