@@ -19,4 +19,6 @@ public class ChatMessageResponseDto {
     private String messageContent;
     private LocalDateTime sentAt;
     private Boolean readStatus;
+    private LocalDateTime deletedAt;
+    private Long deletedBy;
 }
