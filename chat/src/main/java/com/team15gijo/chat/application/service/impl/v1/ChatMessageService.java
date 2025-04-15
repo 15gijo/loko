@@ -190,13 +190,13 @@ public class ChatMessageService {
             })
             .collect(Collectors.toSet());
 
-        // 변경된 참여자로 ChatRoom 업데이트
-        ChatRoom updatedChatRoom = ChatRoom.builder()
-            .chatRoomId(chatRoomId)
-            .chatRoomType(chatRoom.getChatRoomType())
-            .chatRoomParticipants(chatRoomParticipants)
-            .build();
-        chatRoomRepository.save(updatedChatRoom);
+//        // 변경된 참여자로 ChatRoom 업데이트
+//        ChatRoom updatedChatRoom = ChatRoom.builder()
+//            .chatRoomId(chatRoomId)
+//            .chatRoomType(chatRoom.getChatRoomType())
+//            .chatRoomParticipants(chatRoomParticipants)
+//            .build();
+//        chatRoomRepository.save(updatedChatRoom);
 
         // 모든 참여자가 비활성 상태인지 확인 -> 모두 비활성화면 return TRUE
         boolean allParticipantsNonactive = chatRoomParticipants.stream()
@@ -439,21 +439,20 @@ public class ChatMessageService {
             Criteria.where("chatRoomId").is(chatRoomId)
                 .and("deletedAt").is(null));
 
-
         List<ChatMessageDocument> chatMessages = mongoTemplate.find(query, ChatMessageDocument.class);
         log.info("chatMessages.size() = {}", chatMessages.size());
 
         if (chatMessages.isEmpty()) {
             log.error("채팅방에 해당하는 메시지 내역이 존재하지 않습니다.");
-            throw new CustomException(MESSAGE_NOT_FOUND_FOR_CHAT_ROOM);
+//            throw new CustomException(MESSAGE_NOT_FOUND_FOR_CHAT_ROOM);
+        } else {
+            // 메시지 소프트 삭제
+            chatMessages.forEach(chatMessage -> {
+                log.info("[소프트삭제 처리]chatMessage.getSenderId() = {}", chatMessage.getSenderId());
+                chatMessage.softDelete(userId);
+                chatMessageRepository.save(chatMessage);
+            });
+            log.info(">> 메시지 소프트 삭제 완료 : 채팅방 삭제에 따른 채팅방/참여자/메시지 삭제 완료");
         }
-
-        // 메시지 소프트 삭제
-        chatMessages.forEach(chatMessage -> {
-            log.info("[소프트삭제 처리]chatMessage.getSenderId() = {}", chatMessage.getSenderId());
-            chatMessage.softDelete(userId);
-            chatMessageRepository.save(chatMessage);
-        });
-        log.info(">> 메시지 소프트 삭제 완료 : 채팅방 삭제에 따른 채팅방/참여자/메시지 삭제 완료");
     }
 }
