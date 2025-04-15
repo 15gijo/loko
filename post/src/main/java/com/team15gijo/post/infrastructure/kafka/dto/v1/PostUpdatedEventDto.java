@@ -1,9 +1,8 @@
 package com.team15gijo.post.infrastructure.kafka.dto.v1;
 
-import com.team15gijo.post.domain.model.Hashtag;
-import com.team15gijo.post.domain.model.Post;
+import com.team15gijo.post.domain.model.v2.HashtagV2;
+import com.team15gijo.post.domain.model.v2.PostV2;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -31,7 +30,7 @@ public class PostUpdatedEventDto implements FeedEventDto {
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
 
-    public static PostUpdatedEventDto from(Post post) {
+    public static PostUpdatedEventDto from(PostV2 post) {
         return PostUpdatedEventDto.builder()
                 .postId(post.getPostId())
                 .userId(post.getUserId())
@@ -40,7 +39,7 @@ public class PostUpdatedEventDto implements FeedEventDto {
                 .postContent(post.getPostContent())
                 .hashtags(
                         post.getHashtags().stream()
-                                .map(Hashtag::getHashtagName) // Hashtag 클래스에 getName() 메서드가 있다고 가정
+                                .map(HashtagV2::getHashtagName) // Hashtag 클래스에 getName() 메서드가 있다고 가정
                                 .toList()
                 )
                 .views(post.getViews())

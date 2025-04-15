@@ -2,10 +2,10 @@ package com.team15gijo.post.application.service.v1;
 
 import com.team15gijo.post.domain.exception.PostDomainException;
 import com.team15gijo.post.domain.exception.PostDomainExceptionCode;
-import com.team15gijo.post.domain.model.Post;
-import com.team15gijo.post.domain.model.Hashtag;
-import com.team15gijo.post.domain.repository.PostRepository;
-import com.team15gijo.post.domain.repository.HashtagRepository;
+import com.team15gijo.post.domain.model.v1.Post;
+import com.team15gijo.post.domain.model.v1.Hashtag;
+import com.team15gijo.post.domain.repository.v1.PostRepository;
+import com.team15gijo.post.domain.repository.v1.HashtagRepository;
 import com.team15gijo.post.presentation.dto.v1.PostRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

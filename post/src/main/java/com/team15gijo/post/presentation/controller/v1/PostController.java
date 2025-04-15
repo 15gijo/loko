@@ -3,7 +3,7 @@ package com.team15gijo.post.presentation.controller.v1;
 import com.team15gijo.common.annotation.RoleGuard;
 import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.post.application.service.v1.PostService;
-import com.team15gijo.post.domain.model.Post;
+import com.team15gijo.post.domain.model.v1.Post;
 import com.team15gijo.post.presentation.dto.v1.PostRequestDto;
 import com.team15gijo.post.presentation.dto.v1.PostResponseDto;
 import java.net.URLDecoder;

@@ -1,4 +1,4 @@
-package com.team15gijo.post.domain.model;
+package com.team15gijo.post.domain.model.v1;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

@@ -1,6 +1,6 @@
 package com.team15gijo.post.infrastructure.kafka.dto.v1;
 
-import com.team15gijo.post.domain.model.Post;
+import com.team15gijo.post.domain.model.v2.PostV2;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,7 +16,7 @@ public class PostDeletedEventDto implements FeedEventDto {
     private EventType type = EventType.POST_DELETED;
     private UUID postId;
 
-    public static PostDeletedEventDto from(Post post) {
+    public static PostDeletedEventDto from(PostV2 post) {
         return PostDeletedEventDto.builder()
                 .postId(post.getPostId())
                 .build();
