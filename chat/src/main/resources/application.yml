@@ -13,7 +13,7 @@ spring:
     password: ${DB_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: update # Entity 기반으로 테이블을 자동 생성 여부 결정
+      ddl-auto: create # Entity 기반으로 테이블을 자동 생성 여부 결정
     show-sql: true
     properties:
       hibernate:
@@ -52,3 +52,11 @@ management:
 logging:
   level:
     com.team15gijo.chat.presentation.handler: DEBUG
+
+feign:
+  client:
+    config:
+      user-service: # user-service에 대한 설정
+        connectTimeout: 5000 # 연결 타임아웃 (ms)
+        readTimeout: 5000 # 읽기 타임아웃 (ms)
+        retryer: feign.Retryer.Default # 재시도 정책

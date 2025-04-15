@@ -13,6 +13,9 @@
       chatRoomId = document.getElementById('chatRoomId').value;
       senderId = parseInt(document.getElementById('senderId').value);
 
+      // TODO: 인증 헤더에서 닉네임 추출
+      const nickname = getNicknameFromHeader(); // 닉네임 추출 함수 호출
+
       // 채팅방 ID 유효성 검증 API 호출
       fetch(`/api/v1/chats/validate/${chatRoomId}`)
         .then(response => response.json())
@@ -61,11 +64,6 @@
                 stompClient.disconnect();
               });
 
-              // 처음 채팅방 입장 메시지 구독
-              stompClient.subscribe('/topic/chat/enter/' + chatRoomId, function (message) {
-                showMessage(JSON.parse(message.body));
-              });
-
               // 재접속 시 MongoDB 메시지 조회 API 호출
               // fetch PageImpl JSON 응답
               fetch(`/api/v1/chats/message/page/${chatRoomId}/${senderId}`)
@@ -90,6 +88,11 @@
               stompClient.subscribe('/topic/chat/' + chatRoomId, function (message) {
                 showMessage((JSON.parse(message.body)));
               });
+
+              // 처음 채팅방 입장 메시지 구독
+              stompClient.subscribe('/topic/chat/enter/' + chatRoomId, function (message) {
+                showMessage(JSON.parse(message.body));
+              });
             }, function (error) {
               console.error("소켓 Connection error: ", error);
               alert('채팅방 연결 종료 및 실패하였습니다. 서버 오류를 확인해주세요.');
@@ -102,17 +105,22 @@
       });
     }
 
+    // TODO: 인증 헤더에서 닉네임 추출 함수
+    function getNicknameFromHeader() {
+      // X-User-Nickname 헤더 값 추출
+    }
+
     function disconnect() {
       if (stompClient !== null) {
         // 연결 중단 시, redis 삭제 API 호출
-        fetch(`/api/v1/chats/redis/delete/${senderId}`)
+        fetch(`/api/v1/chats/redis/delete/${chatRoomId}/${senderId}`)
           .then(response => response.json())
           .then(data => {
             if(data.data) {
               // Redis 캐시 삭제 성공
               console.log("소켓 Disconnected");
             } else {
-              console.log("저장된 캐시가 없습니다.");
+              console.log(chatRoomId + ":" + senderId + "로 저장된 cacheKey가 없습니다.");
             }
             isConnected = false;
             alert('채팅방 연결 종료하였습니다. 다시 연결해주세요!');
@@ -120,7 +128,7 @@
           })
           .catch(error => {
             console.error("API 호출 실패: " + error);
-            alert('senderId:세션 ID 캐시 삭제 실패');
+            alert('Redis 캐시 삭제 실패');
           });
       }
     }

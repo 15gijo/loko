@@ -6,9 +6,8 @@ import com.team15gijo.chat.domain.model.ChatMessageDocument;
 import com.team15gijo.chat.domain.model.ChatRoom;
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageRequestDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageResponseDto;
-import com.team15gijo.chat.presentation.dto.v1.ChatRoomParticipantRequestDto;
-import com.team15gijo.chat.presentation.dto.v1.ChatRoomParticipantResponseDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatRoomRequestDto;
+import com.team15gijo.common.annotation.RoleGuard;
 import com.team15gijo.common.dto.ApiResponse;
 import java.util.Map;
 import java.util.UUID;
@@ -26,7 +25,6 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -48,24 +46,27 @@ public class ChatMessageController {
     /**
      * 채팅방 생성(chatRoomType, receiver)에 따른 채팅방 참여자 생성
      * 채팅방이 INDIVIDUAL 타입에서는 3명 이상 채팅방 생성 불가
+     * X-User-Id : 채팅방 생성 시 사용
      */
+    @RoleGuard(min = "USER")
     @PostMapping("/rooms")
     @ResponseBody
     public ResponseEntity<ApiResponse<ChatRoomResponseDto>> createChatRoom(
         @RequestBody ChatRoomRequestDto requestDto,
-        @RequestHeader("X-User-Id") Long userId,
-        @RequestHeader("X-User-Nickname") String nickname
+        @RequestHeader("X-User-Id") Long userId
     ) {
-        ChatRoomResponseDto response = chatMessageService.createChatRoom(requestDto, userId, nickname);
+        ChatRoomResponseDto response = chatMessageService.createChatRoom(requestDto, userId);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.success("채팅방 생성되었습니다.", response));
     }
 
     /**
      * 채팅방 단일 조회
+     * X-User-Id : chatRoomId 에 참여하는 사용자 검증
      */
+    @RoleGuard(min = "USER")
     @GetMapping("/rooms/{chatRoomId}")
-    public ResponseEntity<ApiResponse<ChatRoomResponseDto>>  getChatRoom(
+    public ResponseEntity<ApiResponse<ChatRoomResponseDto>> getChatRoom(
         @PathVariable("chatRoomId") UUID chatRoomId,
         @RequestHeader("X-User-Id") Long userId
     ) {
@@ -76,7 +77,9 @@ public class ChatMessageController {
 
     /**
      * 채팅방 전체 조회
+     * X-User-Id : 채팅방 전체에서 참여하는 사용자 필터링
      */
+    @RoleGuard(min = "USER")
     @GetMapping("/rooms")
     public ResponseEntity<ApiResponse<Page<ChatRoom>>> getChatRooms(
         @RequestParam(defaultValue = "0") int page,
@@ -99,7 +102,9 @@ public class ChatMessageController {
      * -> 채팅방의 모든 참여자 퇴장 시 채팅방/채팅방 참여자/채팅 메시지 소프트 삭제 처리
      * 응답 result = false : 참여자만 비활성화
      * 응답 result = true : 참여자 모두 비활성화로 채팅방/참여자 소프트삭제 처리됨
+     * X-User-Id : chatRoomId 에 참여하는 사용자 비활성화로 변경
      */
+    @RoleGuard(min = "USER")
     @PatchMapping("/rooms/{chatRoomId}")
     public ResponseEntity<ApiResponse<Boolean>> exitChatRoom(
         @PathVariable("chatRoomId") UUID chatRoomId,
@@ -142,13 +147,14 @@ public class ChatMessageController {
 
     /**
      * 소켓 연결 중단 시, redis 삭제 API 호출
-     * TODO: Redis 키를 SessionID로, value는 senderId, chatRoomId로 변경
+     * Redis key(chatRoomId:senderId)-value(SessionID, senderId, chatRoomId)로 변경
      */
-    @GetMapping("/redis/delete/{senderId}")
+    @GetMapping("/redis/delete/{chatRoomId}/{senderId}")
     public ResponseEntity<ApiResponse<Boolean>> deleteRedisSenderId(
-        @PathVariable("senderId") Long senderId
+        @PathVariable("chatRoomId") UUID chatRoomId,
+        @PathVariable("senderId") String senderId
     ) {
-        Boolean response = chatMessageService.deleteRedisSenderId(senderId);
+        Boolean response = chatMessageService.deleteRedisSenderId(chatRoomId, senderId);
         return ResponseEntity.ok(ApiResponse.success("Redis 캐시 삭제 성공하였습니다.", response));
     }
 
@@ -175,7 +181,9 @@ public class ChatMessageController {
     /**
      * 채팅방 메시지 상세 조회
      * chatRoomId에 속하는 참여자는 메시지 고유 ID로 메시지 상세 조회 모두 가능
+     * X-User-Id : chatRoomId 에 참여하는 사용자 검증
      */
+    @RoleGuard(min = "USER")
     @GetMapping("message/{chatRoomId}/{id}")
     public ResponseEntity<ApiResponse<ChatMessageResponseDto>> getMessageById(
         @PathVariable("chatRoomId") UUID chatRoomId,
@@ -188,7 +196,8 @@ public class ChatMessageController {
 
     /**
      * "/ws-stomp" 경로로 소켓 연결 시, 쿼리파라미터 senderId를 추출하여 Redis 캐시 저장
-     * @param headerAccessor
+     * Redis key(chatRoomId:senderId)-value(SessionID, senderId, chatRoomId)로 변경
+     * @param headerAccessor : sessionID 추출
      */
     @MessageMapping("/chat/connect/{chatRoomId}/{senderId}")
     @SendTo("/topic/chat/{chatRoomId}")
@@ -198,6 +207,8 @@ public class ChatMessageController {
         SimpMessageHeaderAccessor headerAccessor,
         String message
     ) {
+        log.info(">> headerAccessor {}", headerAccessor);
+        log.info(">> 채팅방 연결 message {}", message);
         chatMessageService.connectChatRoom(chatRoomId, senderId, headerAccessor, message);
     }
 
@@ -212,7 +223,9 @@ public class ChatMessageController {
         @RequestBody ChatMessageRequestDto requestDto,
         SimpMessageHeaderAccessor headerAccessor
     ) {
+        log.info("헤더 headerAccessor: {} ", headerAccessor.getSessionAttributes());
         log.info("Sending message: {}", requestDto.toString());
+
         try {
             return chatMessageService.sendMessage(requestDto);
         } catch (Exception e) {
