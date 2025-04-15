@@ -25,7 +25,7 @@ import org.hibernate.annotations.GenericGenerator;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PostLike {
+public class PostLikeV2 {
 
     @Id
     @GeneratedValue(generator = "UUID")
@@ -35,7 +35,7 @@ public class PostLike {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false)
-    private Post post;
+    private PostV2 post;
 
     @Column(name = "user_id", nullable = false)
     private long userId;
@@ -44,8 +44,8 @@ public class PostLike {
     private LocalDateTime createdAt;
 
     // 정적 팩토리 메서드: PostLike 생성
-    public static PostLike createPostLike(Post post, long userId) {
-        return PostLike.builder()
+    public static PostLikeV2 createPostLike(PostV2 post, long userId) {
+        return PostLikeV2.builder()
                 .post(post)
                 .userId(userId)
                 .createdAt(LocalDateTime.now())

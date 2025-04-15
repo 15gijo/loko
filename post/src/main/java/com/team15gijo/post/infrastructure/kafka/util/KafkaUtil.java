@@ -1,6 +1,6 @@
 package com.team15gijo.post.infrastructure.kafka.util;
 
-import com.team15gijo.post.domain.model.Post;
+import com.team15gijo.post.domain.model.v2.PostV2;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.CommentCreatedEventDto;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.CommentDeletedEventDto;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.EventType;
@@ -22,13 +22,13 @@ public class KafkaUtil {
     /**
      * kafka 이벤트 발행
      */
-    public void sendKafkaEvent(EventType eventType, Post post, String topic) {
+    public void sendKafkaEvent(EventType eventType, PostV2 post, String topic) {
         if (topic == null || post == null || eventType == null) return;
         FeedEventDto feedEventDto = createEventMessageByType(eventType, post);
         producerService.sendMessage(topic, null, feedEventDto);
     }
 
-    public FeedEventDto createEventMessageByType(EventType eventType, Post post) {
+    public FeedEventDto createEventMessageByType(EventType eventType, PostV2 post) {
         if (eventType == null || post == null) return null;
 
         return switch (eventType) {

@@ -1,10 +1,10 @@
-package com.team15gijo.post.domain.repository;
+package com.team15gijo.post.domain.repository.v1;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.team15gijo.post.domain.model.v1.Post;
-import com.team15gijo.post.domain.model.QHashtag;
-import com.team15gijo.post.domain.model.QPost;
+import com.team15gijo.post.domain.model.v1.QHashtag;
+import com.team15gijo.post.domain.model.v1.QPost;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Repository;

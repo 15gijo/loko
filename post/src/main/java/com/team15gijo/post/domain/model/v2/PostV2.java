@@ -18,7 +18,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Post extends BaseEntity {
+public class PostV2 extends BaseEntity {
 
     @Id
     @GeneratedValue(generator = "UUID")
@@ -45,7 +45,7 @@ public class Post extends BaseEntity {
             inverseJoinColumns = @JoinColumn(name = "hashtag_id")
     )
     @Builder.Default
-    private Set<Hashtag> hashtags = new HashSet<>();
+    private Set<HashtagV2> hashtags = new HashSet<>();
 
     @Builder.Default
     @Column(name = "views", nullable = false, columnDefinition = "int default 0")
@@ -98,8 +98,8 @@ public class Post extends BaseEntity {
     }
 
     // 새로운 게시글 생성 정적 팩토리 메서드
-    public static Post createPost(long userId, String username, String region, String postContent) {
-        Post post = Post.builder()
+    public static PostV2 createPost(long userId, String username, String region, String postContent) {
+        PostV2 post = PostV2.builder()
                 .userId(userId)
                 .username(username)
                 .region(region)

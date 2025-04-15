@@ -24,7 +24,7 @@ import org.hibernate.annotations.GenericGenerator;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Hashtag {
+public class HashtagV2 {
 
     @Id
     @GeneratedValue(generator = "UUID")
@@ -42,5 +42,5 @@ public class Hashtag {
      */
     @ManyToMany(mappedBy = "hashtags")
     @JsonIgnore
-    private Set<Post> posts = new HashSet<>();
+    private Set<PostV2> posts = new HashSet<>();
 }

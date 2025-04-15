@@ -10,11 +10,11 @@ import java.util.List;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class PostQueryDslRepositoryImplV2 implements PostQueryDslRepositoryV2Custom {
+public class PostQueryDslRepositoryV2CustomImpl implements PostQueryDslRepositoryV2Custom {
 
     private final JPAQueryFactory queryFactory;
 
-    public PostQueryDslRepositoryImplV2(JPAQueryFactory queryFactory) {
+    public PostQueryDslRepositoryV2CustomImpl(JPAQueryFactory queryFactory) {
         this.queryFactory = queryFactory;
     }
 

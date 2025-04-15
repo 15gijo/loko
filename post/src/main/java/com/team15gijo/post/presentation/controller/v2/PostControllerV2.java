@@ -1,8 +1,9 @@
 package com.team15gijo.post.presentation.controller.v2;
 
+import com.team15gijo.common.annotation.RoleGuard;
 import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.post.application.service.v2.PostServiceV2;
-import com.team15gijo.post.domain.model.Post;
+import com.team15gijo.post.domain.model.v2.PostV2;
 import com.team15gijo.post.presentation.dto.v2.PostRequestDtoV2;
 import com.team15gijo.post.presentation.dto.v2.PostResponseDtoV2;
 import java.net.URLDecoder;
@@ -48,7 +49,7 @@ public class PostControllerV2 {
         String decodedRegion = URLDecoder.decode(region, StandardCharsets.UTF_8);
         String decodedUsername = URLDecoder.decode(username, StandardCharsets.UTF_8);
 
-        Post created = postService.createPost(userId, decodedUsername, decodedRegion, request);
+        PostV2 created = postService.createPost(userId, decodedUsername, decodedRegion, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("신규 게시글 등록 성공", PostResponseDtoV2.from(created)));
     }
@@ -64,7 +65,7 @@ public class PostControllerV2 {
             @RequestParam(defaultValue = "desc") String sortDirection) {
         Sort.Direction direction = sortDirection.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
-        Page<Post> posts = postService.getPosts(pageable);
+        Page<PostV2> posts = postService.getPosts(pageable);
         Page<PostResponseDtoV2> dtoPage = posts.map(PostResponseDtoV2::from);
         return ResponseEntity.ok(ApiResponse.success("게시글 목록 조회 성공", dtoPage));
     }
@@ -74,19 +75,20 @@ public class PostControllerV2 {
      */
     @GetMapping("/{postId}")
     public ResponseEntity<ApiResponse<PostResponseDtoV2>> getPostById(@PathVariable UUID postId) {
-        Post post = postService.getPostById(postId);
+        PostV2 post = postService.getPostById(postId);
         return ResponseEntity.ok(ApiResponse.success("게시글 조회 성공", PostResponseDtoV2.from(post)));
     }
 
     /**
      * 게시글 수정 엔드포인트 (내용 업데이트) - 현재 로그인 사용자의 X-User-Id를 추가로 받음
      */
+    @RoleGuard(min = "USER")
     @PutMapping("/{postId}")
     public ResponseEntity<ApiResponse<PostResponseDtoV2>> updatePost(
             @PathVariable UUID postId,
             @RequestHeader("X-User-Id") Long userId,
             @RequestBody PostRequestDtoV2 request) {
-        Post updated = postService.updatePost(postId, request);
+        PostV2 updated = postService.updatePost(postId, request, userId);
         return ResponseEntity.ok(ApiResponse.success("게시글 수정 성공", PostResponseDtoV2.from(updated)));
     }
 
@@ -97,7 +99,7 @@ public class PostControllerV2 {
     public ResponseEntity<ApiResponse<Void>> deletePost(
             @PathVariable UUID postId,
             @RequestHeader("X-User-Id") Long userId) {
-        postService.deletePost(postId);
+        postService.deletePost(postId,userId);
         return ResponseEntity.ok(ApiResponse.success("게시글 삭제 성공", null));
     }
 
@@ -109,7 +111,7 @@ public class PostControllerV2 {
             @PathVariable UUID postId,
             @RequestHeader("X-User-Id") Long userId,
             @RequestBody List<String> hashtags) {
-        Post updatedPost = postService.addHashtags(postId, hashtags, userId);
+        PostV2 updatedPost = postService.addHashtags(postId, hashtags, userId);
         return ResponseEntity.ok(ApiResponse.success("해시태그 추가 성공", PostResponseDtoV2.from(updatedPost)));
     }
 

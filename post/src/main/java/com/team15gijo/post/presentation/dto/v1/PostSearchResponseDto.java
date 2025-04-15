@@ -1,7 +1,7 @@
 package com.team15gijo.post.presentation.dto.v1;
 
-import com.team15gijo.post.domain.model.Hashtag;
-import com.team15gijo.post.domain.model.Post;
+import com.team15gijo.post.domain.model.v1.Hashtag;
+import com.team15gijo.post.domain.model.v1.Post;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;

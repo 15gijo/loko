@@ -1,6 +1,6 @@
 package com.team15gijo.post.presentation.dto.v2;
 
-import com.team15gijo.post.domain.model.Post;
+import com.team15gijo.post.domain.model.v2.PostV2;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -27,7 +27,7 @@ public class PostResponseDtoV2 {
     private double popularityScore;
     private LocalDateTime createdAt;
 
-    public static PostResponseDtoV2 from(Post post) {
+    public static PostResponseDtoV2 from(PostV2 post) {
 
         List<String> hashtagNames = post.getHashtags().stream()
                 .map(hashtag -> hashtag.getHashtagName())

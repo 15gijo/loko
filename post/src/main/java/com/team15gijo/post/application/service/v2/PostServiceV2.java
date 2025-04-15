@@ -1,12 +1,12 @@
 package com.team15gijo.post.application.service.v2;
 
+import com.team15gijo.post.domain.model.v2.HashtagV2;
 import com.team15gijo.post.infrastructure.kafka.util.KafkaUtil;
 import com.team15gijo.post.domain.exception.PostDomainException;
 import com.team15gijo.post.domain.exception.PostDomainExceptionCode;
-import com.team15gijo.post.domain.model.Hashtag;
-import com.team15gijo.post.domain.model.Post;
-import com.team15gijo.post.domain.repository.HashtagRepository;
-import com.team15gijo.post.domain.repository.PostRepository;
+import com.team15gijo.post.domain.model.v2.PostV2;
+import com.team15gijo.post.domain.repository.v2.HashtagRepositoryV2;
+import com.team15gijo.post.domain.repository.v2.PostRepositoryV2;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.EventType;
 import com.team15gijo.post.presentation.dto.v2.PostRequestDtoV2;
 import java.util.List;
@@ -21,8 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PostServiceV2 {
 
-    private final PostRepository postRepository;
-    private final HashtagRepository hashtagRepository;
+    private final PostRepositoryV2 postRepository;
+    private final HashtagRepositoryV2 hashtagRepository;
     private final KafkaUtil kafkaUtil;
 
     private static final String FEED_EVENTS_TOPIC = "feed_events";
@@ -30,8 +30,8 @@ public class PostServiceV2 {
     /**
      * 게시글 생성
      */
-    public Post createPost(long userId, String username, String region, PostRequestDtoV2 request) {
-        Post post = Post.createPost(userId, username, region, request.getPostContent());
+    public PostV2 createPost(long userId, String username, String region, PostRequestDtoV2 request) {
+        PostV2 post = PostV2.createPost(userId, username, region, request.getPostContent());
         post = postRepository.save(post);
         // kafka 이벤트 발행
         kafkaUtil.sendKafkaEvent(EventType.POST_CREATED, post, FEED_EVENTS_TOPIC);
@@ -41,7 +41,7 @@ public class PostServiceV2 {
     /**
      * 게시글 목록 조회 (페이징)
      */
-    public Page<Post> getPosts(Pageable pageable) {
+    public Page<PostV2> getPosts(Pageable pageable) {
         return postRepository.findAll(pageable);
     }
 
@@ -49,8 +49,8 @@ public class PostServiceV2 {
      * 게시글 상세 조회 (views 증가 포함)
      */
     @Transactional
-    public Post getPostById(UUID postId) {
-        Post post = postRepository.findById(postId)
+    public PostV2 getPostById(UUID postId) {
+        PostV2 post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
         // 도메인 메서드를 통해 조회수 증가
         post.incrementViews();
@@ -64,9 +64,14 @@ public class PostServiceV2 {
     /**
      * 게시글 수정 (내용 업데이트)
      */
-    public Post updatePost(UUID postId, PostRequestDtoV2 request) {
-        Post post = postRepository.findById(postId)
+    public PostV2 updatePost(UUID postId, PostRequestDtoV2 request, long userId) {
+        PostV2 post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
+
+        if (post.getUserId() != userId) {
+            throw new PostDomainException(PostDomainExceptionCode.NOT_OWNER);
+        }
+
         post.updateContent(request.getPostContent());
         post = postRepository.save(post);
         // kafka 이벤트 발행
@@ -77,9 +82,12 @@ public class PostServiceV2 {
     /**
      * 게시글 삭제 (Soft Delete)
      */
-    public void deletePost(UUID postId) {
-        Post post = postRepository.findById(postId)
+    public void deletePost(UUID postId, long userId) {
+        PostV2 post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
+        if (post.getUserId() != userId) {
+            throw new PostDomainException(PostDomainExceptionCode.NOT_OWNER);
+        }
         postRepository.delete(post);
         // kafka 이벤트 발행
         kafkaUtil.sendKafkaEvent(EventType.POST_DELETED, post, FEED_EVENTS_TOPIC);
@@ -88,8 +96,8 @@ public class PostServiceV2 {
     /**
      * 게시글에 해시태그 추가
      */
-    public Post addHashtags(UUID postId, List<String> hashtags, long userId) {
-        Post post = postRepository.findById(postId)
+    public PostV2 addHashtags(UUID postId, List<String> hashtags, long userId) {
+        PostV2 post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
 
         if (post.getUserId() != userId) {
@@ -97,9 +105,9 @@ public class PostServiceV2 {
         }
 
         for (String hashtagName : hashtags) {
-            Hashtag hashtag = hashtagRepository.findByHashtagName(hashtagName)
+            HashtagV2 hashtag = hashtagRepository.findByHashtagName(hashtagName)
                     .orElseGet(() -> {
-                        Hashtag newTag = Hashtag.builder()
+                        HashtagV2 newTag = HashtagV2.builder()
                                 .hashtagName(hashtagName)
                                 .build();
                         return hashtagRepository.save(newTag);
@@ -124,7 +132,7 @@ public class PostServiceV2 {
      */
     @Transactional
     public void addCommentCount(UUID postId) {
-        Post post = postRepository.findById(postId)
+        PostV2 post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
         // 도메인 메서드를 통해 댓글 수 증가
         post.incrementCommentCount();
@@ -135,7 +143,7 @@ public class PostServiceV2 {
 
     @Transactional
     public void minusCommentCount(UUID postId) {
-        Post post = postRepository.findById(postId)
+        PostV2 post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
         // 도메인 메서드를 통해 댓글 수 증가
         post.decrementCommentCount();

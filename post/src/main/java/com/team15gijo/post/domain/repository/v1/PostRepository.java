@@ -1,4 +1,4 @@
-package com.team15gijo.post.domain.repository;
+package com.team15gijo.post.domain.repository.v1;
 
 import com.team15gijo.post.domain.model.v1.Post;
 import org.springframework.data.domain.PageRequest;
