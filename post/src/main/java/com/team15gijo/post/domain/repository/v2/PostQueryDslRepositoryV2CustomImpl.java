@@ -1,27 +1,27 @@
-package com.team15gijo.post.domain.repository;
+package com.team15gijo.post.domain.repository.v2;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.team15gijo.post.domain.model.Post;
-import com.team15gijo.post.domain.model.QHashtag;
-import com.team15gijo.post.domain.model.QPost;
+import com.team15gijo.post.domain.model.v2.QHashtagV2;
+import com.team15gijo.post.domain.model.v2.QPostV2;
+import com.team15gijo.post.domain.model.v2.PostV2;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class PostQueryDslRepositoryImpl implements PostQueryDslRepository {
+public class PostQueryDslRepositoryImplV2 implements PostQueryDslRepositoryV2Custom {
 
     private final JPAQueryFactory queryFactory;
 
-    public PostQueryDslRepositoryImpl(JPAQueryFactory queryFactory) {
+    public PostQueryDslRepositoryImplV2(JPAQueryFactory queryFactory) {
         this.queryFactory = queryFactory;
     }
 
     @Override
-    public List<Post> searchPosts(String keyword, String region, LocalDateTime cursor, int size) {
-        QPost post = QPost.post;
-        QHashtag hashtag = QHashtag.hashtag;
+    public List<PostV2> searchPostsV2(String keyword, String region, LocalDateTime cursor, int size) {
+        QPostV2 post = QPostV2.postV2;
+        QHashtagV2 hashtag = QHashtagV2.hashtagV2;
 
         BooleanBuilder builder = new BooleanBuilder();
         builder.and(post.region.eq(region));

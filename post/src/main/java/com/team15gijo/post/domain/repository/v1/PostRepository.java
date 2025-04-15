@@ -1,6 +1,6 @@
 package com.team15gijo.post.domain.repository;
 
-import com.team15gijo.post.domain.model.Post;
+import com.team15gijo.post.domain.model.v1.Post;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,10 +1,9 @@
-package com.team15gijo.post.domain.repository;
+package com.team15gijo.post.domain.repository.v2;
 
-import com.team15gijo.post.domain.model.Hashtag;
-import org.springframework.data.jpa.repository.JpaRepository;
-
+import com.team15gijo.post.domain.model.v2.Hashtag;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface HashtagRepository extends JpaRepository<Hashtag, UUID> {
 

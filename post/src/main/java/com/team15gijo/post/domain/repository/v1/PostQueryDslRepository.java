@@ -1,6 +1,6 @@
 package com.team15gijo.post.domain.repository;
 
-import com.team15gijo.post.domain.model.Post;
+import com.team15gijo.post.domain.model.v1.Post;
 import java.time.LocalDateTime;
 import java.util.List;
 
