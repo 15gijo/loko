@@ -4,6 +4,8 @@ import com.team15gijo.comment.application.service.v1.CommentService;
 import com.team15gijo.comment.domain.model.Comment;
 import com.team15gijo.comment.presentation.dto.v1.CommentRequestDto;
 import com.team15gijo.common.dto.ApiResponse;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,7 +31,8 @@ public class CommentController {
             @RequestHeader("X-User-Id") Long userId,
             @RequestHeader("X-User-Nickname") String username,
             @RequestBody CommentRequestDto request) {
-        Comment created = commentService.createComment(userId, username, postId, request);
+        String decodedUsername = URLDecoder.decode(username, StandardCharsets.UTF_8);
+        Comment created = commentService.createComment(userId, decodedUsername, postId, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("댓글이 성공적으로 작성되었습니다.", created));
     }
