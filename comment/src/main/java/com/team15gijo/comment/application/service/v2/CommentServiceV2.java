@@ -1,40 +1,40 @@
-package com.team15gijo.comment.application.service.v1;
+package com.team15gijo.comment.application.service.v2;
 
 import com.team15gijo.comment.domain.exception.CommentDomainException;
 import com.team15gijo.comment.domain.exception.CommentDomainExceptionCode;
-import com.team15gijo.comment.domain.model.v1.Comment;
-import com.team15gijo.comment.domain.repository.v1.CommentRepository;
-import com.team15gijo.comment.infrastructure.client.v1.PostClient;
+import com.team15gijo.comment.domain.model.v2.CommentV2;
+import com.team15gijo.comment.domain.repository.v2.CommentRepositoryV2;
+import com.team15gijo.comment.infrastructure.client.v2.PostClientV2;
 import com.team15gijo.comment.infrastructure.kafka.dto.CommentNotificationEventDto;
 import com.team15gijo.comment.infrastructure.kafka.service.KafkaProducerService;
-import com.team15gijo.comment.presentation.dto.v1.CommentRequestDto;
+import com.team15gijo.comment.presentation.dto.v2.CommentRequestDtoV2;
 import com.team15gijo.common.dto.ApiResponse;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class CommentService {
+public class CommentServiceV2 {
 
-    private final CommentRepository commentRepository;
-    private final PostClient postClient;  // Feign Client 주입
+    private final CommentRepositoryV2 commentRepository;
+    private final PostClientV2 postClient;  // Feign Client 주입
     private final KafkaProducerService producerService;
 
     /**
      * 댓글 생성: 게시글 존재 여부를 검증한 후 댓글 생성 및 게시글의 댓글 수 증가 호출
      */
-    public Comment createComment(long userId, String username, UUID postId, CommentRequestDto request) {
+    public CommentV2 createComment(long userId, String username, UUID postId, CommentRequestDtoV2 request) {
         // Feign Client 호출로 게시글 존재 여부 확인
         ApiResponse<Boolean> existsResponse = postClient.exists(postId);
         if (existsResponse.getData() == null || !existsResponse.getData()) {
             throw new CommentDomainException(CommentDomainExceptionCode.POST_NOT_FOUND);
         }
 
-        Comment comment = Comment.createComment(postId, userId, username, request.getCommentContent(), request.getParentCommentId());
-        Comment savedComment = commentRepository.save(comment);
+        CommentV2 comment = CommentV2.createComment(postId, userId, username, request.getCommentContent(), request.getParentCommentId());
+        CommentV2 savedComment = commentRepository.save(comment);
 
         // 게시글의 댓글 수 증가 호출
         postClient.addCommentCount(postId);
@@ -51,15 +51,15 @@ public class CommentService {
     /**
      * 특정 게시글의 댓글 목록 조회 (페이징)
      */
-    public Page<Comment> getCommentsByPostId(UUID postId, Pageable pageable) {
+    public Page<CommentV2> getCommentsByPostId(UUID postId, Pageable pageable) {
         return commentRepository.findByPostId(postId, pageable);
     }
 
     /**
      * 댓글 수정 (내용 업데이트) - 현재 로그인한 사용자(userId)가 댓글 소유자인지 확인
      */
-    public Comment updateComment(UUID commentId, CommentRequestDto request, long userId) {
-        Comment comment = commentRepository.findById(commentId)
+    public CommentV2 updateComment(UUID commentId, CommentRequestDtoV2 request, long userId) {
+        CommentV2 comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CommentDomainException(CommentDomainExceptionCode.COMMENT_NOT_FOUND));
 
         if (comment.getUserId() != userId) {
@@ -74,7 +74,7 @@ public class CommentService {
      * 댓글 삭제 - 현재 로그인한 사용자(userId)가 댓글 소유자인지 확인
      */
     public void deleteComment(UUID commentId, long userId) {
-        Comment comment = commentRepository.findById(commentId)
+        CommentV2 comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CommentDomainException(CommentDomainExceptionCode.COMMENT_NOT_FOUND));
 
         if (comment.getUserId() != userId) {

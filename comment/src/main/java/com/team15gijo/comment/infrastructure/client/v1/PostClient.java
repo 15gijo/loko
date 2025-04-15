@@ -1,4 +1,4 @@
-package com.team15gijo.comment.infrastructure.client;
+package com.team15gijo.comment.infrastructure.client.v1;
 
 import com.team15gijo.common.dto.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
