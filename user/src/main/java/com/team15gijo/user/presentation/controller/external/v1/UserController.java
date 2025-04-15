@@ -7,11 +7,10 @@ import com.team15gijo.user.application.service.UserApplicationService;
 import com.team15gijo.user.domain.model.UserStatus;
 import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserReadResponseDto;
+import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserSignUpRequestDto;
 import com.team15gijo.user.presentation.dto.v1.UserSignUpResponseDto;
 import jakarta.validation.Valid;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -56,7 +55,8 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("유저 단건 조회 성공", adminUserReadResponseDto));
     }
 
-    //유저 전체 조회 - 마스터
+    //유저 전체 조회 - 관리자
+    @RoleGuard(value = "ADMIN")
     @GetMapping("/admin/search")
     public ResponseEntity<ApiResponse<Page<AdminUserReadResponseDto>>> searchUsersForAdmin(
             @RequestParam(
@@ -111,19 +111,53 @@ public class UserController {
     @RoleGuard(min = "USER")
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserReadResponseDto>> getUser(
-            @RequestHeader("X-User-Id") Long userId,
-            @RequestHeader(value = "X-User-Nickname", required = false) String nickname,
-            @RequestHeader("X-User-Region") String region) {
-        log.info("Get User: {}", userId);
-        log.info("Get nickname: {}", URLDecoder.decode(nickname));
-        log.info("Get region: {}", region);
+            @RequestHeader("X-User-Id") Long userId) {
         UserReadResponseDto userReadResponseDto = userApplicatoinService.getUser(userId);
         return ResponseEntity.ok(ApiResponse.success("내 정보 조회 성공", userReadResponseDto));
     }
 
-//    //다른 유저 조회 - 유저
-//    @GetMapping
-//    public ResponseEntity<ApiResponse<>>
+    //다른 유저 검색 - 유저
+    @RoleGuard(min = "USER")
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<Page<UserReadsResponseDto>>> searchUserReads(
+            @RequestParam(
+                    name = "nickname",
+                    defaultValue = "",
+                    required = false
+            ) String nickname,
+            @RequestParam(
+                    name = "username",
+                    defaultValue = "",
+                    required = false
+            ) String username,
+            @RequestParam(
+                    name = "region",
+                    defaultValue = "",
+                    required = false
+            ) String region,
+            @PageableDefault(
+                    size = 10,
+                    page = 1,
+                    sort = {"createdAt", "updatedAt"},
+                    direction = Direction.ASC
+            ) Pageable pageable
+    ) {
+        Pageable validatedPageable = PageableUtils.validate(pageable);
+        Page<UserReadsResponseDto> userReadsResponseDtoPage = userApplicatoinService.searchUsers(
+                nickname,
+                username,
+                region,
+                validatedPageable);
+        return ResponseEntity.ok(ApiResponse.success("다른 유저 검색 성공", userReadsResponseDtoPage));
+    }
 
     //상세조회 - 유저
+    @RoleGuard(min = "USER")
+    @GetMapping("/{nickname}")
+    public ResponseEntity<ApiResponse<UserReadResponseDto>> getUserForUser(
+            @PathVariable String nickname
+    ) {
+        UserReadResponseDto userReadResponseDto = userApplicatoinService.getUserForUser(nickname);
+        return ResponseEntity.ok(ApiResponse.success("유저 상세 조회 성공", userReadResponseDto));
+    }
 }

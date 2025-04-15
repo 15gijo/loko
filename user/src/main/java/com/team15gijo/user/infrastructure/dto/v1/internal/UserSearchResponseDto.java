@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserSearchResponseDto {
 
-    private Long userId;
     private String username;
     private String nickname;
     private String profile;
