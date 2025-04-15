@@ -22,6 +22,7 @@ public class ChatMessageDocument {
     @Column(name = "sender_by", nullable = false, updatable = false)
     private Long senderId;
     private String senderNickname;
+    private String receiverNickname;
     private ConnectionType connectionType;
     private String messageContent;
     private ChatMessageType chatMessageType;
@@ -48,6 +49,7 @@ public class ChatMessageDocument {
             .id(_id)
             .senderId(senderId)
             .senderNickname(senderNickname)
+            .receiverNickname(receiverNickname)
             .connectionType(connectionType)
             .messageContent(messageContent)
             .sentAt(sentAt)

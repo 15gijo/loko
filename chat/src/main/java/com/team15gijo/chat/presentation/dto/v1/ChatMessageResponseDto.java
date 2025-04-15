@@ -15,6 +15,7 @@ public class ChatMessageResponseDto {
     private String id;
     private Long senderId;
     private String senderNickname;
+    private String receiverNickname;
     private ConnectionType connectionType;
     private String messageContent;
     private LocalDateTime sentAt;
