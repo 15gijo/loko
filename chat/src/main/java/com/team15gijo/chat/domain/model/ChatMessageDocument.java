@@ -21,7 +21,7 @@ public class ChatMessageDocument {
     @CreatedBy
     @Column(name = "sender_by", nullable = false, updatable = false)
     private Long senderId;
-    private String senderNickname;
+    private Long receiverId;
     private String receiverNickname;
     private ConnectionType connectionType;
     private String messageContent;
@@ -48,7 +48,7 @@ public class ChatMessageDocument {
         return ChatMessageResponseDto.builder()
             .id(_id)
             .senderId(senderId)
-            .senderNickname(senderNickname)
+            .receiverId(receiverId)
             .receiverNickname(receiverNickname)
             .connectionType(connectionType)
             .messageContent(messageContent)
