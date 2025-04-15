@@ -39,7 +39,7 @@ public class ChatRoom extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private ChatRoomType chatRoomType;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @JoinColumn(name = "chat_room_id") // ChatRoomParticipants 테이블의 chat_room_id 외래키
     private Set<ChatRoomParticipant> chatRoomParticipants;
 
