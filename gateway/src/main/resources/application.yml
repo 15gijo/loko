@@ -34,6 +34,10 @@ spring:
           uri: lb://feed-service
           predicates:
             - Path=/api/v1/feeds/**
+        - id: chat-service  # 라우트 식별자
+          uri: lb://chat-service  # 'chat-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
+          predicates:
+            - Path=/api/v1/chats/**  # /chats 경로로 들어오는 요청을 이 라우트로 처리
       discovery:
         locator:
           enabled: true  # 서비스 디스커버리를 통해 동적으로 라우트를 생성하도록 설정, 나중에 끄자

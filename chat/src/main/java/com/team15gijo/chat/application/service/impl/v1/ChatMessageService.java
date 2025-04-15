@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -58,7 +57,8 @@ public class ChatMessageService {
 
     private final FeignClientService feignClientService;
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
+
     private final SimpMessagingTemplate messagingTemplate;
     private final MongoTemplate mongoTemplate;
 
@@ -69,11 +69,11 @@ public class ChatMessageService {
      */
     public ChatRoomResponseDto createChatRoom(
         ChatRoomRequestDto requestDto,
-        Long userId,
-        String nickname
+        Long userId
     ) {
         log.info("userId = {}", userId);
-        log.info("nickname = {}", nickname);
+
+        // TODO: user에서 userId가 존재하는지 검증
 
         /* 채팅방 생성 시, 상대방 계정 조회(nickname 으로 존재유무 판단)
          * 상대방과 본인 userId를 모두 추출하여 채팅방 참여자 생성
@@ -206,8 +206,8 @@ public class ChatMessageService {
         // 모든 채팅방 참여자가 비활성화 상태면 채팅방 및 참여자 소프트삭제 처리
         if(allParticipantsNonactive) {
             log.info("[exitChatRoom] 모든 채팅방 참여자 비활성화 상태");
-            chatRoomRepository.delete(chatRoom);
             chatRoomParticipantRepository.deleteAll(chatRoomParticipants);
+            chatRoomRepository.delete(chatRoom);
 
             // 채팅방 모든 참여자 userId 메시지 소프트 삭제 메소드
             deleteChatMessageForChatRoomId(chatRoomId, userId);
@@ -238,7 +238,10 @@ public class ChatMessageService {
      * 채팅방 ID에 해당하는 senderId(userId) 유효성 검증
      */
     @Transactional(readOnly = true)
-    public Map<String, Boolean> validateSenderId(UUID chatRoomId, Long senderId) {
+    public Map<String, Boolean> validateSenderId(
+        UUID chatRoomId,
+        Long senderId
+    ) {
         ChatRoom chatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
             .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
 
@@ -254,16 +257,22 @@ public class ChatMessageService {
 
     /**
      * 소켓 연결 중단 시, redis 삭제 호출
-     * TODO: Redis 키를 SessionID로, value는 senderId, chatRoomId로 변경
+     * Redis key(chatRoomId:senderId)-value(SessionID, senderId, chatRoomId)
      */
     @Transactional(readOnly = true)
-    public Boolean deleteRedisSenderId(Long senderId) {
-        if(redisTemplate.hasKey(String.valueOf(senderId))) {
-            log.info("소켓 연결 해지로 senderId {}의 Redis 캐시 삭제", senderId);
-            redisTemplate.delete(String.valueOf(senderId));
+    public Boolean deleteRedisSenderId(
+        UUID chatRoomId,
+        String senderId
+    ) {
+        String cacheKey = chatRoomId + ":"+ senderId;
+        log.info("cacheKey: {}", cacheKey);
+
+        if(redisTemplate.hasKey(cacheKey)) {
+            log.info("소켓 연결 해지로 cacheKey={}인 Redis 캐시 삭제", cacheKey);
+            redisTemplate.delete(cacheKey);
             return true;
         } else {
-            log.info("senderId {}에 해당하는 Redis 캐시가 존재하지 않음", senderId);
+            log.info("cacheKey={}에 해당하는 Redis 캐시가 존재하지 않음", cacheKey);
             return false;
         }
     }
@@ -274,6 +283,7 @@ public class ChatMessageService {
      */
     @Transactional(readOnly = true)
     public Page<ChatMessageDocument> getMessagesByChatRoomId(UUID chatRoomId, Long senderId, Pageable pageable) {
+        // 채팅방 id 및 userId 유효성 검증
         checkRoomIdAndUserId(chatRoomId, senderId);
 
         // 삭제되지 않은 메시지만 조회
@@ -298,6 +308,7 @@ public class ChatMessageService {
      */
     @Transactional(readOnly = true)
     public ChatMessageResponseDto getMessageById(UUID chatRoomId, String id, Long userId) {
+        // 채팅방 id 및 userId 유효성 검증
         checkRoomIdAndUserId(chatRoomId, userId);
 
         Query query = Query.query(Criteria.where("_id").is(id));
@@ -314,8 +325,7 @@ public class ChatMessageService {
     /**
      * "/ws-stomp" 경로로 소켓 연결 시, 채팅방에 참여한 user가 Redis 캐시 조회하여 있는 경우 소켓 연결 중단
      * 서버 리셋 후, 다시 소켓 연결하면 재접속 가능
-     * 웹 소켓 연결 시, redis senderId(key)-sessionId(value) 캐시 저장
-     * -> TODO: Redis 키를 SessionID로, value는 senderId, chatRoomId로 변경
+     * 웹 소켓 연결 시, Redis key(chatRoomId:senderId)-value(SessionID, senderId, chatRoomId)
      * 이전 메시지 조회로 채팅방에 처음 입장한 경우, 입장 메시지 전송
      */
     public void connectChatRoom(
@@ -329,22 +339,38 @@ public class ChatMessageService {
             String sessionId = headerAccessor.getSessionId();
             log.info("connectChatRoom sessionId: {}", sessionId);
 
-            // Redis에 senderId가 이미 존재하는지 확인
-            if(redisTemplate.hasKey(senderId.toString())) {
+            String cacheKey = chatRoomId + ":"+ senderId;
+            log.info("cacheKey: {}", cacheKey);
+
+            // Redis에 senderId:chatRoomId 이미 존재하는지 확인
+            if(redisTemplate.hasKey(cacheKey)) {
                 // 이미 존재하는 경우, 중복 연결 차단 메시지 전송 및 senderId가 연결된 소켓 연결 중단
-                log.warn("senderId {} 가 이미 존재하여 중복 연결이 차단됨", senderId);
-                redisTemplate.delete(senderId.toString());
+                log.warn("cacheKey {} 가 이미 존재하여 중복 연결이 차단됨", cacheKey);
+                redisTemplate.delete(cacheKey);
                 messagingTemplate.convertAndSend("/topic/chat/errors/" + senderId,
                     "중복 로그인으로 인해 연결이 거부되었습니다. 해당 채팅방에 다시 접속해주세요.");
             } else {
-                // 존재하지 않은 경우, Redis에 key(senderId)와 value(sessionId) 저장
-                redisTemplate.opsForValue().set(String.valueOf(senderId),
-                    Objects.requireNonNull(sessionId), 1, TimeUnit.DAYS);
-                log.info("senderId {} 과 sessionId {} Redis 저장", senderId, sessionId);
+                // 존재하지 않은 경우, Redis에 senderId, chatRoomId 저장
+                Map<String, Object> value = new HashMap<>();
+                value.put("sessionId", sessionId);
+                value.put("chatRoomId", chatRoomId);
+                value.put("senderId", senderId);
+
+                redisTemplate.opsForHash().putAll(cacheKey, value);
+                redisTemplate.expire(cacheKey, 1, TimeUnit.DAYS);
+
+                log.info("[Redis 캐싱] cacheKey={} 과 value={} 저장", cacheKey, value);
 
                 // mongoDB에서 userId와 chatRoomId에 대한 메시지 유무로 처음인지 판단하고 입장 메시지 전송
-                List<ChatMessageDocument> messageDocumentList = chatMessageRepository.findByChatRoomIdAndSenderId(chatRoomId, senderId);
-                if(messageDocumentList.isEmpty()) {
+                Query query = Query.query(
+                    Criteria.where("chatRoomId").is(chatRoomId)
+                        .and("senderId").is(senderId)
+                        .and("deletedAt").is(null));
+
+                long messageCount = mongoTemplate.count(query, ChatMessageDocument.class);
+                log.info(">> messageCount={}", messageCount);
+
+                if(messageCount == 0) {
                     // chatRoomId에서 senderId가 보낸 메시지가 없는 경우, mongoDB 메시지 저장
                     ChatMessageDocument firstMessage = ChatMessageDocument.builder()
                         .chatRoomId(chatRoomId)
@@ -354,10 +380,14 @@ public class ChatMessageService {
                         .messageContent(message)
                         .sentAt(LocalDateTime.now())
                         .build();
-                    chatMessageRepository.save(firstMessage);
-
-                    // 처음 채팅방 접속으로 입장 메시지 전송
-                    messagingTemplate.convertAndSend("/topic/chat/enter/" + chatRoomId, firstMessage);
+                    try {
+                        // 처음 채팅방 접속으로 입장 메시지 전송
+                        ChatMessageDocument savedMessage = chatMessageRepository.save(firstMessage);
+                        log.info("[mongoDB 저장 성공] message={}", savedMessage.toString());
+                        messagingTemplate.convertAndSend("/topic/chat/enter/" + chatRoomId, savedMessage);
+                    } catch (Exception e) {
+                        log.error("[mongoDB 저장 실패] message={}", firstMessage, e);
+                    }
                 }
             }
         }
@@ -367,11 +397,12 @@ public class ChatMessageService {
      * stomp 메시지 브로커를 통한 메시지 전송
      */
     public ChatMessageResponseDto sendMessage(ChatMessageRequestDto requestDto) {
+        log.info("sendMessage requestDto={}", requestDto);
         // 메시지 저장 및 전달
         ChatMessageDocument chatMessage = ChatMessageDocument.builder()
             .senderId(requestDto.getSenderId())
             // TODO: 인증 헤더로 전달된 nickname 사용
-//            .senderNickname("닉네임1")
+//            .senderNickname(nickname)
             .chatRoomId(requestDto.getChatRoomId())
             .connectionType(ConnectionType.CHAT)
             .chatMessageType(ChatMessageType.TEXT)
@@ -379,6 +410,7 @@ public class ChatMessageService {
             .sentAt(LocalDateTime.now())
             .build();
         chatMessageRepository.save(chatMessage);
+        log.info("chatMessageContent={}", chatMessage.getMessageContent());
 
         return chatMessage.toResponse();
     }
@@ -403,7 +435,12 @@ public class ChatMessageService {
         log.info(">> 메시지 소프트 삭제 시작");
 
         // 채팅방의 모든 메시지 조회
-        List<ChatMessageDocument> chatMessages = chatMessageRepository.findByChatRoomId(chatRoomId);
+        Query query = Query.query(
+            Criteria.where("chatRoomId").is(chatRoomId)
+                .and("deletedAt").is(null));
+
+
+        List<ChatMessageDocument> chatMessages = mongoTemplate.find(query, ChatMessageDocument.class);
         log.info("chatMessages.size() = {}", chatMessages.size());
 
         if (chatMessages.isEmpty()) {
