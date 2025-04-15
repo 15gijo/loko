@@ -5,6 +5,8 @@ import com.team15gijo.comment.domain.exception.CommentDomainExceptionCode;
 import com.team15gijo.comment.domain.model.Comment;
 import com.team15gijo.comment.domain.repository.CommentRepository;
 import com.team15gijo.comment.infrastructure.client.PostClient;
+import com.team15gijo.comment.infrastructure.kafka.dto.CommentNotificationEventDto;
+import com.team15gijo.comment.infrastructure.kafka.service.KafkaProducerService;
 import com.team15gijo.comment.presentation.dto.v1.CommentRequestDto;
 import com.team15gijo.common.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ public class CommentService {
 
     private final CommentRepository commentRepository;
     private final PostClient postClient;  // Feign Client 주입
+    private final KafkaProducerService producerService;
 
     /**
      * 댓글 생성: 게시글 존재 여부를 검증한 후 댓글 생성 및 게시글의 댓글 수 증가 호출
@@ -35,6 +38,12 @@ public class CommentService {
 
         // 게시글의 댓글 수 증가 호출
         postClient.addCommentCount(postId);
+
+        // 알림 서버로 카프카 메세지 전송
+        producerService.sendCommentCreate(CommentNotificationEventDto.from(
+                request.getReceiverId(),
+                username,
+                request.getCommentContent()));
 
         return savedComment;
     }
