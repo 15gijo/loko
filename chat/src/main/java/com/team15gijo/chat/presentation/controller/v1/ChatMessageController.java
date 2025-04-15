@@ -9,6 +9,8 @@ import com.team15gijo.chat.presentation.dto.v1.ChatMessageResponseDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatRoomRequestDto;
 import com.team15gijo.common.annotation.RoleGuard;
 import com.team15gijo.common.dto.ApiResponse;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -118,6 +120,22 @@ public class ChatMessageController {
             message = userId + "의 " + chatRoomId + " 채팅방이 비활성화 되었습니다.";
         }
         return ResponseEntity.ok(ApiResponse.success(message, result));
+    }
+
+    /**
+     * 수신자 닉네임 검증 및 웹소켓 연결 시, 발송자 닉네임 전달
+     */
+    @GetMapping("/validate/nickname/{receiverNickname}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> validateNickname(
+        @PathVariable("receiverNickname") String receiverNickname,
+        @RequestHeader("X-User-Nickname") String senderNickname
+    ) {
+        // URL 디코딩하여 원래의 한글 문자열로 복원
+        String decodedSenderNickname = URLDecoder.decode(senderNickname, StandardCharsets.UTF_8);
+        log.info("decodedSenderNickname = {}", decodedSenderNickname);
+
+        Map<String, Object> response = chatMessageService.validateNickname(receiverNickname, decodedSenderNickname);
+        return ResponseEntity.ok(ApiResponse.success("닉네임 유효성 검증 완료되었습니다.", response));
     }
 
     /**

@@ -237,6 +237,31 @@ public class ChatMessageService {
     }
 
     /**
+     * 수신자 닉네임 검증 및 웹소켓 연결 시, 발송자 닉네임 전달
+     */
+    public Map<String, Object> validateNickname(String receiverNickname, String senderNickname) {
+        Long receiverId = feignClientService.fetchUserIdByNickname(receiverNickname);
+        log.info("receiverId = {}", receiverId);
+        Long senderId = feignClientService.fetchUserIdByNickname(senderNickname);
+        log.info("senderId = {}", senderId);
+
+        Map<String, Object> response = new HashMap<>();
+        // 수신자 닉네임 검증 완료
+        if(receiverId != null) {
+            log.info("[validateNickname] receiverId = {}, receiverNickname = {}", receiverId, receiverNickname);
+            response.put("receiverId", receiverId);
+            response.put("receiverNickname", receiverNickname);
+            // 발신자 닉네임 추출
+        }
+        if(senderId != null) {
+            log.info("[validateNickname] senderId = {}, senderNickname = {}", senderId, senderNickname);
+            response.put("senderId", senderId);
+            response.put("senderNickname", senderNickname);
+        }
+        return response;
+    }
+
+    /**
      * 소켓 연결 시 사용되는
      * 채팅방 ID 유효성 검증
      */
@@ -417,12 +442,12 @@ public class ChatMessageService {
      */
     @Transactional
     public ChatMessageResponseDto sendMessage(ChatMessageRequestDto requestDto) {
-        log.info("sendMessage requestDto={}", requestDto);
+        log.info("[채팅 비즈니스 sendMessage 메소드 시작] requestDto={}", requestDto);
         // 메시지 저장 및 전달
         ChatMessageDocument chatMessage = ChatMessageDocument.builder()
             .senderId(requestDto.getSenderId())
-            // TODO: 인증 헤더로 전달된 nickname 사용
-//            .senderNickname(nickname)
+            .senderNickname(requestDto.getSenderNickname())
+            .receiverNickname(requestDto.getReceiverNickname())
             .chatRoomId(requestDto.getChatRoomId())
             .connectionType(ConnectionType.CHAT)
             .chatMessageType(ChatMessageType.TEXT)
@@ -431,6 +456,7 @@ public class ChatMessageService {
             .build();
         chatMessageRepository.save(chatMessage);
         log.info("chatMessageContent={}", chatMessage.getMessageContent());
+        log.info("ReceiverNickname={}", requestDto.getReceiverNickname());
 
         return chatMessage.toResponse();
     }

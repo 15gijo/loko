@@ -9,12 +9,16 @@
     let chatRoomId = null;
     let isConnected = false;
 
+    let senderNickname = null;
+    let receiverId = null;
+
     function connect() {
       chatRoomId = document.getElementById('chatRoomId').value;
       senderId = parseInt(document.getElementById('senderId').value);
-
-      // TODO: 인증 헤더에서 닉네임 추출
-      const nickname = getNicknameFromHeader(); // 닉네임 추출 함수 호출
+      receiverNickname = document.getElementById('receiverNickname').value;
+      // TODO: 임의 지정 -> 인증 헤더에서 닉네임 추출
+      senderNickname = "nickname2";
+      const nickname = getNicknameFromHeader(); // 발송자 닉네임 추출 함수 호출
 
       // 채팅방 ID 유효성 검증 API 호출
       fetch(`/api/v1/chats/validate/${chatRoomId}`)
@@ -28,9 +32,33 @@
           }
         })
         .catch(error => {
-          console.error("API 호출 실패: " + error);
+          console.error("채팅방 ID 유효성 API 호출 실패: " + error);
           alert('채팅방 ID 유효성 검증 실패. 서버 오류를 확인해주세요.');
         });
+
+      // 채팅방에 해당하는 유저 닉네임이 채팅방 참여자인지 유효성 검증 API 호출
+      fetch(`/api/v1/chats/validate/nickname/${receiverNickname}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json', // 요청 본문이 있다면 추가
+          'X-User-Nickname': encodeURIComponent(senderNickname) // 요청 헤더에 발송자 닉네임 포함
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.data) {
+          senderNickname = data.data.senderNickname;
+          receiverId = data.data.receiverId;
+          console.log("[발신자 ID] senderId=" + data.data.senderId);
+          console.log("[발신자 닉네임] senderNickname=" + data.data.senderNickname);
+          console.log("[수신자 ID] receiverId=" + data.data.receiverId);
+          console.log("[수신자 닉네임] receiverNickname=" + data.data.receiverNickname);
+        }
+      })
+      .catch(error => {
+        console.error("수/발신자 닉네임 유효성 API 호출 실패: " + error);
+        alert('수/발신자 닉네임 유효성 검증 실패. 서버 오류를 확인해주세요.');
+      });
 
       // 채팅방에 해당하는 userId 유효성 검증 API 호출
       fetch(`/api/v1/chats/validate/${chatRoomId}/${senderId}`)
@@ -142,6 +170,8 @@
         stompClient.send("/app/chat/" + chatRoomId, {}, JSON.stringify({ // messageMapping 경로 사용
           'chatRoomId': chatRoomId,
           'senderId': senderId,
+          'senderNickname' : senderNickname,
+          'receiverNickname' : receiverNickname,
           'messageContent': message
         }), {}, function (error) {
           console.error("메시지 전송 실패: " + error);
@@ -164,7 +194,7 @@
         p.textContent = message.messageContent;
       } else if(message.connectionType === "CHAT") {
         // 채팅 메시지 형식
-        p.textContent = message.senderId + ': ' + message.messageContent
+        p.textContent = message.senderNickname + ': ' + message.messageContent
             + ' - ' + message.sentAt;
       } else {
         // TODO: 퇴장 시 메시지 처리 예정
@@ -176,12 +206,16 @@
 </head>
 <body>
 <div>
-  <label>Chatroom ID:</label>
-  <input type="text" id="chatRoomId" value="e8685f8b-0c31-4ac7-8a95-fc3a8c6d0c9c" />
+  <label>ChatRoom ID:</label>
+  <input type="text" id="chatRoomId" value="f38106f7-8fe7-4351-8eaf-199525b67e9a" />
 </div>
 <div>
-  <label>SenderId:</label>
+  <label>SenderId(발송자 ID) :</label>
   <input type="text" id="senderId" value="1L" />
+</div>
+<div>
+  <label>Receiver Nickname(상대방/수신자 닉네임) :</label>
+  <input type="text" id="receiverNickname" value="nickname1" />
 </div>
 <div>
   <label>Message:</label>
