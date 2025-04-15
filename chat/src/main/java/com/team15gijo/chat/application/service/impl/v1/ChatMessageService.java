@@ -239,11 +239,9 @@ public class ChatMessageService {
     /**
      * 수신자 닉네임 검증 및 웹소켓 연결 시, 발송자 닉네임 전달
      */
-    public Map<String, Object> validateNickname(String receiverNickname, String senderNickname) {
+    public Map<String, Object> validateNickname(String receiverNickname) {
         Long receiverId = feignClientService.fetchUserIdByNickname(receiverNickname);
         log.info("receiverId = {}", receiverId);
-        Long senderId = feignClientService.fetchUserIdByNickname(senderNickname);
-        log.info("senderId = {}", senderId);
 
         Map<String, Object> response = new HashMap<>();
         // 수신자 닉네임 검증 완료
@@ -251,12 +249,6 @@ public class ChatMessageService {
             log.info("[validateNickname] receiverId = {}, receiverNickname = {}", receiverId, receiverNickname);
             response.put("receiverId", receiverId);
             response.put("receiverNickname", receiverNickname);
-            // 발신자 닉네임 추출
-        }
-        if(senderId != null) {
-            log.info("[validateNickname] senderId = {}, senderNickname = {}", senderId, senderNickname);
-            response.put("senderId", senderId);
-            response.put("senderNickname", senderNickname);
         }
         return response;
     }
@@ -446,7 +438,7 @@ public class ChatMessageService {
         // 메시지 저장 및 전달
         ChatMessageDocument chatMessage = ChatMessageDocument.builder()
             .senderId(requestDto.getSenderId())
-            .senderNickname(requestDto.getSenderNickname())
+            .receiverId(requestDto.getReceiverId())
             .receiverNickname(requestDto.getReceiverNickname())
             .chatRoomId(requestDto.getChatRoomId())
             .connectionType(ConnectionType.CHAT)
