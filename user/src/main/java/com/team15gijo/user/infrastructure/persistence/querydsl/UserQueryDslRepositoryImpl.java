@@ -1,25 +1,40 @@
 package com.team15gijo.user.infrastructure.persistence.querydsl;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.EnumPath;
+import com.querydsl.core.types.dsl.NumberPath;
+import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.team15gijo.user.application.dto.v1.AdminUserSearchCommand;
 import com.team15gijo.user.domain.model.QUserEntity;
 import com.team15gijo.user.domain.model.UserEntity;
+import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
+import com.team15gijo.user.presentation.dto.v1.QAdminUserReadResponseDto;
+import com.team15gijo.user.presentation.dto.v1.QUserReadsResponseDto;
+import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
+import java.util.ArrayList;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
 @Repository
+@RequiredArgsConstructor
 public class UserQueryDslRepositoryImpl implements UserQueryDslRepository {
 
     private final JPAQueryFactory jpaQueryFactory;
-
-    public UserQueryDslRepositoryImpl(JPAQueryFactory jpaQueryFactory) {
-        this.jpaQueryFactory = jpaQueryFactory;
-    }
+    private final QUserEntity user = QUserEntity.userEntity;
 
     @Override
-    public List<UserEntity> searchUsers(String keyword, Long userId, String nickname, String region, Long lastUserId, int size) {
-        QUserEntity user = QUserEntity.userEntity;
+    public List<UserEntity> searchUsers(String keyword, Long userId, String nickname, String region,
+            Long lastUserId, int size) {
 
         BooleanBuilder builder = new BooleanBuilder();
 
@@ -50,5 +65,143 @@ public class UserQueryDslRepositoryImpl implements UserQueryDslRepository {
                 .orderBy(user.id.asc())
                 .limit(size)
                 .fetch();
+    }
+
+    @Override
+    public Page<AdminUserReadResponseDto> searchUsersForAdmin(
+            AdminUserSearchCommand adminUserSearchCommand, Pageable pageable) {
+
+        List<OrderSpecifier<?>> orderSpecifiers = getAllOrderSpecifiers(pageable);
+
+        BooleanExpression[] predicates = new BooleanExpression[]{
+                eqIfPresent(user.id, adminUserSearchCommand.getUserId()),
+                containsIfPresent(user.userName, adminUserSearchCommand.getUsername()),
+                containsIfPresent(user.nickName, adminUserSearchCommand.getNickname()),
+                containsIfPresent(user.email, adminUserSearchCommand.getEmail()),
+                eqIfPresent(user.status, adminUserSearchCommand.getUserStatus()),
+                containsIfPresent(user.region, adminUserSearchCommand.getRegion())
+        };
+
+        //cotent 쿼리
+        List<AdminUserReadResponseDto> content = jpaQueryFactory
+                .select(new QAdminUserReadResponseDto(
+                        user.id,
+                        user.userName,
+                        user.nickName,
+                        user.email,
+                        user.profile,
+                        user.status.stringValue(),
+                        user.region
+                ))
+                .from(user)
+                .where(predicates)
+                .orderBy(orderSpecifiers.toArray(new OrderSpecifier[0]))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        //count 쿼리
+        Long total = jpaQueryFactory
+                .select(user.count())
+                .from(user)
+                .where(predicates)
+                .fetchOne();
+
+        return new PageImpl<>(content, pageable, total != null ? total : 0);
+    }
+
+    @Override
+    public Page<UserReadsResponseDto> searchUsersForUser(String nickname, String username,
+            String region, Pageable pageable) {
+        List<OrderSpecifier<?>> orderSpecifiers = getAllOrderSpecifiers(pageable);
+
+        BooleanExpression[] predicates = new BooleanExpression[]{
+                containsIfPresent(user.nickName, nickname),
+                containsIfPresent(user.userName, username),
+                containsIfPresent(user.region, region)
+        };
+
+        List<UserReadsResponseDto> content = jpaQueryFactory
+                .select(new QUserReadsResponseDto(
+                        user.nickName,
+                        user.userName,
+                        user.profile,
+                        user.region
+                ))
+                .from(user)
+                .where(predicates)
+                .orderBy(orderSpecifiers.toArray(new OrderSpecifier[0]))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long total = jpaQueryFactory
+                .select(user.count())
+                .from()
+                .where(predicates)
+                .fetchOne();
+
+        return new PageImpl<>(content, pageable, total != null ? total : 0); //total관련 예외?
+    }
+
+
+    private BooleanExpression containsIfPresent(StringPath path, String value) {
+        return (value != null && !value.isBlank()) ? path.containsIgnoreCase(value) : null;
+    }
+
+    private BooleanExpression eqIfPresent(StringPath path, String value) {
+        return (value != null && !value.isBlank()) ? path.eq(value) : null;
+    }
+
+    //long 용
+    private BooleanExpression eqIfPresent(NumberPath<Long> path, Long value) {
+        return (value != null) ? path.eq(value) : null;
+    }
+
+    //enum 용
+    private <T extends Enum<T>> BooleanExpression eqIfPresent(EnumPath<T> path, T value) {
+        return value != null ? path.eq(value) : null;
+    }
+
+    //sort 용
+    private List<OrderSpecifier<?>> getAllOrderSpecifiers(Pageable pageable) {
+        List<OrderSpecifier<?>> orderSpecifiers = new ArrayList<>();
+
+        if (pageable.getSort() != null) {
+            for (Sort.Order sortedOrder : pageable.getSort()) {
+                Order direction = sortedOrder.isAscending() ? Order.ASC : Order.DESC;
+
+                switch (sortedOrder.getProperty()) {
+                    case "id":
+                        orderSpecifiers.add(new OrderSpecifier<>(direction, user.id));
+                        break;
+                    case "username":
+                        orderSpecifiers.add(new OrderSpecifier<>(direction, user.userName));
+                        break;
+                    case "nickname":
+                        orderSpecifiers.add(new OrderSpecifier<>(direction, user.nickName));
+                        break;
+                    case "email":
+                        orderSpecifiers.add(new OrderSpecifier<>(direction, user.email));
+                        break;
+                    case "region":
+                        orderSpecifiers.add(new OrderSpecifier<>(direction, user.region));
+                        break;
+                    case "status":
+                        orderSpecifiers.add(new OrderSpecifier<>(direction, user.status));
+                        break;
+                    case "createdAt":
+                        orderSpecifiers.add(new OrderSpecifier<>(direction, user.createdAt));
+                        break;
+                    case "updatedAt":
+                        orderSpecifiers.add(new OrderSpecifier<>(direction, user.updatedAt));
+                        break;
+                    default:
+                        break;
+
+                }
+            }
+        }
+        return orderSpecifiers;
     }
 }
