@@ -3,7 +3,7 @@ package com.team15gijo.post.presentation.controller.v1;
 import com.team15gijo.common.annotation.RoleGuard;
 import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.post.application.service.v1.PostService;
-import com.team15gijo.post.domain.model.Post;
+import com.team15gijo.post.domain.model.v1.Post;
 import com.team15gijo.post.presentation.dto.v1.PostRequestDto;
 import com.team15gijo.post.presentation.dto.v1.PostResponseDto;
 import java.net.URLDecoder;
@@ -40,12 +40,13 @@ public class PostController {
 
         // URL 디코딩하여 원래의 한글 문자열로 복원
         String decodedRegion = URLDecoder.decode(region, StandardCharsets.UTF_8);
+        String decodedUsername = URLDecoder.decode(username, StandardCharsets.UTF_8);
 
         System.out.println("수신된 헤더 X-User-Id: " + userId);
         System.out.println("수신된 헤더 X-User-Nickname: " + username);
         System.out.println("수신된 헤더 X-User-Region: " + decodedRegion);
 
-        Post created = postService.createPost(userId, username, decodedRegion, request);
+        Post created = postService.createPost(userId, decodedUsername, decodedRegion, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("신규 게시글 등록 성공", PostResponseDto.from(created)));
     }
@@ -128,7 +129,7 @@ public class PostController {
     /**
      * 게시글 댓글 수 증가 엔드포인트 (댓글 서비스 등에서 호출)
      */
-    @RoleGuard(min = "USER")
+//    @RoleGuard(min = "USER")
     @PostMapping("/{postId}/increment-comment")
     public ResponseEntity<ApiResponse<Void>> addCommentCount(@PathVariable UUID postId) {
         postService.addCommentCount(postId);

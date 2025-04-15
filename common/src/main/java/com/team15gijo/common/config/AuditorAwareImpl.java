@@ -30,13 +30,20 @@ public class AuditorAwareImpl implements AuditorAware<Long> {
             ServletRequestAttributes servletRequestAttributes = (ServletRequestAttributes) requestAttributes;
             HttpServletRequest request = servletRequestAttributes.getRequest();
 
+            String requestURI = request.getRequestURI();
+            if (requestURI.contains("/admin-assign")) {
+                log.info("✅ trusted-admin API 호출 → 감사자: trusted-admin");
+                return Optional.of(Long.valueOf("0000"));
+            }
+
             String userId = request.getHeader(USER_ID_HEADER);
             if (userId == null || userId.isBlank()) {
                 if (request.getRequestURI().contains("/signup")) {
                     log.debug("회원가입");
                     return Optional.empty();
                 }
-                throw new CustomException(CommonExceptionCode.AUDITOR_HEADER_NOT_FOUND);
+//                throw new CustomException(CommonExceptionCode.AUDITOR_HEADER_NOT_FOUND);
+                return Optional.empty();  // 댓글 생성시 내부 client 통신할 때 auditor에 걸려서 임시로 리턴값 넣었습니다.
             }
 
             return Optional.of(Long.valueOf(userId));

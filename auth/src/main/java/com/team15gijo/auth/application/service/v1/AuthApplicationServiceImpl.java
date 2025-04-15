@@ -108,7 +108,6 @@ public class AuthApplicationServiceImpl implements AuthApplicationService {
                         AuthDomainExceptionCode.USER_IDENTIFIER_NOT_FOUND));
 
         auth.updateRole(Role.ADMIN);
-//        authRepository.save(auth);
     }
 
     @Override

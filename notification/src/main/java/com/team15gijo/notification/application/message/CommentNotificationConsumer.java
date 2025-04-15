@@ -21,7 +21,7 @@ public class CommentNotificationConsumer {
     private final NotificationRepository notificationRepository;
     private final EmitterService emitterService;
 
-    @KafkaListener(topics = "COMMENT", groupId = "notification-service", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "COMMENT", groupId = "notification-service", containerFactory = "commentKafkaListenerContainerFactory")
     @Transactional
     public void commentConsumer(CommentNotificationEventDto event) {
         System.out.println("📩 받은 Kafka 메시지: " + event);
@@ -48,7 +48,7 @@ public class CommentNotificationConsumer {
         );
     }
 
-    @KafkaListener(topics = "FOLLOW", groupId = "notification-service", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "FOLLOW", groupId = "notification-service", containerFactory = "followKafkaListenerContainerFactory")
     @Transactional
     public void followConsumer(FollowNotificationEventDto event) {
         System.out.println("📩 받은 Kafka 메시지: " + event);
@@ -74,7 +74,7 @@ public class CommentNotificationConsumer {
         );
     }
 
-    @KafkaListener(topics = "CHAT", groupId = "notification-service", containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "CHAT", groupId = "notification-service", containerFactory = "chatKafkaListenerContainerFactory")
     @Transactional
     public void chatConsumer(ChatNotificationEventDto event) {
         System.out.println("📩 받은 Kafka 메시지: " + event);

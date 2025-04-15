@@ -1,6 +1,7 @@
 package com.team15gijo.user.application.service.v1;
 
 import com.team15gijo.common.exception.CustomException;
+import com.team15gijo.user.application.dto.v1.AdminUserSearchCommand;
 import com.team15gijo.user.application.service.UserApplicationService;
 import com.team15gijo.user.domain.exception.UserDomainExceptionCode;
 import com.team15gijo.user.domain.model.UserEntity;
@@ -13,6 +14,7 @@ import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpRequestDto;
 import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpUpdateUserIdRequestDto;
 import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserReadResponseDto;
+import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserSignUpRequestDto;
 import com.team15gijo.user.presentation.dto.v1.UserSignUpResponseDto;
 import java.util.UUID;
@@ -80,8 +82,16 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     @Override
     public Page<AdminUserReadResponseDto> searchUsersForAdmin(Long userId, String username,
             String nickname, String email, UserStatus userStatus, String region,
-            Pageable pageable) {
-        return null;
+            Pageable validatedPageable) {
+        AdminUserSearchCommand adminUserSearchCommand = AdminUserSearchCommand.builder()
+                .userId(userId)
+                .username(username)
+                .nickname(nickname)
+                .email(email)
+                .userStatus(userStatus)
+                .region(region)
+                .build();
+        return userRepository.searchUsersForAdmin(adminUserSearchCommand, validatedPageable);
     }
 
     @Override
@@ -97,6 +107,19 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                 .orElseThrow(
                         () -> new CustomException(UserDomainExceptionCode.USER_EMAIL_NOT_FOUND));
         return email;
+    }
+
+    @Override
+    public Page<UserReadsResponseDto> searchUsers(String nickname, String username, String region,
+            Pageable validatedPageable) {
+        return userRepository.searchUsers(nickname, username, region, validatedPageable);
+    }
+
+    @Override
+    public UserReadResponseDto getUserForUser(String nickname) {
+        UserEntity user = userRepository.findByNickName(nickname)
+                .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_NOT_FOUND));
+        return UserReadResponseDto.from(user);
     }
 
     //internal

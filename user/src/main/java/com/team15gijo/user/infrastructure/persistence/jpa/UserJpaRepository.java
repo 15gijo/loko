@@ -23,4 +23,6 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, Long> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update UserEntity u set u.createdBy = :id where u.id = :id")
     void updateCreatedById(Long id);
+
+    Optional<UserEntity> findByNickName(String nickname);
 }

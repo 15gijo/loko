@@ -1,6 +1,6 @@
 package com.team15gijo.post.infrastructure.kafka.dto.v1;
 
-import com.team15gijo.post.domain.model.Post;
+import com.team15gijo.post.domain.model.v2.PostV2;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,7 +19,7 @@ public class PostViewedEventDto implements FeedEventDto {
     private int delta;
     private int views;
 
-    public static PostViewedEventDto from(Post post) {
+    public static PostViewedEventDto from(PostV2 post) {
         return PostViewedEventDto.builder()
                 .postId(post.getPostId())
                 .region(post.getRegion())

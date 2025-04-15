@@ -29,7 +29,7 @@ public class KafkaTestController {
 
     @GetMapping("/chat")
     public void sendChatKafkaMessage() {
-        producer.sendChatCreate(new ChatNotificationEventDto(1L, "정영"));
+        producer.sendChatCreate(new ChatNotificationEventDto(1L, "정영", "오늘 사진 이쁘네요!"));
     }
 
 }

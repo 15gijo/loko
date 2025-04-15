@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class ChatNotificationEventDto {
     private Long receiverId;         // 알림 받을 사용자 ID
     private String nickname;           // 알림을 보내는 사용자의 닉네임
+    private String messageContent;   // 채팅 내용
 }
