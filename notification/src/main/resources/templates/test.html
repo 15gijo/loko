@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>SSE 테스트</title>
+</head>
+<body>
+<h1>SSE 알림 수신 테스트</h1>
+<ul id="log"></ul>
+
+<script>
+  const eventSource = new EventSource("http://localhost:19098/api/v1/sse/subscribe");
+
+  eventSource.onopen = () => {
+    console.log("SSE 연결 완료");
+  };
+
+  eventSource.onmessage = function (event) {
+    const data = JSON.parse(event.data);
+    const li = document.createElement("li");
+    li.textContent = `[기본] ${data.notificationContent}`;
+    document.getElementById("log").appendChild(li);
+  };
+
+  eventSource.addEventListener("CONNECT", function (event) {
+    const li = document.createElement("li");
+    li.textContent = `[CONNECT] 연결됨`;
+    document.getElementById("log").appendChild(li);
+  });
+
+  eventSource.addEventListener("NEW", function (event) {
+    const data = JSON.parse(event.data);
+    const li = document.createElement("li");
+    li.textContent = `[NEW] ${data.notificationContent}`;
+    document.getElementById("log").appendChild(li);
+  });
+
+  eventSource.onerror = function (event) {
+    console.error("SSE 연결 오류 발생", event);
+  };
+</script>
+</body>
+</html>

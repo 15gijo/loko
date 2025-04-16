@@ -1,0 +1,70 @@
+spring:
+  application:
+    name: gateway-service
+  config:
+    import: optional:file:./gateway/.env[.properties]
+  cloud:
+    gateway:
+      routes: # Spring Cloud Gateway의 라우팅 설정
+        - id: post-service  # 라우트 식별자
+          uri: lb://post-service  # 'post-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
+          predicates:
+            - Path=/api/v1/posts/**, /api/v2/posts/**  # /posts/** 경로로 들어오는 요청을 이 라우트로 처리
+        - id: comment-service  # 라우트 식별자
+          uri: lb://comment-service  # 'comment-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
+          predicates:
+            - Path=/api/v1/comments/**  # /comments/** 경로로 들어오는 요청을 이 라우트로 처리
+        - id: user-service  # 라우트 식별자
+          uri: lb://user-service  # 'user-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
+          predicates:
+            - Path=/api/v1/users/**  # /users/** 경로로 들어오는 요청을 이 라우트로 처리
+        - id: auth-service  # 라우트 식별자
+          uri: lb://auth-service  # 'auth-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
+          predicates:
+            - Path=/api/v1/auth/**  # /auth/signIn 경로로 들어오는 요청을 이 라우트로 처리
+        - id: search-service
+          uri: lb://search-service
+          predicates:
+            - Path=/api/v1/search/**
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/v1/notifications/**,/api/v1/sse/**
+        - id: feed-service
+          uri: lb://feed-service
+          predicates:
+            - Path=/api/v1/feeds/**
+        - id: chat-service  # 라우트 식별자
+          uri: lb://chat-service  # 'chat-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
+          predicates:
+            - Path=/api/v1/chats/**  # /chats 경로로 들어오는 요청을 이 라우트로 처리
+      discovery:
+        locator:
+          enabled: true  # 서비스 디스커버리를 통해 동적으로 라우트를 생성하도록 설정, 나중에 끄자
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:19098"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+
+#      mvc:
+#        form-filter:
+#          enabled: true
+
+
+
+server:
+  port: 19091
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:19090/eureka/  # Eureka ?? URL
+
+jwt:
+  secret:
+    key: ${JWT_SECRET_KEY}

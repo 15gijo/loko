@@ -1,6 +1,15 @@
 rootProject.name = 'loko'
 
 include("eureka")
-
+include("gateway")
 include("common")
 include("user")
+include("auth")
+include("post")
+include("comment")
+include("feed")
+
+include("search")
+include("notification")
+
+include("chat")
