@@ -50,7 +50,7 @@ public class CommentV2 extends BaseEntity {
     private UUID parentCommentId;
 
     // 댓글의 중첩(depth): 최상위 댓글은 0, 대댓글은 부모의 depth + 1
-    @Column(name = "depth", nullable = false)
+    @Column(name = "depth")
     private int depth;
 
     /**
