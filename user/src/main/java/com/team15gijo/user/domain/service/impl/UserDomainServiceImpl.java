@@ -6,7 +6,7 @@ import com.team15gijo.user.domain.model.UserEntity;
 import com.team15gijo.user.domain.model.UserStatus;
 import com.team15gijo.user.domain.repository.UserRepository;
 import com.team15gijo.user.domain.service.UserDomainService;
-import com.team15gijo.user.presentation.dto.v1.UserSignUpRequestDto;
+import com.team15gijo.user.presentation.dto.v1.request.UserSignUpRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -28,8 +28,8 @@ public class UserDomainServiceImpl implements UserDomainService {
 
         return UserEntity.builder()
                 .email(userSignUpRequestDto.email())
-                .nickName(userSignUpRequestDto.nickName())
-                .userName(userSignUpRequestDto.userName())
+                .nickname(userSignUpRequestDto.nickName())
+                .username(userSignUpRequestDto.userName())
                 .profile(userSignUpRequestDto.profile())
                 .region(userSignUpRequestDto.region())
                 .status(UserStatus.ACTIVE)
