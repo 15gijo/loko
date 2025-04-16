@@ -35,4 +35,9 @@ public class AuthRepositoryImpl implements AuthRepository {
     public void updateUserMeta(Long userId, UUID authId) {
         authJpaRepository.updateUserMeta(userId, authId);
     }
+
+    @Override
+    public Optional<AuthEntity> findByUserId(Long userId) {
+        return authJpaRepository.findByUserId(userId);
+    }
 }
