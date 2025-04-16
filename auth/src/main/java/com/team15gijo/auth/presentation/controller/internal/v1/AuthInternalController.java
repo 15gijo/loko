@@ -1,6 +1,8 @@
 package com.team15gijo.auth.presentation.controller.internal.v1;
 
 import com.team15gijo.auth.application.service.AuthApplicationService;
+import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthIdentifierUpdateRequestDto;
+import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthPasswordUpdateRequestDto;
 import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpRequestDto;
 import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpUpdateUserIdRequestDto;
 import com.team15gijo.common.dto.ApiResponse;
@@ -17,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/internal/auth")
+@RequestMapping("internal/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthInternalController {
 
@@ -38,5 +40,23 @@ public class AuthInternalController {
         log.info("updateId authSignUpUserIdRequestDto={}", authSignUpUpdateUserIdRequestDto);
         authApplicationService.signUpUpdateUserId(authSignUpUpdateUserIdRequestDto);
         return ResponseEntity.ok(ApiResponse.success("인증 서버 회원 가입 유저 아이디 업데이트, createdBy 업데이트 성공"));
+    }
+
+    @PostMapping("/identifier-update")
+    public ResponseEntity<ApiResponse<Void>> updateIdentifier(
+            @RequestBody AuthIdentifierUpdateRequestDto authIdentifierUpdateRequestDto) {
+        log.info("updateIdentifier authIdentifierUpdateRequestDto={}",
+                authIdentifierUpdateRequestDto);
+        authApplicationService.updateIdentifier(authIdentifierUpdateRequestDto);
+        return ResponseEntity.ok(ApiResponse.success("인증 서버 identifier 업데이트 성공"));
+    }
+
+    @PostMapping("/password-update")
+    public ResponseEntity<ApiResponse<Void>> updatePassword(
+            @RequestBody AuthPasswordUpdateRequestDto authPasswordUpdateRequestDto) {
+        log.info("updatePassword authPasswordUpdateRequestDto={}",
+                authPasswordUpdateRequestDto); //추후 password는 로그에서 제외
+        authApplicationService.updatePassword(authPasswordUpdateRequestDto);
+        return ResponseEntity.ok(ApiResponse.success("인증 서버 password 업데이트 성공"));
     }
 }

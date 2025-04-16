@@ -2,6 +2,7 @@ package com.team15gijo.user.application.service.v1;
 
 import com.team15gijo.common.exception.CustomException;
 import com.team15gijo.user.application.dto.v1.AdminUserSearchCommand;
+import com.team15gijo.user.application.exception.UserApplicationExceptionCode;
 import com.team15gijo.user.application.service.UserApplicationService;
 import com.team15gijo.user.domain.exception.UserDomainExceptionCode;
 import com.team15gijo.user.domain.model.UserEntity;
@@ -13,11 +14,20 @@ import com.team15gijo.user.infrastructure.dto.UserFeignInfoResponseDto;
 import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpRequestDto;
 import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpUpdateUserIdRequestDto;
 import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
-import com.team15gijo.user.presentation.dto.v1.UserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
-import com.team15gijo.user.presentation.dto.v1.UserSignUpRequestDto;
-import com.team15gijo.user.presentation.dto.v1.UserSignUpResponseDto;
+import com.team15gijo.user.presentation.dto.v1.internal.request.AuthIdentifierUpdateRequestDto;
+import com.team15gijo.user.presentation.dto.v1.internal.request.AuthPasswordUpdateRequestDto;
+import com.team15gijo.user.presentation.dto.v1.request.AdminUserStatusUpdateRequestDto;
+import com.team15gijo.user.presentation.dto.v1.request.UserEmailUpdateRequestDto;
+import com.team15gijo.user.presentation.dto.v1.request.UserPasswordUpdateRequestDto;
+import com.team15gijo.user.presentation.dto.v1.request.UserSignUpRequestDto;
+import com.team15gijo.user.presentation.dto.v1.request.UserUpdateRequestDto;
+import com.team15gijo.user.presentation.dto.v1.response.UserReadResponseDto;
+import com.team15gijo.user.presentation.dto.v1.response.UserSignUpResponseDto;
+import com.team15gijo.user.presentation.dto.v1.response.UserUpdateResponseDto;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -43,15 +53,15 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         UserEntity createdUser = userDomainService.createUser(userSignUpRequestDto);
 
         //인증 서버로 회원가입 알림
-        AuthSignUpRequestDto authSignUpRequsetDto =
+        AuthSignUpRequestDto authSignUpRequestDto =
                 AuthSignUpRequestDto.builder()
-                        .nickname(createdUser.getNickName())
+                        .nickname(createdUser.getNickname())
                         .identifier(createdUser.getEmail())
                         .password(userSignUpRequestDto.password())
                         .loginTypeName("PASSWORD")
                         .build();
 
-        UUID authId = authServiceClient.signUp(authSignUpRequsetDto);
+        UUID authId = authServiceClient.signUp(authSignUpRequestDto);
 
         //유저 DB save
         UserEntity savedUser = userRepository.save(createdUser);
@@ -66,8 +76,8 @@ public class UserApplicationServiceImpl implements UserApplicationService {
 
         return new UserSignUpResponseDto(
                 savedUser.getEmail(),
-                savedUser.getNickName(),
-                savedUser.getUserName(),
+                savedUser.getNickname(),
+                savedUser.getUsername(),
                 savedUser.getRegion(),
                 savedUser.getProfile());
     }
@@ -117,9 +127,128 @@ public class UserApplicationServiceImpl implements UserApplicationService {
 
     @Override
     public UserReadResponseDto getUserForUser(String nickname) {
-        UserEntity user = userRepository.findByNickName(nickname)
+        UserEntity user = userRepository.findByNickname(nickname)
                 .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_NOT_FOUND));
         return UserReadResponseDto.from(user);
+    }
+
+    @Override
+    @Transactional
+    public UserUpdateResponseDto updateUser(
+            Long userId,
+            UserUpdateRequestDto userUpdateRequestDto) {
+
+        //유저존재 확인
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_NOT_FOUND));
+
+        //null -> 기존 유지, isBlank -> 예외
+        safeUpdate(
+                userUpdateRequestDto.username(),
+                user.getUsername(),
+                user::updateUsername,
+                () -> new CustomException(UserApplicationExceptionCode.INVALID_UPDATE_PARAMETER)
+        );
+        safeUpdate(
+                userUpdateRequestDto.nickname(),
+                user.getNickname(),
+                user::updateNickname,
+                () -> new CustomException(UserApplicationExceptionCode.INVALID_UPDATE_PARAMETER)
+        );
+        safeUpdate(
+                userUpdateRequestDto.profile(),
+                user.getProfile(),
+                user::updateProfile,
+                () -> new CustomException(UserApplicationExceptionCode.INVALID_UPDATE_PARAMETER)
+        );
+        safeUpdate(
+                userUpdateRequestDto.region(),
+                user.getRegion(),
+                user::updateRegion,
+                () -> new CustomException(UserApplicationExceptionCode.INVALID_UPDATE_PARAMETER)
+        );
+
+        return UserUpdateResponseDto.from(user);
+    }
+
+    @Override
+    @Transactional
+    public void updateEmailUser(Long userId, UserEmailUpdateRequestDto userEmailUpdateRequestDto) {
+
+        //유저 확인
+        UserEntity user = userRepository.findByEmail(userEmailUpdateRequestDto.currentEmail())
+                .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_NOT_FOUND));
+
+        //요청자 정보 유효 검사
+        if (!user.getId().equals(userId)) {
+            throw new CustomException(UserApplicationExceptionCode.UNAUTHORIZED_USER);
+        }
+
+        //인증 확인 및 업데이트
+        authServiceClient.updateIdentifier(
+                new AuthIdentifierUpdateRequestDto(
+                        user.getId(),
+                        userEmailUpdateRequestDto.password(),
+                        userEmailUpdateRequestDto.newEmail()
+                )
+        );
+
+        //이메일 업데이트
+        user.updateEmail(userEmailUpdateRequestDto.newEmail());
+    }
+
+    @Override
+    @Transactional
+    public void updatePasswordUser(Long userId,
+            UserPasswordUpdateRequestDto userPasswordUpdateRequestDto) {
+
+        //유저 확인
+        UserEntity user = userRepository.findByEmail(userPasswordUpdateRequestDto.email())
+                .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_NOT_FOUND));
+
+        //요청자 정보 유효 검사
+        if (!user.getId().equals(userId)) {
+            throw new CustomException(UserApplicationExceptionCode.UNAUTHORIZED_USER);
+        }
+
+        //인증 확인 및 업데이트
+        authServiceClient.updatePassword(
+                new AuthPasswordUpdateRequestDto(
+                        user.getId(),
+                        userPasswordUpdateRequestDto.password(),
+                        userPasswordUpdateRequestDto.newPassword()
+                )
+        );
+
+    }
+
+    @Override
+    @Transactional
+    public void updateUserStatus(AdminUserStatusUpdateRequestDto adminUserStatusUpdateRequestDto) {
+        //유저 확인
+        UserEntity user = userRepository.findById(adminUserStatusUpdateRequestDto.userId())
+                .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_NOT_FOUND));
+
+        //enum으로 변환 및 검사
+        UserStatus newUserStatus = UserStatus.fromUserStatusName(
+                adminUserStatusUpdateRequestDto.targetUserStatusName());
+
+        //업데이트
+        user.updateUserStatus(newUserStatus);
+    }
+
+    @Override
+    @Transactional
+    public void deleteUser(Long userId) {
+        //유저 확인
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_NOT_FOUND));
+
+        //유저 탈퇴 상태 변경
+        user.updateUserStatus(UserStatus.WITHDRAWN);
+
+        //삭제
+        userRepository.deleteById(userId);
     }
 
     //internal
@@ -131,17 +260,35 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                         () -> new CustomException(UserDomainExceptionCode.USER_NOT_FOUND));
         return new UserFeignInfoResponseDto(
                 user.getId(),
-                user.getNickName(),
-                user.getRegion()
+                user.getNickname(),
+                user.getRegion(),
+                user.getStatus().name()
         );
     }
 
     //internal
     @Override
     public Long getUserIdByNickname(String nickname) {
-        Long userId = userRepository.findIdByNickName(nickname)
+        Long userId = userRepository.findIdByNickname(nickname)
                 .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_ID_NOT_FOUND));
         return userId;
+    }
+
+
+    private static void safeUpdate(
+            String newValue,
+            String currentValue,
+            Consumer<String> updater,
+            Supplier<RuntimeException> exceptionSupplier
+    ) {
+        if (newValue != null) {
+            if (newValue.isBlank()) {
+                throw exceptionSupplier.get();
+            }
+            if (!newValue.equals(currentValue)) {
+                updater.accept(newValue);
+            }
+        }
     }
 
 }

@@ -14,4 +14,6 @@ public interface AuthRepository {
     boolean existsByIdentifierAndLoginType(String identifier, LoginType loginType);
 
     void updateUserMeta(Long userId, UUID authId);
+
+    Optional<AuthEntity> findByUserId(Long userId);
 }

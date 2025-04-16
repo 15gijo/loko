@@ -12,4 +12,5 @@ public class UserFeignInfoResponseDto {
     Long userId;
     String nickname;
     String region;
+    String userStatusName;
 }

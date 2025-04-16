@@ -76,6 +76,11 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
             UserFeignInfoResponseDto userFeignInfoResponseDto = userServiceClient.getUserInfo(
                     identifier);
 
+            //사용자 상태 탈퇴 확인
+            if ("WITHDRAWN".equals(userFeignInfoResponseDto.getUserStatusName())) {
+               throw new CustomException(AuthInfraExceptionCode.USER_ALREADY_WITHDRAWN);
+            }
+
             //응답 커맨드
             AuthLoginResponseCommand loginUser = new AuthLoginResponseCommand(
                     userFeignInfoResponseDto.getUserId(),

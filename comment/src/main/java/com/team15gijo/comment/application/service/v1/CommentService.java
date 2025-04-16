@@ -2,9 +2,9 @@ package com.team15gijo.comment.application.service.v1;
 
 import com.team15gijo.comment.domain.exception.CommentDomainException;
 import com.team15gijo.comment.domain.exception.CommentDomainExceptionCode;
-import com.team15gijo.comment.domain.model.Comment;
-import com.team15gijo.comment.domain.repository.CommentRepository;
-import com.team15gijo.comment.infrastructure.client.PostClient;
+import com.team15gijo.comment.domain.model.v1.Comment;
+import com.team15gijo.comment.domain.repository.v1.CommentRepository;
+import com.team15gijo.comment.infrastructure.client.v1.PostClient;
 import com.team15gijo.comment.infrastructure.kafka.dto.CommentNotificationEventDto;
 import com.team15gijo.comment.infrastructure.kafka.service.KafkaProducerService;
 import com.team15gijo.comment.presentation.dto.v1.CommentRequestDto;

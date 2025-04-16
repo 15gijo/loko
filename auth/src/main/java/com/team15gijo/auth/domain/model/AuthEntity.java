@@ -52,11 +52,13 @@ public class AuthEntity extends BaseEntity {
 
     @Builder
     public AuthEntity(
+            Long userId,
             String nickname,
             String password,
             String identifier,
             LoginType loginType,
             Role role) {
+        this.userId = userId;
         this.nickname = nickname;
         this.password = password;
         this.identifier = identifier;
@@ -66,5 +68,13 @@ public class AuthEntity extends BaseEntity {
 
     public void updateRole(Role userRole) {
         this.role = userRole;
+    }
+
+    public void updateIdentifier(String newIdentifier) {
+        this.identifier = newIdentifier;
+    }
+
+    public void updatePassword(String newPassword) {
+        this.password = newPassword;
     }
 }

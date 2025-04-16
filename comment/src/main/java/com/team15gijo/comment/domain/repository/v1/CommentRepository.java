@@ -1,6 +1,6 @@
-package com.team15gijo.comment.domain.repository;
+package com.team15gijo.comment.domain.repository.v1;
 
-import com.team15gijo.comment.domain.model.Comment;
+import com.team15gijo.comment.domain.model.v1.Comment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
