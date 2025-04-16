@@ -1,7 +1,7 @@
 package com.team15gijo.auth.presentation.controller.external.v1;
 
 import com.team15gijo.auth.application.service.AuthApplicationService;
-import com.team15gijo.auth.infrastructure.dto.v1.internal.AdminAssignManagerRequestDto;
+import com.team15gijo.auth.presentation.dto.v1.AdminAssignManagerRequestDto;
 import com.team15gijo.auth.presentation.dto.v1.AssignAdminRequestDto;
 import com.team15gijo.common.annotation.RoleGuard;
 import com.team15gijo.common.dto.ApiResponse;
