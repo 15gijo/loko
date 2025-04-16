@@ -31,10 +31,10 @@ public class UserEntity extends BaseEntity {
     private Long id;
 
     @Column(name = "username", nullable = false)
-    private String userName;
+    private String username;
 
     @Column(name = "nickname", nullable = false, unique = true)
-    private String nickName;
+    private String nickname;
 
     @Column(name = "email", nullable = false, unique = true)
     private String email;
@@ -51,18 +51,42 @@ public class UserEntity extends BaseEntity {
 
     @Builder
     public UserEntity(
-            String userName,
-            String nickName,
+            String username,
+            String nickname,
             String email,
             String profile,
             UserStatus status,
             String region) {
-        this.userName = userName;
-        this.nickName = nickName;
+        this.username = username;
+        this.nickname = nickname;
         this.email = email;
         this.profile = profile;
         this.status = status;
         this.region = region;
+    }
+
+    public void updateUsername(String newUsername) {
+        this.username = newUsername;
+    }
+
+    public void updateNickname(String newNickname) {
+        this.nickname = newNickname;
+    }
+
+    public void updateProfile(String newProfile) {
+        this.profile = newProfile;
+    }
+
+    public void updateRegion(String newRegion) {
+        this.region = newRegion;
+    }
+
+    public void updateEmail(String newEmail) {
+        this.email = newEmail;
+    }
+
+    public void updateUserStatus(UserStatus newUserStatus) {
+        this.status = newUserStatus;
     }
 }
 

@@ -8,7 +8,8 @@ import lombok.Getter;
 public enum UserStatus {
 
     BLOCKED("차단 유저"),
-    ACTIVE("활성화 유저");
+    ACTIVE("활성화 유저"),
+    WITHDRAWN("탈퇴 유저");
 
     private final String userStatusName;
 
