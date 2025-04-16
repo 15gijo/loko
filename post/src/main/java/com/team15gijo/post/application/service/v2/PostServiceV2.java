@@ -14,6 +14,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,8 +25,11 @@ public class PostServiceV2 {
     private final PostRepositoryV2 postRepository;
     private final HashtagRepositoryV2 hashtagRepository;
     private final KafkaUtil kafkaUtil;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     private static final String FEED_EVENTS_TOPIC = "feed_events";
+    private static final String REDIS_VIEW_COUNT_HASH_KEY = "views:buffer";
+    private static final String REDIS_VIEW_DIRTY_KEY_SET = "views:dirty-keys";
 
     /**
      * 게시글 생성
@@ -52,9 +56,8 @@ public class PostServiceV2 {
     public PostV2 getPostById(UUID postId) {
         PostV2 post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
-        // 도메인 메서드를 통해 조회수 증가
-        post.incrementViews();
-        post = postRepository.save(post);
+        // 조회수 버퍼 처리
+        bufferView(postId);
         // kafka 이벤트 발행
         kafkaUtil.sendKafkaEvent(EventType.POST_VIEWED, post, FEED_EVENTS_TOPIC);
         return post;
@@ -150,6 +153,17 @@ public class PostServiceV2 {
         postRepository.save(post);
         // kafka 이벤트 발행
         kafkaUtil.sendKafkaEvent(EventType.COMMENT_DELETED, post, FEED_EVENTS_TOPIC);
+    }
+
+    /**
+     * 조회수 버퍼 처리
+     */
+    public void bufferView(UUID postId) {
+        String postIdStr = postId.toString();
+        // 조회수 1 증가 (Hash 구조)
+        redisTemplate.opsForHash().increment(REDIS_VIEW_COUNT_HASH_KEY, postIdStr, 1);
+        // dirty check용 기록
+        redisTemplate.opsForSet().add(REDIS_VIEW_DIRTY_KEY_SET, postIdStr);
     }
 
 }
