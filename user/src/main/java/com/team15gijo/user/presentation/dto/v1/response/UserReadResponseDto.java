@@ -12,8 +12,8 @@ public record UserReadResponseDto(
 
     public static UserReadResponseDto from(UserEntity user) {
         return new UserReadResponseDto(
-                user.getUserName(),
-                user.getNickName(),
+                user.getUsername(),
+                user.getNickname(),
                 user.getEmail(),
                 user.getProfile(),
                 user.getRegion()
