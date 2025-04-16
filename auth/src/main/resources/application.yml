@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: auth-service
+  cloud:
+    config:
+      enabled: false #?? config server ????
+  config:
+    import: optional:file:./auth/.env[.properties] # ?? ?? env
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+
+
+server:
+  port: 19092
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:19090/eureka/  # Eureka ?? URL
+
+jwt:
+  secret:
+    key: ${JWT_SECRET_KEY}
+  access-token:
+    expiration: ${ACCESS_TOKEN_EXPIRATION}
+  refresh-token:
+    expiration: ${REFRESH_TOKEN_EXPIRATION}
+
+  admin:
+    secret:
+      key: ${JWT_ADMIN_SECRET_KEY}
