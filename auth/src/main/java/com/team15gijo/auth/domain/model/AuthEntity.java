@@ -67,4 +67,12 @@ public class AuthEntity extends BaseEntity {
     public void updateRole(Role userRole) {
         this.role = userRole;
     }
+
+    public void updateIdentifier(String newIdentifier) {
+        this.identifier = newIdentifier;
+    }
+
+    public void updatePassword(String newPassword) {
+        this.password = newPassword;
+    }
 }
