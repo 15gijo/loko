@@ -1,10 +1,10 @@
-package com.team15gijo.user.presentation.controller.internal.v1;
+package com.team15gijo.user.presentation.controller.v1;
 
 import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.user.application.service.UserApplicationService;
 import com.team15gijo.user.application.service.v1.InternalUserService;
 import com.team15gijo.user.infrastructure.dto.UserFeignInfoResponseDto;
-import com.team15gijo.user.presentation.dto.v1.UserSearchResponseDto;
+import com.team15gijo.user.infrastructure.dto.v1.internal.UserSearchResponseDto;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

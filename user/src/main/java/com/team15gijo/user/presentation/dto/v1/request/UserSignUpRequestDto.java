@@ -1,4 +1,4 @@
-package com.team15gijo.user.presentation.dto.v1;
+package com.team15gijo.user.presentation.dto.v1.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
