@@ -8,14 +8,14 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface UserJpaRepository extends JpaRepository<UserEntity, Long> {
 
-    boolean existsByNickName(String nickName);
+    boolean existsByNickname(String nickname);
 
     boolean existsByEmail(String email);
 
     Optional<UserEntity> findByEmail(String identifier);
 
-    @Query("SELECT u.id FROM UserEntity u WHERE u.nickName = :nickName")
-    Optional<Long> findIdByNickName(String nickName);
+    @Query("SELECT u.id FROM UserEntity u WHERE u.nickname = :nickname")
+    Optional<Long> findIdByNickname(String nickname);
 
     @Query("SELECT u.email FROM UserEntity u WHERE u.id = :id")
     Optional<String> findEmailById(Long id);
@@ -24,5 +24,5 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, Long> {
     @Query("update UserEntity u set u.createdBy = :id where u.id = :id")
     void updateCreatedById(Long id);
 
-    Optional<UserEntity> findByNickName(String nickname);
+    Optional<UserEntity> findByNickname(String nickname);
 }

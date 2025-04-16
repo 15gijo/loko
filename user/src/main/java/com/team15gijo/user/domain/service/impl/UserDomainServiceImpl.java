@@ -22,14 +22,14 @@ public class UserDomainServiceImpl implements UserDomainService {
         if (userRepository.existsByEmail(userSignUpRequestDto.email())) {
             throw new CustomException(UserDomainExceptionCode.DUPLICATED_USER_EMAIL);
         }
-        if (userRepository.existsByNickName(userSignUpRequestDto.nickName())) {
+        if (userRepository.existsByNickname(userSignUpRequestDto.nickname())) {
             throw new CustomException(UserDomainExceptionCode.DUPLICATED_USER_NICKNAME);
         }
 
         return UserEntity.builder()
                 .email(userSignUpRequestDto.email())
-                .nickname(userSignUpRequestDto.nickName())
-                .username(userSignUpRequestDto.userName())
+                .nickname(userSignUpRequestDto.nickname())
+                .username(userSignUpRequestDto.username())
                 .profile(userSignUpRequestDto.profile())
                 .region(userSignUpRequestDto.region())
                 .status(UserStatus.ACTIVE)

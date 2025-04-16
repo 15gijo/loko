@@ -127,7 +127,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
 
     @Override
     public UserReadResponseDto getUserForUser(String nickname) {
-        UserEntity user = userRepository.findByNickName(nickname)
+        UserEntity user = userRepository.findByNickname(nickname)
                 .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_NOT_FOUND));
         return UserReadResponseDto.from(user);
     }
@@ -269,7 +269,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     //internal
     @Override
     public Long getUserIdByNickname(String nickname) {
-        Long userId = userRepository.findIdByNickName(nickname)
+        Long userId = userRepository.findIdByNickname(nickname)
                 .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_ID_NOT_FOUND));
         return userId;
     }
