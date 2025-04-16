@@ -33,8 +33,8 @@ public class AdminUserReadResponseDto {
     public static AdminUserReadResponseDto from(UserEntity user) {
         return new AdminUserReadResponseDto(
                 user.getId(),
-                user.getUserName(),
-                user.getNickName(),
+                user.getUsername(),
+                user.getNickname(),
                 user.getEmail(),
                 user.getProfile(),
                 user.getStatus().getUserStatusName(),
