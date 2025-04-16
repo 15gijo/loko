@@ -17,6 +17,8 @@ import com.team15gijo.chat.domain.repository.ChatMessageRepository;
 import com.team15gijo.chat.domain.repository.ChatRoomParticipantRepository;
 import com.team15gijo.chat.domain.repository.ChatRoomRepository;
 import com.team15gijo.chat.infrastructure.client.v1.FeignClientService;
+import com.team15gijo.chat.infrastructure.kafka.dto.ChatNotificationEventDto;
+import com.team15gijo.chat.infrastructure.kafka.service.NotificationKafkaProducerService;
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageRequestDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageResponseDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatRoomRequestDto;
@@ -54,6 +56,7 @@ public class ChatMessageService {
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
 
     private final FeignClientService feignClientService;
+    private final NotificationKafkaProducerService notificationKafkaProducerService;
 
     private final RedisTemplate<String, Object> redisTemplate;
 
@@ -449,6 +452,10 @@ public class ChatMessageService {
         chatMessageRepository.save(chatMessage);
         log.info("chatMessageContent={}", chatMessage.getMessageContent());
         log.info("ReceiverNickname={}", requestDto.getReceiverNickname());
+
+        // 수정이 필요한 사항 : 현재 보내는 사람의 닉네임을 받을 수 없어 임시로 받는 사람의 닉네임을 보냄. 추후 수정 필요
+        notificationKafkaProducerService.sendChatCreate(ChatNotificationEventDto
+                .from(requestDto.getReceiverId(), requestDto.getReceiverNickname(), requestDto.getMessageContent()));
 
         return chatMessage.toResponse();
     }
