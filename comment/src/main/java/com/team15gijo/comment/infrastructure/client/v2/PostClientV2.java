@@ -7,17 +7,17 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
-@FeignClient(name = "post-service", contextId = "postClient")
+@FeignClient(name = "post-service", contextId = "postClientV2")
 public interface PostClientV2 {
 
-    @GetMapping("/api/v1/posts/{postId}/exists")
+    @GetMapping("/api/v2/posts/{postId}/exists")
     ApiResponse<Boolean> exists(@PathVariable("postId") UUID postId);
 
 
-    @PostMapping("/api/v1/posts/{postId}/increment-comment")
+    @PostMapping("/api/v2/posts/{postId}/increment-comment")
     ApiResponse<Void> addCommentCount(@PathVariable("postId") UUID postId);
 
-    @PostMapping("/api/v1/posts/{postId}/decrement-comment")
+    @PostMapping("/api/v2/posts/{postId}/decrement-comment")
     ApiResponse<Void> decreaseCommentCount(@PathVariable("postId") UUID postId);
 
 }

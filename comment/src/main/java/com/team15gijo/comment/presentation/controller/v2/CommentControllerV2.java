@@ -48,6 +48,24 @@ public class CommentControllerV2 {
     }
 
     /**
+     * 대댓글(답글) 작성 엔드포인트
+     */
+    @PostMapping("/{postId}/comments/{parentCommentId}/replies")
+    public ResponseEntity<ApiResponse<CommentV2>> createReply(
+            @PathVariable UUID postId,
+            @PathVariable UUID parentCommentId,
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestHeader("X-User-Nickname") String username,
+            @RequestBody CommentRequestDtoV2 request) {
+        // path에서 받은 parentCommentId를 요청 객체에 반영
+        request.setParentCommentId(parentCommentId);
+        CommentV2 created = commentService.createComment(userId, username, postId, request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("대댓글이 성공적으로 작성되었습니다.", created));
+    }
+
+
+    /**
      * 댓글 목록 조회 (페이징)
      */
     @GetMapping("/{postId}")

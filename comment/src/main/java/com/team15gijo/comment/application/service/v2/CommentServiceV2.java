@@ -33,7 +33,21 @@ public class CommentServiceV2 {
             throw new CommentDomainException(CommentDomainExceptionCode.POST_NOT_FOUND);
         }
 
-        CommentV2 comment = CommentV2.createComment(postId, userId, username, request.getCommentContent(), request.getParentCommentId());
+        int depth = 0;
+        if (request.getParentCommentId() != null) {
+            // 부모 댓글 존재 여부 확인
+            CommentV2 parentComment = commentRepository.findById(request.getParentCommentId())
+                    .orElseThrow(() -> new CommentDomainException(
+                            CommentDomainExceptionCode.COMMENT_NOT_FOUND));
+            // 부모 댓글이 다른 게시글에 속한 경우(일관성 오류) 예외 처리 가능
+            if (!parentComment.getPostId().equals(postId)) {
+                // 필요에 따라 별도의 에러 코드를 정의할 수도 있음
+                throw new CommentDomainException(CommentDomainExceptionCode.COMMENT_NOT_FOUND);
+            }
+            depth = parentComment.getDepth() + 1;
+        }
+
+        CommentV2 comment = CommentV2.createComment(postId, userId, username, request.getCommentContent(), request.getParentCommentId(), depth);
         CommentV2 savedComment = commentRepository.save(comment);
 
         // 게시글의 댓글 수 증가 호출

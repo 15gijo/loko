@@ -49,8 +49,12 @@ public class CommentV2 extends BaseEntity {
     @Column(name = "parent_comment_id")
     private UUID parentCommentId;
 
+    // 댓글의 중첩(depth): 최상위 댓글은 0, 대댓글은 부모의 depth + 1
+    @Column(name = "depth", nullable = false)
+    private int depth;
+
     /**
-     * 인스턴스 메서드: 댓글 내용을 업데이트합니다.
+     * 댓글 내용을 업데이트합니다.
      */
     public void updateContent(String newContent) {
         if (newContent == null || newContent.trim().isEmpty()) {
@@ -62,13 +66,14 @@ public class CommentV2 extends BaseEntity {
     /**
      * 정적 팩토리 메서드: 댓글 객체를 생성하고 생성 메타데이터(생성자 ID, 생성일시)를 설정합니다.
      */
-    public static CommentV2 createComment(UUID postId, long userId, String username, String commentContent, UUID parentCommentId) {
+    public static CommentV2 createComment(UUID postId, long userId, String username, String commentContent, UUID parentCommentId, int depth) {
         CommentV2 comment = CommentV2.builder()
                 .postId(postId)
                 .userId(userId)
                 .username(username)
                 .commentContent(commentContent)
                 .parentCommentId(parentCommentId)
+                .depth(depth)
                 .build();
         return comment;
     }
