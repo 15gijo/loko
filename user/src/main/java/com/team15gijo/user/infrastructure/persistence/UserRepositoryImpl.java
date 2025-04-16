@@ -55,7 +55,13 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public Page<UserReadsResponseDto> searchUsers(String nickname, String username, String region,
             Pageable validatedPageable) {
-        return userQueryDslRepository.searchUsersForUser(nickname, username, region, validatedPageable);
+        return userQueryDslRepository.searchUsersForUser(nickname, username, region,
+                validatedPageable);
+    }
+
+    @Override
+    public void deleteById(Long userId) {
+        userJpaRepository.deleteById(userId);
     }
 
     //내부 통신

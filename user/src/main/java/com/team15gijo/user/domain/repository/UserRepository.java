@@ -31,4 +31,6 @@ public interface UserRepository {
     Optional<UserEntity> findByNickName(String nickname);
 
     Page<UserReadsResponseDto> searchUsers(String nickname, String username, String region, Pageable validatedPageable);
+
+    void deleteById(Long userId);
 }
