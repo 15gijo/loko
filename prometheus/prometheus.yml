@@ -11,3 +11,4 @@ scrape_configs:
           - 'host.docker.internal:19102'
           - 'host.docker.internal:19096'
           - 'host.docker.internal:19098'
+          - 'host.docker.internal:19097'

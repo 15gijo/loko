@@ -57,6 +57,15 @@ management:
   tracing:
     sampling:
       probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: "*" #모든 엔드포인트 노출 설정
+  endpoint:
+    health:
+      show-details: always # /actuator/health 엔드포인트에서 헬스 체크 정보를 항상 상세히 보여주도록 설정
+    prometheus:
+      access: unrestricted
 
 logging:
   level:
