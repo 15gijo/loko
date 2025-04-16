@@ -21,6 +21,7 @@ public class AuditorAwareImpl implements AuditorAware<Long> {
     public Optional<Long> getCurrentAuditor() {
         try {
             RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+
             if (!(requestAttributes instanceof ServletRequestAttributes)) {
 //                throw new CustomException(CommonExceptionCode.AUDITOR_NON_MVC_REQUEST);
                 log.warn("🟡 AuditorAware: 비동기 컨텍스트 감지, Optional.empty 반환");
@@ -31,15 +32,16 @@ public class AuditorAwareImpl implements AuditorAware<Long> {
             HttpServletRequest request = servletRequestAttributes.getRequest();
 
             String requestURI = request.getRequestURI();
+            log.info("📌 Auditor 호출됨: URI={}", requestURI);
             if (requestURI.contains("/admin-assign")) {
                 log.info("✅ trusted-admin API 호출 → 감사자: trusted-admin");
                 return Optional.of(Long.valueOf("0000"));
             }
 
             String userId = request.getHeader(USER_ID_HEADER);
+            log.info("📌 Auditor 호출됨: userId={}", userId);
             if (userId == null || userId.isBlank()) {
                 if (request.getRequestURI().contains("/signup")) {
-                    log.debug("회원가입");
                     return Optional.empty();
                 }
                 throw new CustomException(CommonExceptionCode.AUDITOR_HEADER_NOT_FOUND);
