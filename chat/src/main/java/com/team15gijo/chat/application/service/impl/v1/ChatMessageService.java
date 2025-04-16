@@ -453,9 +453,9 @@ public class ChatMessageService {
         log.info("chatMessageContent={}", chatMessage.getMessageContent());
         log.info("ReceiverNickname={}", requestDto.getReceiverNickname());
 
-        // 필요한 정보 : 채팅 메세지를 받는 유저의 ID(receiverId), 보내는 유저의 닉네임
-//        notificationKafkaProducerService.sendChatCreate(ChatNotificationEventDto
-//                .from(receiverId, chatMessage.getSenderNickname(), requestDto.getMessageContent()));
+        // 수정이 필요한 사항 : 현재 보내는 사람의 닉네임을 받을 수 없어 임시로 받는 사람의 닉네임을 보냄. 추후 수정 필요
+        notificationKafkaProducerService.sendChatCreate(ChatNotificationEventDto
+                .from(requestDto.getReceiverId(), requestDto.getReceiverNickname(), requestDto.getMessageContent()));
 
         return chatMessage.toResponse();
     }

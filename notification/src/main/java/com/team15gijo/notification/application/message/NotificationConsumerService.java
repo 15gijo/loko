@@ -81,8 +81,10 @@ public class NotificationConsumerService {
         log.info("📨 Kafka COMMENT 메시지 수신: {}", event);
         Long receiverId = event.getReceiverId();
         String nickname = event.getNickname();
+        String messageContent = event.getMessageContent();
         String eventId = receiverId + "_" + System.currentTimeMillis() + "_chat";
-        String content = String.format("%s님이 채팅을 보냈습니다.", nickname);
+//        String content = String.format("%s님이 채팅을 보냈습니다.", nickname);
+        String content = String.format("[%s] 채팅이 왔습니다", messageContent);
 
 
         // 1. 알림 DB 저장
