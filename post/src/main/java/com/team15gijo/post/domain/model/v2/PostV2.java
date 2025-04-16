@@ -76,6 +76,10 @@ public class PostV2 extends BaseEntity {
         this.views++;
     }
 
+    public void increaseViews(Integer viewCount) {
+        this.views += viewCount;
+    }
+
     // 댓글 수 증가 메서드 (setter 없이)
     public void incrementCommentCount() {
         this.commentCount++;
@@ -111,4 +115,6 @@ public class PostV2 extends BaseEntity {
                 .build();
         return post;
     }
+
+
 }
