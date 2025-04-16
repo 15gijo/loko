@@ -282,7 +282,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
             Supplier<RuntimeException> exceptionSupplier
     ) {
         if (newValue != null) {
-            if (!newValue.isBlank()) {
+            if (newValue.isBlank()) {
                 throw exceptionSupplier.get();
             }
             if (!newValue.equals(currentValue)) {
