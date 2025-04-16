@@ -8,7 +8,7 @@ import com.team15gijo.auth.domain.model.Role;
 import com.team15gijo.auth.domain.repository.AuthRepository;
 import com.team15gijo.auth.domain.service.AuthDomainService;
 import com.team15gijo.auth.infrastructure.client.UserServiceClient;
-import com.team15gijo.auth.infrastructure.dto.v1.internal.AdminAssignManagerRequestDto;
+import com.team15gijo.auth.presentation.dto.v1.AdminAssignManagerRequestDto;
 import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthIdentifierUpdateRequestDto;
 import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthPasswordUpdateRequestDto;
 import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpRequestCommand;
