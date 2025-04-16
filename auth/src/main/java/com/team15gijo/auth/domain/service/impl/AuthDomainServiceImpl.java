@@ -1,9 +1,8 @@
 package com.team15gijo.auth.domain.service.impl;
 
-import com.team15gijo.auth.application.dto.v1.AuthLoginRequestCommand;
+import com.team15gijo.auth.application.dto.v1.AuthValidatePasswordRequestCommand;
 import com.team15gijo.auth.domain.exception.AuthDomainExceptionCode;
 import com.team15gijo.auth.domain.model.AuthEntity;
-import com.team15gijo.auth.domain.model.LoginType;
 import com.team15gijo.auth.domain.model.Role;
 import com.team15gijo.auth.domain.repository.AuthRepository;
 import com.team15gijo.auth.domain.service.AuthDomainService;
@@ -44,13 +43,14 @@ public class AuthDomainServiceImpl implements AuthDomainService {
         return createdAuth;
     }
 
-    @Override
-    public void loginAuth(AuthLoginRequestCommand authLoginRequestCommand) {
 
+    @Override
+    public void validatePassword(
+            AuthValidatePasswordRequestCommand authValidatePasswordRequestCommand) {
         //비밀번호 비교
         if (!passwordEncoder.matches(
-                authLoginRequestCommand.getPassword(),
-                authLoginRequestCommand.password())) {
+                authValidatePasswordRequestCommand.rawPassword(),
+                authValidatePasswordRequestCommand.encodedPassword())) {
             throw new CustomException(AuthDomainExceptionCode.INVALID_PASSWORD);
         }
     }

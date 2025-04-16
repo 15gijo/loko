@@ -12,13 +12,13 @@ public interface UserRepository {
 
     boolean existsByEmail(String email);
 
-    boolean existsByNickName(String nickName);
+    boolean existsByNickname(String nickname);
 
     UserEntity save(UserEntity createdUser);
 
     Optional<UserEntity> findByEmail(String identifier);
 
-    Optional<Long> findIdByNickName(String nickname);
+    Optional<Long> findIdByNickname(String nickname);
 
     Optional<UserEntity> findById(Long userId);
 
@@ -28,7 +28,9 @@ public interface UserRepository {
 
     Page<AdminUserReadResponseDto> searchUsersForAdmin(AdminUserSearchCommand adminUserSearchCommand, Pageable pageable);
 
-    Optional<UserEntity> findByNickName(String nickname);
+    Optional<UserEntity> findByNickname(String nickname);
 
     Page<UserReadsResponseDto> searchUsers(String nickname, String username, String region, Pageable validatedPageable);
+
+    void deleteById(Long userId);
 }

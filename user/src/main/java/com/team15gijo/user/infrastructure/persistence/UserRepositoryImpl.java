@@ -27,8 +27,8 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public boolean existsByNickName(String nickName) {
-        return userJpaRepository.existsByNickName(nickName);
+    public boolean existsByNickname(String nickname) {
+        return userJpaRepository.existsByNickname(nickname);
     }
 
     @Override
@@ -48,14 +48,20 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public Optional<UserEntity> findByNickName(String nickname) {
-        return userJpaRepository.findByNickName(nickname);
+    public Optional<UserEntity> findByNickname(String nickname) {
+        return userJpaRepository.findByNickname(nickname);
     }
 
     @Override
     public Page<UserReadsResponseDto> searchUsers(String nickname, String username, String region,
             Pageable validatedPageable) {
-        return userQueryDslRepository.searchUsersForUser(nickname, username, region, validatedPageable);
+        return userQueryDslRepository.searchUsersForUser(nickname, username, region,
+                validatedPageable);
+    }
+
+    @Override
+    public void deleteById(Long userId) {
+        userJpaRepository.deleteById(userId);
     }
 
     //내부 통신
@@ -79,8 +85,8 @@ public class UserRepositoryImpl implements UserRepository {
 
     //내부 통신
     @Override
-    public Optional<Long> findIdByNickName(String nickname) {
-        return userJpaRepository.findIdByNickName(nickname);
+    public Optional<Long> findIdByNickname(String nickname) {
+        return userJpaRepository.findIdByNickname(nickname);
     }
 
 }

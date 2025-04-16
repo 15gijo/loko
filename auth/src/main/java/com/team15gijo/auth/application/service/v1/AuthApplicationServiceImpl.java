@@ -1,22 +1,21 @@
 package com.team15gijo.auth.application.service.v1;
 
-import com.team15gijo.auth.application.dto.v1.AuthLoginRequestCommand;
-import com.team15gijo.auth.application.dto.v1.AuthLoginResponseCommand;
+import com.team15gijo.auth.application.dto.v1.AuthValidatePasswordRequestCommand;
 import com.team15gijo.auth.application.service.AuthApplicationService;
 import com.team15gijo.auth.domain.exception.AuthDomainExceptionCode;
 import com.team15gijo.auth.domain.model.AuthEntity;
-import com.team15gijo.auth.domain.model.LoginType;
 import com.team15gijo.auth.domain.model.Role;
 import com.team15gijo.auth.domain.repository.AuthRepository;
 import com.team15gijo.auth.domain.service.AuthDomainService;
 import com.team15gijo.auth.infrastructure.client.UserServiceClient;
-import com.team15gijo.auth.infrastructure.dto.v1.UserFeignInfoResponseDto;
+import com.team15gijo.auth.presentation.dto.v1.AdminAssignManagerRequestDto;
+import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthIdentifierUpdateRequestDto;
+import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthPasswordUpdateRequestDto;
 import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpRequestCommand;
 import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpRequestDto;
 import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpUpdateUserIdRequestDto;
 import com.team15gijo.auth.infrastructure.jwt.JwtAdminProvider;
 import com.team15gijo.auth.presentation.dto.v1.AssignAdminRequestDto;
-import com.team15gijo.auth.presentation.dto.v1.AuthLoginRequestDto;
 import com.team15gijo.common.exception.CommonExceptionCode;
 import com.team15gijo.common.exception.CustomException;
 import io.jsonwebtoken.Claims;
@@ -45,42 +44,6 @@ public class AuthApplicationServiceImpl implements AuthApplicationService {
         AuthEntity createdAuth = authDomainService.createAuth(authSignUpRequestCommand);
         authRepository.save(createdAuth);
         return createdAuth.getId();
-    }
-
-    @Override
-    @Transactional
-    public AuthLoginResponseCommand login(AuthLoginRequestDto authLoginRequestDto) {
-
-        //인증 조회
-        AuthEntity auth = authRepository.findByIdentifier(authLoginRequestDto.identifier())
-                .orElseThrow(() -> new CustomException(
-                        AuthDomainExceptionCode.USER_IDENTIFIER_NOT_FOUND));
-
-        //사용자 조회
-        UserFeignInfoResponseDto userFeignInfoResponseDto = userServiceClient.getUserInfo(
-                auth.getIdentifier());
-
-        //로그인 타입 정의
-        AuthLoginRequestCommand authLoginRequestCommand = new AuthLoginRequestCommand(
-                auth.getPassword(),
-                authLoginRequestDto.password(),
-                auth.getRole(),
-                userFeignInfoResponseDto.getUserId(),
-                userFeignInfoResponseDto.getNickname(),
-                userFeignInfoResponseDto.getRegion(),
-                LoginType.PASSWORD
-        );
-
-        //비번 검증 -> 추후 도메인 로직 확장
-        authDomainService.loginAuth(authLoginRequestCommand);
-
-        //인증 완료 유저 jwt 헤더에 넣을 내용 보내기
-        return new AuthLoginResponseCommand(
-                authLoginRequestCommand.userId(),
-                authLoginRequestCommand.nickname(),
-                authLoginRequestCommand.role().name(),
-                authLoginRequestCommand.region()
-        );
     }
 
     //어드민 권한 부여
@@ -116,5 +79,62 @@ public class AuthApplicationServiceImpl implements AuthApplicationService {
             AuthSignUpUpdateUserIdRequestDto authSignUpUpdateUserIdRequestDto) {
         authRepository.updateUserMeta(authSignUpUpdateUserIdRequestDto.userId(),
                 authSignUpUpdateUserIdRequestDto.authId());
+    }
+
+    @Override
+    @Transactional
+    public void updateIdentifier(AuthIdentifierUpdateRequestDto authIdentifierUpdateRequestDto) {
+        //인증 디비 확인
+        AuthEntity auth = authRepository.findByUserId(authIdentifierUpdateRequestDto.userId())
+                .orElseThrow(() -> new CustomException(
+                        AuthDomainExceptionCode.AUTH_NOT_FOUND));
+
+        //비밀번호 확인
+        authDomainService.validatePassword(
+                new AuthValidatePasswordRequestCommand(
+                        authIdentifierUpdateRequestDto.password(),
+                        auth.getPassword()
+                )
+        );
+
+        //업데이트
+        auth.updateIdentifier(authIdentifierUpdateRequestDto.newIdentifier());
+    }
+
+    @Override
+    @Transactional
+    public void updatePassword(AuthPasswordUpdateRequestDto authPasswordUpdateRequestDto) {
+        //인증 디비 확인
+        AuthEntity auth = authRepository.findByUserId(authPasswordUpdateRequestDto.userId())
+                .orElseThrow(() -> new CustomException(
+                        AuthDomainExceptionCode.AUTH_NOT_FOUND));
+
+        //비밀번호 확인
+        authDomainService.validatePassword(
+                new AuthValidatePasswordRequestCommand(
+                        authPasswordUpdateRequestDto.currentPassword(),
+                        auth.getPassword()
+                )
+        );
+
+        //비밀번호 업데이트
+        auth.updatePassword(authPasswordUpdateRequestDto.newPassword());
+    }
+
+    @Override
+    @Transactional
+    public void assignManger(AdminAssignManagerRequestDto adminAssignManagerRequestDto) {
+        //인증 디비 확인
+        AuthEntity auth = authRepository.findByUserId(adminAssignManagerRequestDto.targetUserId())
+                .orElseThrow(() -> new CustomException(
+                        AuthDomainExceptionCode.AUTH_NOT_FOUND));
+
+        //USER롤 확인
+        if (auth.getRole() != Role.USER) {
+            throw new CustomException(AuthDomainExceptionCode.ALREADY_PROMOTED);
+        }
+
+        //롤 부여 업데이트
+        auth.updateRole(Role.MANAGER);
     }
 }

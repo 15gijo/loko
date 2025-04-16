@@ -1,4 +1,4 @@
-package com.team15gijo.user.presentation.dto.v1;
+package com.team15gijo.user.presentation.dto.v1.response;
 
 import com.team15gijo.user.domain.model.UserEntity;
 import lombok.AllArgsConstructor;
@@ -20,8 +20,8 @@ public class UserSearchResponseDto {
     public static UserSearchResponseDto from(UserEntity user) {
         return UserSearchResponseDto.builder()
                 .userId(user.getId())
-                .username(user.getUserName())
-                .nickname(user.getNickName())
+                .username(user.getUsername())
+                .nickname(user.getNickname())
                 .profile(user.getProfile())
                 .region(user.getRegion())
                 .build();

@@ -40,7 +40,7 @@ public class UserQueryDslRepositoryImpl implements UserQueryDslRepository {
 
         // 본인 제외
         builder.and(user.id.ne(userId));
-        builder.and(user.nickName.ne(nickname));
+        builder.and(user.nickname.ne(nickname));
 
         // 지역 일치
         builder.and(user.region.eq(region));
@@ -49,8 +49,8 @@ public class UserQueryDslRepositoryImpl implements UserQueryDslRepository {
         if (StringUtils.hasText(keyword)) {
             String likeKeyword = "%" + keyword.toLowerCase() + "%";
             builder.and(
-                    user.nickName.lower().like(likeKeyword)
-                            .or(user.userName.lower().like(likeKeyword))
+                    user.nickname.lower().like(likeKeyword)
+                            .or(user.username.lower().like(likeKeyword))
             );
         }
 
@@ -75,8 +75,8 @@ public class UserQueryDslRepositoryImpl implements UserQueryDslRepository {
 
         BooleanExpression[] predicates = new BooleanExpression[]{
                 eqIfPresent(user.id, adminUserSearchCommand.getUserId()),
-                containsIfPresent(user.userName, adminUserSearchCommand.getUsername()),
-                containsIfPresent(user.nickName, adminUserSearchCommand.getNickname()),
+                containsIfPresent(user.username, adminUserSearchCommand.getUsername()),
+                containsIfPresent(user.nickname, adminUserSearchCommand.getNickname()),
                 containsIfPresent(user.email, adminUserSearchCommand.getEmail()),
                 eqIfPresent(user.status, adminUserSearchCommand.getUserStatus()),
                 containsIfPresent(user.region, adminUserSearchCommand.getRegion())
@@ -86,8 +86,8 @@ public class UserQueryDslRepositoryImpl implements UserQueryDslRepository {
         List<AdminUserReadResponseDto> content = jpaQueryFactory
                 .select(new QAdminUserReadResponseDto(
                         user.id,
-                        user.userName,
-                        user.nickName,
+                        user.username,
+                        user.nickname,
                         user.email,
                         user.profile,
                         user.status.stringValue(),
@@ -116,15 +116,15 @@ public class UserQueryDslRepositoryImpl implements UserQueryDslRepository {
         List<OrderSpecifier<?>> orderSpecifiers = getAllOrderSpecifiers(pageable);
 
         BooleanExpression[] predicates = new BooleanExpression[]{
-                containsIfPresent(user.nickName, nickname),
-                containsIfPresent(user.userName, username),
+                containsIfPresent(user.nickname, nickname),
+                containsIfPresent(user.username, username),
                 containsIfPresent(user.region, region)
         };
 
         List<UserReadsResponseDto> content = jpaQueryFactory
                 .select(new QUserReadsResponseDto(
-                        user.nickName,
-                        user.userName,
+                        user.nickname,
+                        user.username,
                         user.profile,
                         user.region
                 ))
@@ -176,10 +176,10 @@ public class UserQueryDslRepositoryImpl implements UserQueryDslRepository {
                         orderSpecifiers.add(new OrderSpecifier<>(direction, user.id));
                         break;
                     case "username":
-                        orderSpecifiers.add(new OrderSpecifier<>(direction, user.userName));
+                        orderSpecifiers.add(new OrderSpecifier<>(direction, user.username));
                         break;
                     case "nickname":
-                        orderSpecifiers.add(new OrderSpecifier<>(direction, user.nickName));
+                        orderSpecifiers.add(new OrderSpecifier<>(direction, user.nickname));
                         break;
                     case "email":
                         orderSpecifiers.add(new OrderSpecifier<>(direction, user.email));
