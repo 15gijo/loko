@@ -6,15 +6,14 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
   <script>
     let stompClient = null;
-    let chatRoomId = null;
     let isConnected = false;
+    let chatRoomId = null;
+    let receiverId = null;
 
     function connect() {
       chatRoomId = document.getElementById('chatRoomId').value;
       senderId = parseInt(document.getElementById('senderId').value);
-
-      // TODO: 인증 헤더에서 닉네임 추출
-      const nickname = getNicknameFromHeader(); // 닉네임 추출 함수 호출
+      receiverNickname = document.getElementById('receiverNickname').value;
 
       // 채팅방 ID 유효성 검증 API 호출
       fetch(`/api/v1/chats/validate/${chatRoomId}`)
@@ -23,24 +22,42 @@
           if(!data.data.valid) {
             // 채팅방 id가 유효하지 않을 때 오류 표시
             alert('존재하지 않은 채팅방 ID 입니다. 다시 확인해주세요.');
+            console.log("존재하지 않은 채팅방 ID 입니다. 다시 확인해주세요.");
           } else {
             console.log("채팅방 ID 유효성 검증 성공");
           }
         })
-        .catch(error => {
-          console.error("API 호출 실패: " + error);
-          alert('채팅방 ID 유효성 검증 실패. 서버 오류를 확인해주세요.');
-        });
+      .catch(error => {
+        console.error("채팅방 ID 유효성 API 호출 실패: " + error);
+        alert('채팅방 ID 유효성 검증 실패. 서버 오류를 확인해주세요.');
+      });
 
-      // 채팅방에 해당하는 userId 유효성 검증 API 호출
+      // 채팅방에 해당하는 userId 유효성 검증 & 발신자 nickname API 호출
       fetch(`/api/v1/chats/validate/${chatRoomId}/${senderId}`)
         .then(response => response.json())
         .then(data => {
           if(!data.data.valid) {
             // 해당 chatRoomId의 userId가 유효하지 않을 때 오류 표시
+            console.log("해당 채팅방의 사용자가 아닙니다. 다시 확인해주세요.");
             alert('해당 채팅방의 사용자가 아닙니다. 다시 확인해주세요.');
           } else {
             console.log("채팅방 ID에 해당하는 senderId 유효성 검증 성공");
+          }
+        })
+      .catch(error => {
+        console.error("senderId 유효성 검증 API 호출 실패: " + error);
+        alert('채팅방의 사용자 ID 유효성 검증 실패. 서버 오류를 확인해주세요.');
+      });
+
+      // 채팅방에 해당하는 수신자(유저)닉네임이 채팅방 참여자인지 유효성 검증 API 호출
+      fetch(`/api/v1/chats/validate/nickname/${receiverNickname}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.data.receiverId !== null) {
+            console.log("receiverNickname 유효성 검증 성공");
+            receiverId = data.data.receiverId;
+            console.log("[수신자 ID] receiverId=" + receiverId);
+            console.log("[수신자 닉네임] receiverNickname=" + receiverNickname);
 
             // 채팅방 id과 userId가 유효성 검증 성공하면 webSocket 연결(쿠키 senderId 추출안되서 쿼리 파라미터로 대체)
             document.cookie = "senderId=" + senderId;
@@ -97,17 +114,16 @@
               console.error("소켓 Connection error: ", error);
               alert('채팅방 연결 종료 및 실패하였습니다. 서버 오류를 확인해주세요.');
             });
+          } else {
+            // 수신자(유저)닉네임이 채팅방 참여자인지 유효하지 않을 때 오류 표시
+            console.log("receiverNickname 유효성 검증하여 receiverId가 null 입니다.");
+            alert('receiverNickname 유효성 검증하여 receiverId가 null 입니다. 다시 확인해주세요.');
           }
         })
       .catch(error => {
-        console.error("API 호출 실패: " + error);
-        alert('채팅방의 사용자 ID 유효성 검증 실패. 서버 오류를 확인해주세요.');
+        console.error("수신자 닉네임 유효성 API 호출 실패: " + error);
+        alert('수신자 닉네임 유효성 검증 실패. 서버 오류를 확인해주세요.');
       });
-    }
-
-    // TODO: 인증 헤더에서 닉네임 추출 함수
-    function getNicknameFromHeader() {
-      // X-User-Nickname 헤더 값 추출
     }
 
     function disconnect() {
@@ -142,6 +158,8 @@
         stompClient.send("/app/chat/" + chatRoomId, {}, JSON.stringify({ // messageMapping 경로 사용
           'chatRoomId': chatRoomId,
           'senderId': senderId,
+          'receiverId' : receiverId,
+          'receiverNickname' : receiverNickname,
           'messageContent': message
         }), {}, function (error) {
           console.error("메시지 전송 실패: " + error);
@@ -176,12 +194,16 @@
 </head>
 <body>
 <div>
-  <label>Chatroom ID:</label>
-  <input type="text" id="chatRoomId" value="e8685f8b-0c31-4ac7-8a95-fc3a8c6d0c9c" />
+  <label>ChatRoom ID:</label>
+  <input type="text" id="chatRoomId" value="f38106f7-8fe7-4351-8eaf-199525b67e9a" />
 </div>
 <div>
-  <label>SenderId:</label>
+  <label>SenderId(발송자 ID) :</label>
   <input type="text" id="senderId" value="1L" />
+</div>
+<div>
+  <label>Receiver Nickname(상대방/수신자 닉네임) :</label>
+  <input type="text" id="receiverNickname" value="nickname1" />
 </div>
 <div>
   <label>Message:</label>

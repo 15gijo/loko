@@ -4,7 +4,6 @@ import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.CHAT_
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.CHAT_ROOM_NOT_FOUND;
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.CHAT_ROOM_USER_ID_NOT_FOUND;
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.MESSAGE_ID_NOT_FOUND;
-import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.MESSAGE_NOT_FOUND_FOR_CHAT_ROOM;
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.USER_NICK_NAME_NOT_EXIST;
 
 import com.team15gijo.chat.application.dto.v1.ChatRoomResponseDto;
@@ -23,6 +22,7 @@ import com.team15gijo.chat.presentation.dto.v1.ChatMessageResponseDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatRoomRequestDto;
 import com.team15gijo.common.exception.CustomException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -48,7 +47,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ChatMessageService {
 
     private final ChatMessageRepository chatMessageRepository;
@@ -67,6 +65,7 @@ public class ChatMessageService {
      * 채팅방 생성(chatRoomType, receiver)에 따른 채팅방 참여자 생성
      * UserFeignClient 사용자 유효성 검사
      */
+    @Transactional
     public ChatRoomResponseDto createChatRoom(
         ChatRoomRequestDto requestDto,
         Long userId
@@ -74,6 +73,7 @@ public class ChatMessageService {
         log.info("userId = {}", userId);
 
         // TODO: user에서 userId가 존재하는지 검증
+        // TODO: 본인 userId인 경우, 채팅방 생성 제한
 
         /* 채팅방 생성 시, 상대방 계정 조회(nickname 으로 존재유무 판단)
          * 상대방과 본인 userId를 모두 추출하여 채팅방 참여자 생성
@@ -167,36 +167,36 @@ public class ChatMessageService {
      * -> 채팅방의 모든 참여자 퇴장 시, 채팅방/채팅방 참여자/채팅 메시지 소프트 삭제 처리
      * TODO: 마지막 참여자 activation false 변경 안됨
      */
+    @Transactional
     public boolean exitChatRoom(UUID chatRoomId, Long userId) {
         log.info("[exitChatRoom] chatRoomId = {}", chatRoomId);
         log.info("[exitChatRoom] userId = {}", userId);
 
-        ChatRoom chatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
+        ChatRoom chatRoom = chatRoomRepository.findByChatRoomIdAndDeletedAtNull(chatRoomId)
             .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
 
-        // 퇴장 요청 참여자 비활성화
-        Set<ChatRoomParticipant> chatRoomParticipants = chatRoom.getChatRoomParticipants().stream()
-            .map(participant -> {
-                if (participant.getUserId().equals(userId)) {
-                    log.info("[exitChatRoom] userId = {}", participant.getUserId());
-                    log.info("[exitChatRoom] getActivation() 전 = {}", participant.getActivation());
-                    participant.nonActivate();
-                    log.info("[exitChatRoom] getActivation() 후 = {}", participant.getActivation());
+        Set<ChatRoomParticipant> chatRoomParticipants = chatRoom.getChatRoomParticipants();
+        ChatRoomParticipant targetParticipant = null;
+        log.info("[존재하는 참여자 수] chatRoomParticipants.size() = {}", chatRoomParticipants.size());
 
-                    return chatRoomParticipantRepository.save(participant);
-                } else {
-                    return participant;
-                }
-            })
-            .collect(Collectors.toSet());
+        // 퇴장 요청 참여자 찾기
+        for(ChatRoomParticipant participant : chatRoomParticipants) {
+            if(participant.getUserId().equals(userId)) {
+                log.info("[exitChatRoom] userId = {}", participant.getUserId());
+                log.info("[exitChatRoom] getActivation() 전 = {}", participant.getActivation());
+                participant.nonActivate();
+                log.info("[exitChatRoom] getActivation() 후 = {}", participant.getActivation());
 
-        // 변경된 참여자로 ChatRoom 업데이트
-        ChatRoom updatedChatRoom = ChatRoom.builder()
-            .chatRoomId(chatRoomId)
-            .chatRoomType(chatRoom.getChatRoomType())
-            .chatRoomParticipants(chatRoomParticipants)
-            .build();
-        chatRoomRepository.save(updatedChatRoom);
+                targetParticipant = participant;
+                break;
+            }
+        }
+
+        // 비활성화된 참여자 있다면 저장
+        if(targetParticipant != null) {
+            log.info("[퇴장 원하는 사용자 비활성화 업데이트] chatRoomParticipantRepository.save(participant)");
+            chatRoomParticipantRepository.save(targetParticipant);
+        }
 
         // 모든 참여자가 비활성 상태인지 확인 -> 모두 비활성화면 return TRUE
         boolean allParticipantsNonactive = chatRoomParticipants.stream()
@@ -206,8 +206,26 @@ public class ChatMessageService {
         // 모든 채팅방 참여자가 비활성화 상태면 채팅방 및 참여자 소프트삭제 처리
         if(allParticipantsNonactive) {
             log.info("[exitChatRoom] 모든 채팅방 참여자 비활성화 상태");
-            chatRoomParticipantRepository.deleteAll(chatRoomParticipants);
-            chatRoomRepository.delete(chatRoom);
+
+            // 비활성화된 참여자 ID의 List
+            List<UUID> participantId = new ArrayList<>();
+            for(ChatRoomParticipant participant : chatRoomParticipants) {
+                log.info("[채팅방 참여자 소프트 삭제 처리] 전, participant.getUserId() = {}", participant.getUserId());
+                chatRoomParticipantRepository.deleteByUserId(participant.getUserId());
+                participantId.add(participant.getId());
+                log.info("[채팅방 참여자 소프트 삭제 처리] 후");
+            }
+
+            // chatRoomParticipant 저장 이후, chatRoom 조회하여 삭제된 chatRoomParticipant 삭제 처리되지 않도록 chatRoom 조회 추가(불필요한 query 조회)
+            // TODO: 해당 PATCH 로직에서 채팅방 참여자 비활성화만 진행하고, 비동기 또는 배치로 채팅방 삭제 구현 필요!
+            ChatRoom updatedChatRoom = chatRoomRepository.findByChatRoomIdAndDeletedAtNull(chatRoomId).orElse(null);
+            log.info("updatedChatRoom : {}", updatedChatRoom);
+            log.info("[비활성화된 참여자 수] participantId.size()  = {}", participantId.size());
+            if(participantId.size() >= 2) {
+                log.info("[채팅방 삭제] 전");
+                chatRoomRepository.delete(chatRoom);
+                log.info("[채팅방 삭제] 후");
+            }
 
             // 채팅방 모든 참여자 userId 메시지 소프트 삭제 메소드
             deleteChatMessageForChatRoomId(chatRoomId, userId);
@@ -216,6 +234,23 @@ public class ChatMessageService {
         } else {
             return false;
         }
+    }
+
+    /**
+     * 수신자 닉네임 검증 및 웹소켓 연결 시, 발송자 닉네임 전달
+     */
+    public Map<String, Object> validateNickname(String receiverNickname) {
+        Long receiverId = feignClientService.fetchUserIdByNickname(receiverNickname);
+        log.info("receiverId = {}", receiverId);
+
+        Map<String, Object> response = new HashMap<>();
+        // 수신자 닉네임 검증 완료
+        if(receiverId != null) {
+            log.info("[validateNickname] receiverId = {}, receiverNickname = {}", receiverId, receiverNickname);
+            response.put("receiverId", receiverId);
+            response.put("receiverNickname", receiverNickname);
+        }
+        return response;
     }
 
     /**
@@ -242,7 +277,7 @@ public class ChatMessageService {
         UUID chatRoomId,
         Long senderId
     ) {
-        ChatRoom chatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
+        ChatRoom chatRoom = chatRoomRepository.findByChatRoomIdAndDeletedAtNull(chatRoomId)
             .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
 
         Boolean participantExists = chatRoom.getChatRoomParticipants().stream()
@@ -328,6 +363,7 @@ public class ChatMessageService {
      * 웹 소켓 연결 시, Redis key(chatRoomId:senderId)-value(SessionID, senderId, chatRoomId)
      * 이전 메시지 조회로 채팅방에 처음 입장한 경우, 입장 메시지 전송
      */
+    @Transactional
     public void connectChatRoom(
         UUID chatRoomId,
         Long senderId,
@@ -396,13 +432,14 @@ public class ChatMessageService {
     /**
      * stomp 메시지 브로커를 통한 메시지 전송
      */
+    @Transactional
     public ChatMessageResponseDto sendMessage(ChatMessageRequestDto requestDto) {
-        log.info("sendMessage requestDto={}", requestDto);
+        log.info("[채팅 비즈니스 sendMessage 메소드 시작] requestDto={}", requestDto);
         // 메시지 저장 및 전달
         ChatMessageDocument chatMessage = ChatMessageDocument.builder()
             .senderId(requestDto.getSenderId())
-            // TODO: 인증 헤더로 전달된 nickname 사용
-//            .senderNickname(nickname)
+            .receiverId(requestDto.getReceiverId())
+            .receiverNickname(requestDto.getReceiverNickname())
             .chatRoomId(requestDto.getChatRoomId())
             .connectionType(ConnectionType.CHAT)
             .chatMessageType(ChatMessageType.TEXT)
@@ -411,6 +448,7 @@ public class ChatMessageService {
             .build();
         chatMessageRepository.save(chatMessage);
         log.info("chatMessageContent={}", chatMessage.getMessageContent());
+        log.info("ReceiverNickname={}", requestDto.getReceiverNickname());
 
         return chatMessage.toResponse();
     }
@@ -418,7 +456,7 @@ public class ChatMessageService {
     // 채팅방 id 및 userId 유효성 검증
     private void checkRoomIdAndUserId(UUID chatRoomId, Long userId) {
         // 채팅방 유무 검증
-        ChatRoom chatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
+        ChatRoom chatRoom = chatRoomRepository.findByChatRoomIdAndDeletedAtNull(chatRoomId)
             .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
 
         // 채팅방 참여자만 해당 메시지 조회 가능
@@ -431,7 +469,7 @@ public class ChatMessageService {
     }
 
     // 채팅방의 메시지 소프트 삭제
-    public void deleteChatMessageForChatRoomId(UUID chatRoomId, Long userId) {
+    private void deleteChatMessageForChatRoomId(UUID chatRoomId, Long userId) {
         log.info(">> 메시지 소프트 삭제 시작");
 
         // 채팅방의 모든 메시지 조회
@@ -439,21 +477,20 @@ public class ChatMessageService {
             Criteria.where("chatRoomId").is(chatRoomId)
                 .and("deletedAt").is(null));
 
-
         List<ChatMessageDocument> chatMessages = mongoTemplate.find(query, ChatMessageDocument.class);
         log.info("chatMessages.size() = {}", chatMessages.size());
 
         if (chatMessages.isEmpty()) {
             log.error("채팅방에 해당하는 메시지 내역이 존재하지 않습니다.");
-            throw new CustomException(MESSAGE_NOT_FOUND_FOR_CHAT_ROOM);
+//            throw new CustomException(MESSAGE_NOT_FOUND_FOR_CHAT_ROOM);
+        } else {
+            // 메시지 소프트 삭제
+            chatMessages.forEach(chatMessage -> {
+                log.info("[소프트삭제 처리]chatMessage.getSenderId() = {}", chatMessage.getSenderId());
+                chatMessage.softDelete(userId);
+                chatMessageRepository.save(chatMessage);
+            });
+            log.info(">> 메시지 소프트 삭제 완료 : 채팅방 삭제에 따른 채팅방/참여자/메시지 삭제 완료");
         }
-
-        // 메시지 소프트 삭제
-        chatMessages.forEach(chatMessage -> {
-            log.info("[소프트삭제 처리]chatMessage.getSenderId() = {}", chatMessage.getSenderId());
-            chatMessage.softDelete(userId);
-            chatMessageRepository.save(chatMessage);
-        });
-        log.info(">> 메시지 소프트 삭제 완료 : 채팅방 삭제에 따른 채팅방/참여자/메시지 삭제 완료");
     }
 }

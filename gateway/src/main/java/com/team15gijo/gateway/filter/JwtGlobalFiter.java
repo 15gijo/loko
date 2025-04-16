@@ -70,7 +70,7 @@ public class JwtGlobalFiter implements GlobalFilter {
             log.info("Role: {}", role);
             log.info("NickName: {}", nickname);
             log.info("NickName: {}", URLDecoder.decode(nickname, StandardCharsets.UTF_8));
-            log.info("Region: {}", URLDecoder.decode(nickname, StandardCharsets.UTF_8));
+            log.info("Region: {}", URLDecoder.decode(region, StandardCharsets.UTF_8));
             ServerWebExchange mutatedExchange = exchange.mutate().request(mutated).build();
             return chain.filter(mutatedExchange);
         } catch (JwtException e) {
