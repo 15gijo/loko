@@ -1,6 +1,6 @@
-package com.team15gijo.post.domain.repository;
+package com.team15gijo.post.domain.repository.v1;
 
-import com.team15gijo.post.domain.model.Hashtag;
+import com.team15gijo.post.domain.model.v1.Hashtag;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

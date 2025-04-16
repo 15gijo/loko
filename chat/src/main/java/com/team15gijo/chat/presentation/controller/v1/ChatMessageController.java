@@ -121,6 +121,16 @@ public class ChatMessageController {
     }
 
     /**
+     * 수신자 닉네임 검증 및 웹소켓 연결 시, 발송자 닉네임 전달
+     */
+    @GetMapping("/validate/nickname/{receiverNickname}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> validateNickname(
+        @PathVariable("receiverNickname") String receiverNickname) {
+        Map<String, Object> response = chatMessageService.validateNickname(receiverNickname);
+        return ResponseEntity.ok(ApiResponse.success("닉네임 유효성 검증 완료되었습니다.", response));
+    }
+
+    /**
      * 소켓 연결 시 사용되는 엔드포인트
      * 채팅방 ID 유효성 검증 API
      */

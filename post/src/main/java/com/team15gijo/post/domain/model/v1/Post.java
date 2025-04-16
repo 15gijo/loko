@@ -1,8 +1,7 @@
-package com.team15gijo.post.domain.model;
+package com.team15gijo.post.domain.model.v1;
 
 import com.team15gijo.common.model.base.BaseEntity;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.SQLDelete;
