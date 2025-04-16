@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class CommentNotificationConsumer {
+public class NotificationConsumerService {
 
     private final NotificationRepository notificationRepository;
     private final EmitterService emitterService;

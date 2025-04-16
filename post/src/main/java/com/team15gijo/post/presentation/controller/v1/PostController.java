@@ -129,7 +129,7 @@ public class PostController {
     /**
      * 게시글 댓글 수 증가 엔드포인트 (댓글 서비스 등에서 호출)
      */
-//    @RoleGuard(min = "USER")
+    @RoleGuard(min = "USER")
     @PostMapping("/{postId}/increment-comment")
     public ResponseEntity<ApiResponse<Void>> addCommentCount(@PathVariable UUID postId) {
         postService.addCommentCount(postId);
