@@ -44,8 +44,8 @@ public class AuditorAwareImpl implements AuditorAware<Long> {
                 if (request.getRequestURI().contains("/signup")) {
                     return Optional.empty();
                 }
-                throw new CustomException(CommonExceptionCode.AUDITOR_HEADER_NOT_FOUND);
-//                return Optional.empty();  // 댓글 생성시 내부 client 통신할 때 auditor에 걸려서 임시로 리턴값 넣었습니다.
+//                throw new CustomException(CommonExceptionCode.AUDITOR_HEADER_NOT_FOUND);
+                return Optional.empty();  // 댓글 생성시 내부 client 통신할 때 auditor에 걸려서 임시로 리턴값 넣었습니다.
             }
 
             return Optional.of(Long.valueOf(userId));
