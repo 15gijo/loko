@@ -8,6 +8,7 @@ import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.USER_
 
 import com.team15gijo.chat.application.dto.v2.ChatMessageResponseDtoV2;
 import com.team15gijo.chat.application.dto.v2.ChatRoomResponseDtoV2;
+import com.team15gijo.chat.application.service.ChatServiceV2;
 import com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2;
 import com.team15gijo.chat.domain.model.v2.ChatMessageTypeV2;
 import com.team15gijo.chat.domain.model.v2.ChatRoomParticipantV2;
@@ -49,7 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ChatServiceV2 {
+public class ChatServiceImplV2 implements ChatServiceV2 {
     private final ChatMessageRepositoryV2 chatMessageRepository;
     private final ChatRoomRepositoryV2 chatRoomRepository;
     private final ChatRoomParticipantRepositoryV2 chatRoomParticipantRepository;
@@ -67,6 +68,7 @@ public class ChatServiceV2 {
      * 채팅방 생성(chatRoomType, receiver)에 따른 채팅방 참여자 생성
      * UserFeignClient 사용자 유효성 검사
      */
+    @Override
     @Transactional
     public ChatRoomResponseDtoV2 createChatRoom(
         ChatRoomRequestDtoV2 requestDto,
@@ -125,6 +127,7 @@ public class ChatServiceV2 {
     /**
      * 채팅방 단일 조회
      */
+    @Override
     @Transactional(readOnly = true)
     public ChatRoomResponseDtoV2 getChatRoom(UUID chatRoomId, Long userId) {
         ChatRoomV2 chatRoom = chatRoomRepository.findById(chatRoomId).
@@ -141,6 +144,7 @@ public class ChatServiceV2 {
     /**
      * 채팅방 전체 조회
      */
+    @Override
     @Transactional(readOnly = true)
     public Page<ChatRoomV2> getChatRooms(Pageable pageable, Long userId) {
         log.info("userId = {}", userId);
@@ -167,8 +171,8 @@ public class ChatServiceV2 {
      * 채팅방 퇴장(비활성화) -> 삭제(Batch 또는 비동기 처리)
      * -> 1:1 채팅방에서 1명의 사용자 퇴장(채팅방 참여자 비활성화로 변경)
      * -> 채팅방의 모든 참여자 퇴장 시, 채팅방/채팅방 참여자/채팅 메시지 소프트 삭제 처리
-     * TODO: 마지막 참여자 activation false 변경 안됨
      */
+    @Override
     @Transactional
     public boolean exitChatRoom(UUID chatRoomId, Long userId) {
         log.info("[exitChatRoom] chatRoomId = {}", chatRoomId);
@@ -241,6 +245,7 @@ public class ChatServiceV2 {
     /**
      * 수신자 닉네임 검증 및 웹소켓 연결 시, 발송자 닉네임 전달
      */
+    @Override
     public Map<String, Object> validateNickname(String receiverNickname) {
         Long receiverId = feignClientService.fetchUserIdByNickname(receiverNickname);
         log.info("receiverId = {}", receiverId);
@@ -259,6 +264,7 @@ public class ChatServiceV2 {
      * 소켓 연결 시 사용되는
      * 채팅방 ID 유효성 검증
      */
+    @Override
     @Transactional(readOnly = true)
     public Map<String, Boolean> validateChatRoomId(UUID chatRoomId) {
         Boolean valid = chatRoomRepository.existsById(chatRoomId);
@@ -274,6 +280,7 @@ public class ChatServiceV2 {
      * 소켓 연결 시 사용되는 엔드포인트
      * 채팅방 ID에 해당하는 senderId(userId) 유효성 검증
      */
+    @Override
     @Transactional(readOnly = true)
     public Map<String, Boolean> validateSenderId(
         UUID chatRoomId,
@@ -296,6 +303,7 @@ public class ChatServiceV2 {
      * 소켓 연결 중단 시, redis 삭제 호출
      * Redis key(chatRoomId:senderId)-value(SessionID, senderId, chatRoomId)
      */
+    @Override
     @Transactional(readOnly = true)
     public Boolean deleteRedisSenderId(
         UUID chatRoomId,
@@ -318,6 +326,7 @@ public class ChatServiceV2 {
      * mongoDB 에서 채팅방(chatRoomId) 이전 메시지 불러오기(조회)
      * Page 전체 조회(sentAt ASC 정렬)
      */
+    @Override
     @Transactional(readOnly = true)
     public Page<ChatMessageDocumentV2> getMessagesByChatRoomId(UUID chatRoomId, Long senderId, Pageable pageable) {
         // 채팅방 id 및 userId 유효성 검증
@@ -343,6 +352,7 @@ public class ChatServiceV2 {
      * 채팅방 메시지 상세 조회
      * chatRoomId에 속하는 참여자는 메시지 고유 ID로 메시지 상세 조회 모두 가능
      */
+    @Override
     @Transactional(readOnly = true)
     public ChatMessageResponseDtoV2 getMessageById(UUID chatRoomId, String id, Long userId) {
         // 채팅방 id 및 userId 유효성 검증
@@ -365,6 +375,7 @@ public class ChatServiceV2 {
      * 웹 소켓 연결 시, Redis key(chatRoomId:senderId)-value(SessionID, senderId, chatRoomId)
      * 이전 메시지 조회로 채팅방에 처음 입장한 경우, 입장 메시지 전송
      */
+    @Override
     @Transactional
     public void connectChatRoom(
         UUID chatRoomId,
@@ -385,7 +396,7 @@ public class ChatServiceV2 {
                 // 이미 존재하는 경우, 중복 연결 차단 메시지 전송 및 senderId가 연결된 소켓 연결 중단
                 log.warn("cacheKey {} 가 이미 존재하여 중복 연결이 차단됨", cacheKey);
                 redisTemplate.delete(cacheKey);
-                messagingTemplate.convertAndSend("/topic/chat/errors/" + senderId,
+                messagingTemplate.convertAndSend("/topic/v2/chat/errors/" + senderId,
                     "중복 로그인으로 인해 연결이 거부되었습니다. 해당 채팅방에 다시 접속해주세요.");
             } else {
                 // 존재하지 않은 경우, Redis에 senderId, chatRoomId 저장
@@ -421,8 +432,8 @@ public class ChatServiceV2 {
                     try {
                         // 처음 채팅방 접속으로 입장 메시지 전송
                         ChatMessageDocumentV2 savedMessage = chatMessageRepository.save(firstMessage);
-                        log.info("[mongoDB 저장 성공] message={}", savedMessage.toString());
-                        messagingTemplate.convertAndSend("/topic/chat/enter/" + chatRoomId, savedMessage);
+                        log.info("[mongoDB 저장 성공] message={}", savedMessage);
+                        messagingTemplate.convertAndSend("/topic/v2/chat/enter/" + chatRoomId, savedMessage);
                     } catch (Exception e) {
                         log.error("[mongoDB 저장 실패] message={}", firstMessage, e);
                     }
@@ -434,6 +445,7 @@ public class ChatServiceV2 {
     /**
      * stomp 메시지 브로커를 통한 메시지 전송
      */
+    @Override
     @Transactional
     public ChatMessageResponseDtoV2 sendMessage(ChatMessageRequestDtoV2 requestDto) {
         log.info("[채팅 비즈니스 sendMessage 메소드 시작] requestDto={}", requestDto);
