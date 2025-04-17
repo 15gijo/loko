@@ -2,7 +2,7 @@ package com.team15gijo.chat.presentation.controller.v2;
 
 import com.team15gijo.chat.application.dto.v2.ChatMessageResponseDtoV2;
 import com.team15gijo.chat.application.dto.v2.ChatRoomResponseDtoV2;
-import com.team15gijo.chat.application.service.impl.v2.ChatServiceV2;
+import com.team15gijo.chat.application.service.impl.v2.ChatServiceImplV2;
 import com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2;
 import com.team15gijo.chat.domain.model.v2.ChatRoomV2;
 import com.team15gijo.chat.presentation.dto.v2.ChatMessageRequestDtoV2;
@@ -40,7 +40,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @RequiredArgsConstructor
 @RequestMapping("/api/v2/chats")
 public class ChatControllerV2 {
-    private final ChatServiceV2 chatService;
+    private final ChatServiceImplV2 chatService;
 
     /**
      * 채팅방 생성(chatRoomType, receiver)에 따른 채팅방 참여자 생성
@@ -208,8 +208,8 @@ public class ChatControllerV2 {
      * Redis key(chatRoomId:senderId)-value(SessionID, senderId, chatRoomId)로 변경
      * @param headerAccessor : sessionID 추출
      */
-    @MessageMapping("/chat/connect/{chatRoomId}/{senderId}")
-    @SendTo("/topic/chat/{chatRoomId}")
+    @MessageMapping("v2/chat/connect/{chatRoomId}/{senderId}")
+    @SendTo("/topic/v2/chat/{chatRoomId}")
     public void connectChatRoom(
         @DestinationVariable UUID chatRoomId,
         @DestinationVariable Long senderId,
@@ -226,8 +226,8 @@ public class ChatControllerV2 {
      * "/topic"을 구독하는 서버에서 실시간 메시지 송수신 가능
      * "/app" 시작하는 경로 stomp 메시지 전송하면 @MessageMapping 으로 연결
      */
-    @MessageMapping("/chat/{chatRoomId}")
-    @SendTo("/topic/chat/{chatRoomId}")
+    @MessageMapping("v2/chat/{chatRoomId}")
+    @SendTo("/topic/v2/chat/{chatRoomId}")
     public ChatMessageResponseDtoV2 sendMessage(
         @RequestBody ChatMessageRequestDtoV2 requestDto,
         SimpMessageHeaderAccessor headerAccessor
