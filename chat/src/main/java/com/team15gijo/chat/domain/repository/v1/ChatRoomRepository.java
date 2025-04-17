@@ -1,4 +1,4 @@
-package com.team15gijo.chat.domain.repository;
+package com.team15gijo.chat.domain.repository.v1;
 
 import com.team15gijo.chat.domain.model.ChatRoom;
 import java.util.Optional;
