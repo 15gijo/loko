@@ -5,7 +5,7 @@ import com.team15gijo.chat.application.service.impl.v1.ChatService;
 import com.team15gijo.chat.domain.model.v1.ChatMessageDocument;
 import com.team15gijo.chat.domain.model.v1.ChatRoom;
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageRequestDto;
-import com.team15gijo.chat.presentation.dto.v1.ChatMessageResponseDto;
+import com.team15gijo.chat.application.dto.v1.ChatMessageResponseDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatRoomRequestDto;
 import com.team15gijo.common.annotation.RoleGuard;
 import com.team15gijo.common.dto.ApiResponse;

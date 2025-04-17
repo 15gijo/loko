@@ -20,7 +20,7 @@ import com.team15gijo.chat.infrastructure.client.v1.FeignClientService;
 import com.team15gijo.chat.infrastructure.kafka.dto.ChatNotificationEventDto;
 import com.team15gijo.chat.infrastructure.kafka.service.NotificationKafkaProducerService;
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageRequestDto;
-import com.team15gijo.chat.presentation.dto.v1.ChatMessageResponseDto;
+import com.team15gijo.chat.application.dto.v1.ChatMessageResponseDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatRoomRequestDto;
 import com.team15gijo.common.exception.CustomException;
 import java.time.LocalDateTime;

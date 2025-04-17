@@ -1,4 +1,4 @@
-package com.team15gijo.chat.presentation.dto.v1;
+package com.team15gijo.chat.application.dto.v1;
 
 import com.team15gijo.chat.domain.model.v1.ConnectionType;
 import java.time.LocalDateTime;
