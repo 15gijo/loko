@@ -1,4 +1,4 @@
-package com.team15gijo.user.presentation.dto.v1.internal.request;
+package com.team15gijo.user.infrastructure.dto.request.v1;
 
 public record AuthIdentifierUpdateRequestDto(
         Long userId,

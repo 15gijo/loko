@@ -1,4 +1,4 @@
-package com.team15gijo.user.presentation.dto.v1.response;
+package com.team15gijo.user.presentation.dto.internal.response.v1;
 
 import com.team15gijo.user.domain.model.UserEntity;
 import lombok.AllArgsConstructor;
@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class UserSearchResponseDto {
+
     private Long userId;
     private String username;
     private String nickname;

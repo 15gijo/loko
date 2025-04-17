@@ -1,4 +1,4 @@
-package com.team15gijo.user.infrastructure.dto.v1.internal;
+package com.team15gijo.user.infrastructure.dto.request.v1;
 
 import lombok.Builder;
 import lombok.Getter;

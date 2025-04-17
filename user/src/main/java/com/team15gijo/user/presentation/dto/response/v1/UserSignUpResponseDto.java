@@ -1,4 +1,4 @@
-package com.team15gijo.user.presentation.dto.v1.response;
+package com.team15gijo.user.presentation.dto.response.v1;
 
 public record UserSignUpResponseDto(
         String email,
