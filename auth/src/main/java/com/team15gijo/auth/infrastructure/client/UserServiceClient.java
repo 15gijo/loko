@@ -1,7 +1,7 @@
 package com.team15gijo.auth.infrastructure.client;
 
 import com.team15gijo.auth.infrastructure.config.UserFeignClientConfig;
-import com.team15gijo.auth.infrastructure.dto.v1.UserFeignInfoResponseDto;
+import com.team15gijo.auth.infrastructure.dto.feign.response.v1.UserFeignInfoResponseDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

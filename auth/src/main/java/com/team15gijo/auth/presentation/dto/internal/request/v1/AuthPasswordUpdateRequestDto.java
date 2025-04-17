@@ -1,4 +1,4 @@
-package com.team15gijo.user.presentation.dto.v1.internal.request;
+package com.team15gijo.auth.presentation.dto.internal.request.v1;
 
 public record AuthPasswordUpdateRequestDto(
         Long userId,
@@ -7,3 +7,4 @@ public record AuthPasswordUpdateRequestDto(
 ) {
 
 }
+

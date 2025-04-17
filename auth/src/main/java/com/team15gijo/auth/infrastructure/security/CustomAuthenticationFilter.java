@@ -1,12 +1,12 @@
 package com.team15gijo.auth.infrastructure.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.team15gijo.auth.application.dto.v1.AuthLoginResponseCommand;
+import com.team15gijo.auth.infrastructure.dto.security.AuthLoginResponseCommand;
 import com.team15gijo.auth.infrastructure.client.UserServiceClient;
-import com.team15gijo.auth.infrastructure.dto.v1.UserFeignInfoResponseDto;
+import com.team15gijo.auth.infrastructure.dto.feign.response.v1.UserFeignInfoResponseDto;
 import com.team15gijo.auth.infrastructure.exception.AuthInfraExceptionCode;
 import com.team15gijo.auth.infrastructure.jwt.JwtProvider;
-import com.team15gijo.auth.presentation.dto.v1.AuthLoginRequestDto;
+import com.team15gijo.auth.presentation.dto.request.v1.AuthLoginRequestDto;
 import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.common.exception.CustomException;
 import com.team15gijo.common.exception.ExceptionCode;

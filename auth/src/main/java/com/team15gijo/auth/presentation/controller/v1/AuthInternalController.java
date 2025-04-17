@@ -1,10 +1,10 @@
-package com.team15gijo.auth.presentation.controller.internal.v1;
+package com.team15gijo.auth.presentation.controller.v1;
 
 import com.team15gijo.auth.application.service.AuthApplicationService;
-import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthIdentifierUpdateRequestDto;
-import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthPasswordUpdateRequestDto;
-import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpRequestDto;
-import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpUpdateUserIdRequestDto;
+import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthIdentifierUpdateRequestDto;
+import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthPasswordUpdateRequestDto;
+import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthSignUpRequestDto;
+import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthSignUpUpdateUserIdRequestDto;
 import com.team15gijo.common.dto.ApiResponse;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;

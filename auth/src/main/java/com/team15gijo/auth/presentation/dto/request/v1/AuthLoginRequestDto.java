@@ -1,4 +1,4 @@
-package com.team15gijo.auth.presentation.dto.v1;
+package com.team15gijo.auth.presentation.dto.request.v1;
 
 import jakarta.validation.constraints.NotBlank;
 

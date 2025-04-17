@@ -1,6 +1,7 @@
-package com.team15gijo.auth.infrastructure.dto.v1.internal;
+package com.team15gijo.auth.application.dto.v1;
 
 import com.team15gijo.auth.domain.model.LoginType;
+import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthSignUpRequestDto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

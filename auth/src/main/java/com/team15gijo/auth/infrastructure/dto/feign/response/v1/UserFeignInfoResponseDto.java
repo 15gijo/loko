@@ -1,4 +1,4 @@
-package com.team15gijo.auth.infrastructure.dto.v1;
+package com.team15gijo.auth.infrastructure.dto.feign.response.v1;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

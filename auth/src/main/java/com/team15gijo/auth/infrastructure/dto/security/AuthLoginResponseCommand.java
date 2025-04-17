@@ -1,4 +1,4 @@
-package com.team15gijo.auth.application.dto.v1;
+package com.team15gijo.auth.infrastructure.dto.security;
 
 public record AuthLoginResponseCommand(
         //jwt 헤더 내용
