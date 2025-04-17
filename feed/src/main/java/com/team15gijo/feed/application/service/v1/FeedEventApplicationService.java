@@ -6,6 +6,8 @@ import com.team15gijo.feed.infrastructure.kafka.dto.v1.CommentCreatedEventDto;
 import com.team15gijo.feed.infrastructure.kafka.dto.v1.CommentDeletedEventDto;
 import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostCreatedEventDto;
 import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostDeletedEventDto;
+import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostLikedEventDto;
+import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostUnlikedEventDto;
 import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostUpdatedEventDto;
 import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostViewedEventDto;
 import java.util.UUID;
@@ -97,6 +99,34 @@ public class FeedEventApplicationService implements FeedEventService {
         feedRepository.save(feed);
         updatePopularityScore(dto.getPostId()); //인기 점수 갱신
         log.info("Feed 댓글 수 수정 완료 - postId: {}", feed.getPostId());
+    }
+
+    public void handlePostLiked(PostLikedEventDto dto) {
+        log.info( "❤️ POST_LIKED received: {}", dto.toString());
+        // TODO: 좋아요 수 증가 처리
+        Feed feed = feedRepository.findById(dto.getPostId()).orElse(null);
+        if (feed == null) {
+            log.warn("Feed not found for postId: {}", dto.getPostId());
+            return;
+        }
+        feed.updateFeedLikeCount(dto.getLikeCount());
+        feedRepository.save(feed);
+        updatePopularityScore(dto.getPostId()); //인기 점수 갱신
+        log.info("Feed 좋아요 수 수정 완료 - postId: {}", feed.getPostId());
+    }
+
+    public void handlePostUnliked(PostUnlikedEventDto dto) {
+        log.info( "💔 POST_UNLIKED received: {}", dto.toString());
+        // TODO: 좋아요 수 감소 처리
+        Feed feed = feedRepository.findById(dto.getPostId()).orElse(null);
+        if (feed == null) {
+            log.warn("Feed not found for postId: {}", dto.getPostId());
+            return;
+        }
+        feed.updateFeedLikeCount(dto.getLikeCount());
+        feedRepository.save(feed);
+        updatePopularityScore(dto.getPostId()); //인기 점수 갱신
+        log.info("Feed 좋아요 수 수정 완료 - postId: {}", feed.getPostId());
     }
 
     /**
