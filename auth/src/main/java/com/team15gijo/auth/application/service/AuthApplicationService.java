@@ -1,11 +1,11 @@
 package com.team15gijo.auth.application.service;
 
-import com.team15gijo.auth.presentation.dto.v1.AdminAssignManagerRequestDto;
-import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthIdentifierUpdateRequestDto;
-import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthPasswordUpdateRequestDto;
-import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpRequestDto;
-import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpUpdateUserIdRequestDto;
-import com.team15gijo.auth.presentation.dto.v1.AssignAdminRequestDto;
+import com.team15gijo.auth.presentation.dto.request.v1.AdminAssignManagerRequestDto;
+import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthIdentifierUpdateRequestDto;
+import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthPasswordUpdateRequestDto;
+import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthSignUpRequestDto;
+import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthSignUpUpdateUserIdRequestDto;
+import com.team15gijo.auth.presentation.dto.request.v1.AssignAdminRequestDto;
 import jakarta.validation.Valid;
 import java.util.UUID;
 
