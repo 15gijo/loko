@@ -20,7 +20,9 @@ spring:
       ddl-auto: create
     show-sql: true
     database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
-
+gemini:
+  api-url: ${GEMINI_API_URL}
+  api-key: ${GEMINI_API_KEY}
 
 eureka:
   client:
