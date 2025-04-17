@@ -1,4 +1,4 @@
-package com.team15gijo.chat.presentation.config;
+package com.team15gijo.chat.presentation.config.v1;
 
 import com.team15gijo.chat.presentation.handler.HttpHandshakeInterceptor;
 import lombok.RequiredArgsConstructor;
