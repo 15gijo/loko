@@ -7,12 +7,12 @@ import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.MESSA
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.USER_NICK_NAME_NOT_EXIST;
 
 import com.team15gijo.chat.application.dto.v1.ChatRoomResponseDto;
-import com.team15gijo.chat.domain.model.ChatMessageDocument;
-import com.team15gijo.chat.domain.model.ChatMessageType;
-import com.team15gijo.chat.domain.model.ChatRoom;
-import com.team15gijo.chat.domain.model.ChatRoomParticipant;
-import com.team15gijo.chat.domain.model.ChatRoomType;
-import com.team15gijo.chat.domain.model.ConnectionType;
+import com.team15gijo.chat.domain.model.v1.ChatMessageDocument;
+import com.team15gijo.chat.domain.model.v1.ChatMessageType;
+import com.team15gijo.chat.domain.model.v1.ChatRoom;
+import com.team15gijo.chat.domain.model.v1.ChatRoomParticipant;
+import com.team15gijo.chat.domain.model.v1.ChatRoomType;
+import com.team15gijo.chat.domain.model.v1.ConnectionType;
 import com.team15gijo.chat.domain.repository.v1.ChatMessageRepository;
 import com.team15gijo.chat.domain.repository.v1.ChatRoomParticipantRepository;
 import com.team15gijo.chat.domain.repository.v1.ChatRoomRepository;

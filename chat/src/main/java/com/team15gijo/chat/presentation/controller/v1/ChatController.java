@@ -2,8 +2,8 @@ package com.team15gijo.chat.presentation.controller.v1;
 
 import com.team15gijo.chat.application.dto.v1.ChatRoomResponseDto;
 import com.team15gijo.chat.application.service.impl.v1.ChatService;
-import com.team15gijo.chat.domain.model.ChatMessageDocument;
-import com.team15gijo.chat.domain.model.ChatRoom;
+import com.team15gijo.chat.domain.model.v1.ChatMessageDocument;
+import com.team15gijo.chat.domain.model.v1.ChatRoom;
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageRequestDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageResponseDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatRoomRequestDto;

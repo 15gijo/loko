@@ -1,4 +1,4 @@
-package com.team15gijo.chat.domain.model;
+package com.team15gijo.chat.domain.model.v1;
 
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageResponseDto;
 import jakarta.persistence.Column;

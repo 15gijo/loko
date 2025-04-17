@@ -1,4 +1,4 @@
-package com.team15gijo.chat.domain.model;
+package com.team15gijo.chat.domain.model.v1;
 
 public enum ChatRoomType {
     INDIVIDUAL("INDIVIDUAL"),
