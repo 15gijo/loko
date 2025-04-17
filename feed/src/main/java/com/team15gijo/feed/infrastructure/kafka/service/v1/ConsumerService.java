@@ -55,6 +55,14 @@ public class ConsumerService {
                 CommentDeletedEventDto dto = objectMapper.treeToValue(rootNode, CommentDeletedEventDto.class);
                 feedEventService.handlePostCommentDeleted(dto);
             }
+            case POST_LIKED -> {
+                PostLikedEventDto dto = objectMapper.treeToValue(rootNode, PostLikedEventDto.class);
+                feedEventService.handlePostLiked(dto);
+            }
+            case POST_UNLIKED -> {
+                PostUnlikedEventDto dto = objectMapper.treeToValue(rootNode, PostUnlikedEventDto.class);
+                feedEventService.handlePostUnliked(dto);
+            }
             default -> log.warn("Unknown event type: {}", type);
         }
     }

@@ -7,6 +7,8 @@ import com.team15gijo.post.infrastructure.kafka.dto.v1.EventType;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.FeedEventDto;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.PostCreatedEventDto;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.PostDeletedEventDto;
+import com.team15gijo.post.infrastructure.kafka.dto.v1.PostLikedEventDto;
+import com.team15gijo.post.infrastructure.kafka.dto.v1.PostUnlikedEventDto;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.PostUpdatedEventDto;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.PostViewedEventDto;
 import com.team15gijo.post.infrastructure.kafka.service.v1.ProducerService;
@@ -38,6 +40,8 @@ public class KafkaUtil {
             case POST_VIEWED -> PostViewedEventDto.from(post);
             case COMMENT_CREATED -> CommentCreatedEventDto.from(post);
             case COMMENT_DELETED -> CommentDeletedEventDto.from(post);
+            case POST_LIKED -> PostLikedEventDto.from(post);
+            case POST_UNLIKED -> PostUnlikedEventDto.from(post);
             default -> null;
         };
     }

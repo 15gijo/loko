@@ -8,6 +8,8 @@ import com.team15gijo.post.domain.model.v2.PostLikeV2;
 import com.team15gijo.post.domain.model.v2.PostV2;
 import com.team15gijo.post.domain.repository.v2.PostLikeRepositoryV2;
 import com.team15gijo.post.domain.repository.v2.PostRepositoryV2;
+import com.team15gijo.post.infrastructure.kafka.dto.v1.EventType;
+import com.team15gijo.post.infrastructure.kafka.util.KafkaUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +23,9 @@ public class PostLikeServiceV2 {
 
     private final PostRepositoryV2 postRepository;
     private final PostLikeRepositoryV2 postLikeRepository;
+    private final KafkaUtil kafkaUtil;
+
+    private static final String FEED_EVENTS_TOPIC = "feed_events";
 
 
     /**
@@ -42,6 +47,9 @@ public class PostLikeServiceV2 {
         post.incrementLikeCount();
         postRepository.save(post);
 
+        // kafka 이벤트 발행
+        kafkaUtil.sendKafkaEvent(EventType.POST_LIKED, post, FEED_EVENTS_TOPIC);
+
         return savedLike;
     }
 
@@ -61,6 +69,8 @@ public class PostLikeServiceV2 {
         post.decrementLikeCount();
         postRepository.save(post);
 
+        // kafka 이벤트 발행
+        kafkaUtil.sendKafkaEvent(EventType.POST_UNLIKED, post, FEED_EVENTS_TOPIC);
     }
 
     /**

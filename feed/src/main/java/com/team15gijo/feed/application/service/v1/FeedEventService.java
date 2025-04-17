@@ -4,6 +4,8 @@ import com.team15gijo.feed.infrastructure.kafka.dto.v1.CommentCreatedEventDto;
 import com.team15gijo.feed.infrastructure.kafka.dto.v1.CommentDeletedEventDto;
 import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostCreatedEventDto;
 import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostDeletedEventDto;
+import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostLikedEventDto;
+import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostUnlikedEventDto;
 import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostUpdatedEventDto;
 import com.team15gijo.feed.infrastructure.kafka.dto.v1.PostViewedEventDto;
 
@@ -14,4 +16,6 @@ public interface FeedEventService {
     void handlePostViewed(PostViewedEventDto dto);
     void handlePostCommented(CommentCreatedEventDto dto);
     void handlePostCommentDeleted(CommentDeletedEventDto dto);
+    void handlePostLiked(PostLikedEventDto dto);
+    void handlePostUnliked(PostUnlikedEventDto dto);
 }
