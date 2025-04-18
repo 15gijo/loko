@@ -5,26 +5,25 @@ import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.CHAT_
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.CHAT_ROOM_USER_ID_NOT_FOUND;
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.MESSAGE_ID_NOT_FOUND;
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.USER_NICK_NAME_NOT_EXIST;
+import static com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2.createChatMessageDocument;
+import static com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2.createEnterMessageDocument;
+import static com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2.createErrorMessageDocument;
 
 import com.team15gijo.chat.application.dto.v2.ChatMessageResponseDtoV2;
 import com.team15gijo.chat.application.dto.v2.ChatRoomResponseDtoV2;
 import com.team15gijo.chat.application.service.ChatServiceV2;
 import com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2;
-import com.team15gijo.chat.domain.model.v2.ChatMessageTypeV2;
 import com.team15gijo.chat.domain.model.v2.ChatRoomParticipantV2;
 import com.team15gijo.chat.domain.model.v2.ChatRoomTypeV2;
 import com.team15gijo.chat.domain.model.v2.ChatRoomV2;
-import com.team15gijo.chat.domain.model.v2.ConnectionTypeV2;
 import com.team15gijo.chat.domain.repository.v2.ChatMessageRepositoryV2;
 import com.team15gijo.chat.domain.repository.v2.ChatRoomParticipantRepositoryV2;
 import com.team15gijo.chat.domain.repository.v2.ChatRoomRepositoryV2;
 import com.team15gijo.chat.infrastructure.client.v1.FeignClientService;
-import com.team15gijo.chat.infrastructure.kafka.dto.ChatNotificationEventDto;
-import com.team15gijo.chat.infrastructure.kafka.service.NotificationKafkaProducerService;
+import com.team15gijo.chat.infrastructure.kafka.util.KafkaUtil;
 import com.team15gijo.chat.presentation.dto.v2.ChatMessageRequestDtoV2;
 import com.team15gijo.chat.presentation.dto.v2.ChatRoomRequestDtoV2;
 import com.team15gijo.common.exception.CustomException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,7 +42,6 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,12 +54,13 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
     private final ChatRoomParticipantRepositoryV2 chatRoomParticipantRepository;
 
     private final FeignClientService feignClientService;
-    private final NotificationKafkaProducerService notificationKafkaProducerService;
 
     private final RedisTemplate<String, Object> redisTemplate;
-
-    private final SimpMessagingTemplate messagingTemplate;
     private final MongoTemplate mongoTemplate;
+
+    private static final String CHAT_MESSAGE_EVENT_TOPIC = "chat_message_event";
+    private static final String CHAT_ERROR_EVENT_TOPIC = "chat_error_event";
+    private final KafkaUtil kafkaUtil;
 
     /**
      * 1차 MVP 1:1 채팅만 구현
@@ -309,12 +308,14 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
         UUID chatRoomId,
         String senderId
     ) {
-        String cacheKey = chatRoomId + ":"+ senderId;
+        log.info("[ChatServiceImplV2] deleteRedisSenderId 메소드 시작");
+        String cacheKey = "CHATROOM:" + chatRoomId + ":"+ senderId;
         log.info("cacheKey: {}", cacheKey);
 
         if(redisTemplate.hasKey(cacheKey)) {
-            log.info("소켓 연결 해지로 cacheKey={}인 Redis 캐시 삭제", cacheKey);
+            log.info("소켓 연결 해지 요청으로 cacheKey={}인 Redis 캐시 삭제", cacheKey);
             redisTemplate.delete(cacheKey);
+            log.info("[ChatServiceImplV2] deleteRedisSenderId 메소드 종료");
             return true;
         } else {
             log.info("cacheKey={}에 해당하는 Redis 캐시가 존재하지 않음", cacheKey);
@@ -378,66 +379,56 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
     @Override
     @Transactional
     public void connectChatRoom(
-        UUID chatRoomId,
-        Long senderId,
-        SimpMessageHeaderAccessor headerAccessor,
-        String message
-    ) {
-        if (senderId != null) {
-            // 세션 ID 가져오기
-            String sessionId = headerAccessor.getSessionId();
-            log.info("connectChatRoom sessionId: {}", sessionId);
+        UUID chatRoomId, Long senderId, SimpMessageHeaderAccessor headerAccessor) {
+        log.info("[ChatServiceImplV2] connectChatRoom 메소드 시작");
 
-            String cacheKey = chatRoomId + ":"+ senderId;
-            log.info("cacheKey: {}", cacheKey);
+        String sessionId = headerAccessor.getSessionId();
+        String cacheKey = "CHATROOM:" + chatRoomId + ":"+ senderId;
 
-            // Redis에 senderId:chatRoomId 이미 존재하는지 확인
-            if(redisTemplate.hasKey(cacheKey)) {
-                // 이미 존재하는 경우, 중복 연결 차단 메시지 전송 및 senderId가 연결된 소켓 연결 중단
-                log.warn("cacheKey {} 가 이미 존재하여 중복 연결이 차단됨", cacheKey);
-                redisTemplate.delete(cacheKey);
-                messagingTemplate.convertAndSend("/topic/v2/chat/errors/" + senderId,
-                    "중복 로그인으로 인해 연결이 거부되었습니다. 해당 채팅방에 다시 접속해주세요.");
-            } else {
-                // 존재하지 않은 경우, Redis에 senderId, chatRoomId 저장
-                Map<String, Object> value = new HashMap<>();
-                value.put("sessionId", sessionId);
-                value.put("chatRoomId", chatRoomId);
-                value.put("senderId", senderId);
+        // Redis에 chatRoomId:senderId가 이미 존재하는지 확인
+        if(redisTemplate.hasKey(cacheKey)) {
+            // 이미 존재하는 경우, 중복 연결 차단 메시지 전송 및 senderId가 연결된 소켓 연결 중단
+            log.warn("cacheKey={} 가 이미 존재하여 중복 연결 차단 및 해당 캐시 삭제", cacheKey);
+            redisTemplate.delete(cacheKey);
 
-                redisTemplate.opsForHash().putAll(cacheKey, value);
-                redisTemplate.expire(cacheKey, 1, TimeUnit.DAYS);
+            // 카프카 에러 메시지 처리
+            String errorMessage = "중복 로그인으로 인해 연결이 거부되었습니다. 해당 채팅방에 다시 접속해주세요.";
+            ChatMessageDocumentV2 errorDocument = createErrorMessageDocument(chatRoomId, senderId, errorMessage);
+            kafkaUtil.sendKafkaEvent(CHAT_ERROR_EVENT_TOPIC, errorDocument);
+            log.info("[ChatServiceImplV2] redis 키 중복으로 웹소켓 중복 연결 차단 - Kafka 발행 완료");
+        } else {
+            // 존재하지 않은 경우, Redis에 chatRoomId:senderId 저장
+            Map<String, Object> value = new HashMap<>();
+            value.put("sessionId", sessionId);
+            value.put("chatRoomId", chatRoomId);
+            value.put("senderId", senderId);
 
-                log.info("[Redis 캐싱] cacheKey={} 과 value={} 저장", cacheKey, value);
+            redisTemplate.opsForHash().putAll(cacheKey, value);
+            redisTemplate.expire(cacheKey, 1, TimeUnit.DAYS);
 
-                // mongoDB에서 userId와 chatRoomId에 대한 메시지 유무로 처음인지 판단하고 입장 메시지 전송
-                Query query = Query.query(
-                    Criteria.where("chatRoomId").is(chatRoomId)
-                        .and("senderId").is(senderId)
-                        .and("deletedAt").is(null));
+            log.info("[Redis 캐싱] cacheKey={} 과 value={} 저장", cacheKey, value);
 
-                long messageCount = mongoTemplate.count(query, ChatMessageDocumentV2.class);
-                log.info(">> messageCount={}", messageCount);
+            // mongoDB에서 userId와 chatRoomId에 대한 메시지 유무로 처음인지 판단하고 입장 메시지 전송
+            Query query = Query.query(
+                Criteria.where("chatRoomId").is(chatRoomId)
+                    .and("senderId").is(senderId)
+                    .and("deletedAt").is(null));
 
-                if(messageCount == 0) {
-                    // chatRoomId에서 senderId가 보낸 메시지가 없는 경우, mongoDB 메시지 저장
-                    ChatMessageDocumentV2 firstMessage = ChatMessageDocumentV2.builder()
-                        .chatRoomId(chatRoomId)
-                        .senderId(senderId)
-                        .connectionType(ConnectionTypeV2.ENTER)
-                        .chatMessageType(ChatMessageTypeV2.TEXT)
-                        .messageContent(message)
-                        .sentAt(LocalDateTime.now())
-                        .build();
-                    try {
-                        // 처음 채팅방 접속으로 입장 메시지 전송
-                        ChatMessageDocumentV2 savedMessage = chatMessageRepository.save(firstMessage);
-                        log.info("[mongoDB 저장 성공] message={}", savedMessage);
-                        messagingTemplate.convertAndSend("/topic/v2/chat/enter/" + chatRoomId, savedMessage);
-                    } catch (Exception e) {
-                        log.error("[mongoDB 저장 실패] message={}", firstMessage, e);
-                    }
-                }
+            long messageCount = mongoTemplate.count(query, ChatMessageDocumentV2.class);
+
+            log.info("[채팅방({})의 사용자({}) 메시지 내역 조회] messageCount={}", chatRoomId, senderId, messageCount);
+
+            if(messageCount == 0) {
+                // chatRoomId에서 senderId가 보낸 메시지가 없는 경우, 입장 메시지 전송하기
+                String messageContent = senderId + "님이 입장하였습니다.";
+                Long receiverId = Long.parseLong(headerAccessor.getSessionAttributes().get("receiverId").toString());
+                String receiverNickname = headerAccessor.getSessionAttributes().get("receiverNickname").toString();
+
+                ChatMessageDocumentV2 firstMessage = createEnterMessageDocument(chatRoomId, senderId, receiverId, receiverNickname, messageContent);
+
+                // 카프카 입장 메시지 처리
+                kafkaUtil.sendKafkaEvent(CHAT_MESSAGE_EVENT_TOPIC, firstMessage);
+                log.info("[ChatServiceImplV2] connectChatRoom 메소드 종료 - Kafka 발행 완료");
             }
         }
     }
@@ -447,28 +438,17 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
      */
     @Override
     @Transactional
-    public ChatMessageResponseDtoV2 sendMessage(ChatMessageRequestDtoV2 requestDto) {
-        log.info("[채팅 비즈니스 sendMessage 메소드 시작] requestDto={}", requestDto);
-        // 메시지 저장 및 전달
-        ChatMessageDocumentV2 chatMessage = ChatMessageDocumentV2.builder()
-            .senderId(requestDto.getSenderId())
-            .receiverId(requestDto.getReceiverId())
-            .receiverNickname(requestDto.getReceiverNickname())
-            .chatRoomId(requestDto.getChatRoomId())
-            .connectionType(ConnectionTypeV2.CHAT)
-            .chatMessageType(ChatMessageTypeV2.TEXT)
-            .messageContent(requestDto.getMessageContent())
-            .sentAt(LocalDateTime.now())
-            .build();
-        chatMessageRepository.save(chatMessage);
-        log.info("chatMessageContent={}", chatMessage.getMessageContent());
-        log.info("ReceiverNickname={}", requestDto.getReceiverNickname());
+    public void sendMessage(
+        ChatMessageRequestDtoV2 requestDto,
+        SimpMessageHeaderAccessor headerAccessor) {
+        log.info("[ChatServiceImplV2] sendMessage 메소드 시작");
 
-        // 수정이 필요한 사항 : 현재 보내는 사람의 닉네임을 받을 수 없어 임시로 받는 사람의 닉네임을 보냄. 추후 수정 필요
-        notificationKafkaProducerService.sendChatCreate(ChatNotificationEventDto
-            .from(requestDto.getReceiverId(), requestDto.getReceiverNickname(), requestDto.getMessageContent()));
+        // 메시지 변환
+        ChatMessageDocumentV2 chatMessage = createChatMessageDocument(requestDto);
 
-        return chatMessage.toResponse();
+        // 카프카 채팅 메시지 처리
+        kafkaUtil.sendKafkaEvent(CHAT_MESSAGE_EVENT_TOPIC, chatMessage);
+        log.info("[ChatServiceImplV2] sendMessage 메소드 종료 - Kafka 발행 완료");
     }
 
     // 채팅방 id 및 userId 유효성 검증
@@ -500,7 +480,6 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
 
         if (chatMessages.isEmpty()) {
             log.error("채팅방에 해당하는 메시지 내역이 존재하지 않습니다.");
-//            throw new CustomException(MESSAGE_NOT_FOUND_FOR_CHAT_ROOM);
         } else {
             // 메시지 소프트 삭제
             chatMessages.forEach(chatMessage -> {

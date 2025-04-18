@@ -46,8 +46,8 @@ public interface ChatServiceV2 {
         UUID chatRoomId, String id, Long userId);
 
     void connectChatRoom(
-        UUID chatRoomId, Long senderId, SimpMessageHeaderAccessor headerAccessor, String message);
+        UUID chatRoomId, Long senderId, SimpMessageHeaderAccessor headerAccessor);
 
-    ChatMessageResponseDtoV2 sendMessage(
-        ChatMessageRequestDtoV2 requestDto);
+    void sendMessage(
+        ChatMessageRequestDtoV2 requestDto, SimpMessageHeaderAccessor headerAccessor);
 }
