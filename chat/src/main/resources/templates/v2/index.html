@@ -62,16 +62,14 @@
           // 채팅방 id과 userId가 유효성 검증 성공하면 webSocket 연결(쿠키 senderId 추출안되서 쿼리 파라미터로 대체)
           document.cookie = "senderId=" + senderId;
           // 소켓 연결 시, 쿼리 파리미터로 senderId 전달
-          const socket = new SockJS('/v2/ws-stomp?senderId=' + senderId);
+          const socket = new SockJS(`/v2/ws-stomp?senderId=${senderId}&receiverId=${receiverId}&receiverNickname=${receiverNickname}`);
           stompClient = Stomp.over(socket);
           stompClient.connect({}, function (frame) {
             isConnected = true;
             console.log('소켓 Connected: ' + frame);
 
             // connect 엔드포인트로 메시지 전송하여 Redis 저장
-            stompClient.send("/app/v2/chat/connect/" + chatRoomId + "/" + senderId, {},
-                senderId + "님이 입장하였습니다."
-            );
+            stompClient.send("/app/v2/chat/connect/" + chatRoomId + "/" + senderId, {});
 
             // connect 에서 오류 메시지 구독
             stompClient.subscribe('/topic/v2/chat/errors/' + senderId, function (message) {
