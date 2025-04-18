@@ -16,9 +16,10 @@ public class PostSearchResponseDto {
     private String username;
     private String postContent;
     private List<String> hashtags;
-    private int views;
-    private int commentCount;
-    private int likeCount;
+    private String region;
+//    private int views;
+//    private int commentCount;
+//    private int likeCount;
     private LocalDateTime createdAt;
 
 }
