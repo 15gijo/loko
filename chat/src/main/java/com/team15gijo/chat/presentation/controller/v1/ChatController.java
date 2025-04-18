@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @Slf4j
-@Controller
+@Controller("chatController")
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/chats")
 public class ChatController {
@@ -209,8 +209,8 @@ public class ChatController {
      * Redis key(chatRoomId:senderId)-value(SessionID, senderId, chatRoomId)로 변경
      * @param headerAccessor : sessionID 추출
      */
-    @MessageMapping("/chat/connect/{chatRoomId}/{senderId}")
-    @SendTo("/topic/chat/{chatRoomId}")
+    @MessageMapping("/v1/chat/connect/{chatRoomId}/{senderId}")
+    @SendTo("/topic/v1/chat/{chatRoomId}")
     public void connectChatRoom(
         @DestinationVariable UUID chatRoomId,
         @DestinationVariable Long senderId,
@@ -227,8 +227,8 @@ public class ChatController {
      * "/topic"을 구독하는 서버에서 실시간 메시지 송수신 가능
      * "/app" 시작하는 경로 stomp 메시지 전송하면 @MessageMapping 으로 연결
      */
-    @MessageMapping("/chat/{chatRoomId}")
-    @SendTo("/topic/chat/{chatRoomId}")
+    @MessageMapping("/v1/chat/{chatRoomId}")
+    @SendTo("/topic/v1/chat/{chatRoomId}")
     public ChatMessageResponseDto sendMessage(
         @RequestBody ChatMessageRequestDto requestDto,
         SimpMessageHeaderAccessor headerAccessor
