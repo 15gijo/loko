@@ -21,7 +21,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.stereotype.Controller;
@@ -36,7 +35,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @Slf4j
-@Controller
+@Controller("chatControllerV2")
 @RequiredArgsConstructor
 @RequestMapping("/api/v2/chats")
 public class ChatControllerV2 {
@@ -163,7 +162,9 @@ public class ChatControllerV2 {
         @PathVariable("chatRoomId") UUID chatRoomId,
         @PathVariable("senderId") String senderId
     ) {
+        log.info("[ChatControllerV2] deleteRedisSenderId 메소드 시작");
         Boolean response = chatService.deleteRedisSenderId(chatRoomId, senderId);
+        log.info("[ChatControllerV2] response = {}", response);
         return ResponseEntity.ok(ApiResponse.success("Redis 캐시 삭제 성공하였습니다.", response));
     }
 
@@ -208,17 +209,15 @@ public class ChatControllerV2 {
      * Redis key(chatRoomId:senderId)-value(SessionID, senderId, chatRoomId)로 변경
      * @param headerAccessor : sessionID 추출
      */
-    @MessageMapping("v2/chat/connect/{chatRoomId}/{senderId}")
-    @SendTo("/topic/v2/chat/{chatRoomId}")
-    public void connectChatRoom(
+    @MessageMapping("/chat/connect/{chatRoomId}/{senderId}")
+    public ResponseEntity<ApiResponse<String>> connectChatRoom(
         @DestinationVariable UUID chatRoomId,
         @DestinationVariable Long senderId,
-        SimpMessageHeaderAccessor headerAccessor,
-        String message
-    ) {
-        log.info(">> headerAccessor {}", headerAccessor);
-        log.info(">> 채팅방 연결 message {}", message);
-        chatService.connectChatRoom(chatRoomId, senderId, headerAccessor, message);
+        SimpMessageHeaderAccessor headerAccessor) {
+        log.info("[ChatControllerV2] connectChatRoom 메소드 시작");
+        log.info("헤더 headerAccessor: {}", headerAccessor.getSessionAttributes());
+        chatService.connectChatRoom(chatRoomId, senderId, headerAccessor);
+        return ResponseEntity.ok(ApiResponse.success("웹소켓 연결 처리하였습니다."));
     }
 
     /**
@@ -226,17 +225,18 @@ public class ChatControllerV2 {
      * "/topic"을 구독하는 서버에서 실시간 메시지 송수신 가능
      * "/app" 시작하는 경로 stomp 메시지 전송하면 @MessageMapping 으로 연결
      */
-    @MessageMapping("v2/chat/{chatRoomId}")
-    @SendTo("/topic/v2/chat/{chatRoomId}")
-    public ChatMessageResponseDtoV2 sendMessage(
+    @MessageMapping("/chat/{chatRoomId}")
+    public ResponseEntity<ApiResponse<String>> sendMessage(
         @RequestBody ChatMessageRequestDtoV2 requestDto,
         SimpMessageHeaderAccessor headerAccessor
     ) {
+        log.info("[ChatControllerV2] sendMessage 메소드 시작");
         log.info("헤더 headerAccessor: {} ", headerAccessor.getSessionAttributes());
-        log.info("Sending message: {}", requestDto.toString());
+        log.info("채팅 message: {}", requestDto.toString());
 
         try {
-            return chatService.sendMessage(requestDto);
+            chatService.sendMessage(requestDto, headerAccessor);
+            return ResponseEntity.ok(ApiResponse.success("카프카로 채팅 메시지 발행 처리하였습니다."));
         } catch (Exception e) {
             headerAccessor.setMessageTypeIfNotSet(SimpMessageType.MESSAGE);
             headerAccessor.setLeaveMutable(true);
