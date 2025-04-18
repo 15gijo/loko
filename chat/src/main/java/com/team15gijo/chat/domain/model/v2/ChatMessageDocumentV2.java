@@ -1,6 +1,7 @@
 package com.team15gijo.chat.domain.model.v2;
 
 import com.team15gijo.chat.application.dto.v2.ChatMessageResponseDtoV2;
+import com.team15gijo.chat.presentation.dto.v2.ChatMessageRequestDtoV2;
 import jakarta.persistence.Column;
 import jakarta.persistence.Id;
 import java.time.LocalDateTime;
@@ -56,6 +57,49 @@ public class ChatMessageDocumentV2 {
             .readStatus(readStatus)
             .deletedAt(deletedAt)
             .deletedBy(deletedBy)
+            .build();
+    }
+
+    // 채팅 입장 메시지 전송
+    public static ChatMessageDocumentV2 createEnterMessageDocument(
+        UUID chatRoomId, Long senderId, Long receiverId, String receiverNickname, String messageContent) {
+        return ChatMessageDocumentV2.builder()
+            .chatRoomId(chatRoomId)
+            .senderId(senderId)
+            .receiverId(receiverId)
+            .receiverNickname(receiverNickname)
+            .connectionType(ConnectionTypeV2.ENTER)
+            .chatMessageType(ChatMessageTypeV2.TEXT)
+            .messageContent(messageContent)
+            .sentAt(LocalDateTime.now())
+            .build();
+    }
+
+    // 채팅 메시지 전송
+    public static ChatMessageDocumentV2 createChatMessageDocument(
+        ChatMessageRequestDtoV2 request) {
+        return ChatMessageDocumentV2.builder()
+            .chatRoomId(request.getChatRoomId())
+            .senderId(request.getSenderId())
+            .receiverId(request.getReceiverId())
+            .receiverNickname(request.getReceiverNickname())
+            .connectionType(ConnectionTypeV2.CHAT)
+            .chatMessageType(ChatMessageTypeV2.TEXT)
+            .messageContent(request.getMessageContent())
+            .sentAt(LocalDateTime.now())
+            .build();
+    }
+
+    // 채팅 에러 메시지 전송
+    public static ChatMessageDocumentV2 createErrorMessageDocument(
+        UUID chatRoomId, Long senderId, String messageContent) {
+        return ChatMessageDocumentV2.builder()
+            .chatRoomId(chatRoomId)
+            .senderId(senderId)
+            .connectionType(ConnectionTypeV2.ENTER)
+            .chatMessageType(ChatMessageTypeV2.TEXT)
+            .messageContent(messageContent)
+            .sentAt(LocalDateTime.now())
             .build();
     }
 }
