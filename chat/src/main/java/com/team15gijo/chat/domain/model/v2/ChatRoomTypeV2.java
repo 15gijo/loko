@@ -1,12 +1,12 @@
-package com.team15gijo.chat.domain.model;
+package com.team15gijo.chat.domain.model.v2;
 
-public enum ChatRoomType {
+public enum ChatRoomTypeV2 {
     INDIVIDUAL("INDIVIDUAL"),
     ORGANIZATION("ORGANIZATION");
 
     private final String type;
 
-    ChatRoomType(String type) {
+    ChatRoomTypeV2(String type) {
         this.type = type;
     }
 }

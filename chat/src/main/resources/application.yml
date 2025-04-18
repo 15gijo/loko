@@ -5,7 +5,8 @@ spring:
     config:
       enabled: false
   config:
-    import: optional:classpath:.env[.properties]
+    import:
+      - optional:classpath:.env[.properties]
   datasource:
     driver-class-name: org.postgresql.Driver
     url: ${DB_URL}
@@ -13,20 +14,20 @@ spring:
     password: ${DB_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: create # Entity 기반으로 테이블을 자동 생성 여부 결정
+      ddl-auto: update # Entity 기반으로 테이블을 자동 생성 여부 결정
     show-sql: true
     properties:
       hibernate:
         format_sql: true
-    kafka:
-      bootstrap-servers: localhost:9092
-      producer:
-        key-serializer: org.apache.kafka.common.serialization.StringSerializer
-        value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      consumer:
-        key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-        value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-        auto-offset-reset: earliest
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
 
   # mongoDB
   data:
@@ -78,3 +79,4 @@ feign:
         connectTimeout: 5000 # 연결 타임아웃 (ms)
         readTimeout: 5000 # 읽기 타임아웃 (ms)
         retryer: feign.Retryer.Default # 재시도 정책
+

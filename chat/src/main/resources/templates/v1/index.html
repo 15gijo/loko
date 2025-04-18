@@ -62,19 +62,19 @@
             // 채팅방 id과 userId가 유효성 검증 성공하면 webSocket 연결(쿠키 senderId 추출안되서 쿼리 파라미터로 대체)
             document.cookie = "senderId=" + senderId;
             // 소켓 연결 시, 쿼리 파리미터로 senderId 전달
-            const socket = new SockJS('/ws-stomp?senderId=' + senderId);
+            const socket = new SockJS('/v1/ws-stomp?senderId=' + senderId);
             stompClient = Stomp.over(socket);
             stompClient.connect({}, function (frame) {
               isConnected = true;
               console.log('소켓 Connected: ' + frame);
 
               // connect 엔드포인트로 메시지 전송하여 Redis 저장
-              stompClient.send("/app/chat/connect/" + chatRoomId + "/" + senderId, {},
+              stompClient.send("/app/v1/chat/connect/" + chatRoomId + "/" + senderId, {},
                 senderId + "님이 입장하였습니다."
               );
 
               // connect 에서 오류 메시지 구독
-              stompClient.subscribe('/topic/chat/errors/' + senderId, function (message) {
+              stompClient.subscribe('/topic/v1/chat/errors/' + senderId, function (message) {
                 alert(message.body);
                 isConnected = false;
                 console.log("소켓 Disconnected");
@@ -102,12 +102,12 @@
               });
 
               // 실시간 채팅 메시지 전송 구독
-              stompClient.subscribe('/topic/chat/' + chatRoomId, function (message) {
+              stompClient.subscribe('/topic/v1/chat/' + chatRoomId, function (message) {
                 showMessage((JSON.parse(message.body)));
               });
 
               // 처음 채팅방 입장 메시지 구독
-              stompClient.subscribe('/topic/chat/enter/' + chatRoomId, function (message) {
+              stompClient.subscribe('/topic/v1/chat/enter/' + chatRoomId, function (message) {
                 showMessage(JSON.parse(message.body));
               });
             }, function (error) {
@@ -155,7 +155,7 @@
       if(isConnected) {
         const senderId = parseInt(document.getElementById('senderId').value); // 문자열을 숫자로 변환
         const message = document.getElementById('message').value;
-        stompClient.send("/app/chat/" + chatRoomId, {}, JSON.stringify({ // messageMapping 경로 사용
+        stompClient.send("/app/v1/chat/" + chatRoomId, {}, JSON.stringify({ // messageMapping 경로 사용
           'chatRoomId': chatRoomId,
           'senderId': senderId,
           'receiverId' : receiverId,

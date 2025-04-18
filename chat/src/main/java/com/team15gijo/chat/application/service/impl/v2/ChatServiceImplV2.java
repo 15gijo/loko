@@ -1,29 +1,29 @@
-package com.team15gijo.chat.application.service.impl.v1;
+package com.team15gijo.chat.application.service.impl.v2;
 
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.CHAT_ROOM_INDIVIDUAL_NUMBER_LIMIT;
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.CHAT_ROOM_NOT_FOUND;
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.CHAT_ROOM_USER_ID_NOT_FOUND;
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.MESSAGE_ID_NOT_FOUND;
 import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.USER_NICK_NAME_NOT_EXIST;
+import static com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2.createChatMessageDocument;
+import static com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2.createEnterMessageDocument;
+import static com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2.createErrorMessageDocument;
 
-import com.team15gijo.chat.application.dto.v1.ChatRoomResponseDto;
-import com.team15gijo.chat.domain.model.ChatMessageDocument;
-import com.team15gijo.chat.domain.model.ChatMessageType;
-import com.team15gijo.chat.domain.model.ChatRoom;
-import com.team15gijo.chat.domain.model.ChatRoomParticipant;
-import com.team15gijo.chat.domain.model.ChatRoomType;
-import com.team15gijo.chat.domain.model.ConnectionType;
-import com.team15gijo.chat.domain.repository.ChatMessageRepository;
-import com.team15gijo.chat.domain.repository.ChatRoomParticipantRepository;
-import com.team15gijo.chat.domain.repository.ChatRoomRepository;
+import com.team15gijo.chat.application.dto.v2.ChatMessageResponseDtoV2;
+import com.team15gijo.chat.application.dto.v2.ChatRoomResponseDtoV2;
+import com.team15gijo.chat.application.service.ChatServiceV2;
+import com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2;
+import com.team15gijo.chat.domain.model.v2.ChatRoomParticipantV2;
+import com.team15gijo.chat.domain.model.v2.ChatRoomTypeV2;
+import com.team15gijo.chat.domain.model.v2.ChatRoomV2;
+import com.team15gijo.chat.domain.repository.v2.ChatMessageRepositoryV2;
+import com.team15gijo.chat.domain.repository.v2.ChatRoomParticipantRepositoryV2;
+import com.team15gijo.chat.domain.repository.v2.ChatRoomRepositoryV2;
 import com.team15gijo.chat.infrastructure.client.v1.FeignClientService;
-import com.team15gijo.chat.infrastructure.kafka.dto.ChatNotificationEventDto;
-import com.team15gijo.chat.infrastructure.kafka.service.NotificationKafkaProducerService;
-import com.team15gijo.chat.presentation.dto.v1.ChatMessageRequestDto;
-import com.team15gijo.chat.presentation.dto.v1.ChatMessageResponseDto;
-import com.team15gijo.chat.presentation.dto.v1.ChatRoomRequestDto;
+import com.team15gijo.chat.infrastructure.kafka.util.KafkaUtil;
+import com.team15gijo.chat.presentation.dto.v2.ChatMessageRequestDtoV2;
+import com.team15gijo.chat.presentation.dto.v2.ChatRoomRequestDtoV2;
 import com.team15gijo.common.exception.CustomException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,35 +42,35 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ChatMessageService {
-
-    private final ChatMessageRepository chatMessageRepository;
-    private final ChatRoomRepository chatRoomRepository;
-    private final ChatRoomParticipantRepository chatRoomParticipantRepository;
+public class ChatServiceImplV2 implements ChatServiceV2 {
+    private final ChatMessageRepositoryV2 chatMessageRepository;
+    private final ChatRoomRepositoryV2 chatRoomRepository;
+    private final ChatRoomParticipantRepositoryV2 chatRoomParticipantRepository;
 
     private final FeignClientService feignClientService;
-    private final NotificationKafkaProducerService notificationKafkaProducerService;
 
     private final RedisTemplate<String, Object> redisTemplate;
-
-    private final SimpMessagingTemplate messagingTemplate;
     private final MongoTemplate mongoTemplate;
+
+    private static final String CHAT_MESSAGE_EVENT_TOPIC = "chat_message_event";
+    private static final String CHAT_ERROR_EVENT_TOPIC = "chat_error_event";
+    private final KafkaUtil kafkaUtil;
 
     /**
      * 1차 MVP 1:1 채팅만 구현
      * 채팅방 생성(chatRoomType, receiver)에 따른 채팅방 참여자 생성
      * UserFeignClient 사용자 유효성 검사
      */
+    @Override
     @Transactional
-    public ChatRoomResponseDto createChatRoom(
-        ChatRoomRequestDto requestDto,
+    public ChatRoomResponseDtoV2 createChatRoom(
+        ChatRoomRequestDtoV2 requestDto,
         Long userId
     ) {
         log.info("userId = {}", userId);
@@ -91,17 +91,17 @@ public class ChatMessageService {
         }
 
         // 채팅방 생성하는 당사자의 참여자 생성 및 저장
-        ChatRoomParticipant addParticipants = ChatRoomParticipant.builder()
+        ChatRoomParticipantV2 addParticipants = ChatRoomParticipantV2.builder()
             .userId(userId)
             .activation(Boolean.TRUE)
             .build();
         chatRoomParticipantRepository.save(addParticipants);
 
-        Set<ChatRoomParticipant> participantsSet = new HashSet<>();
+        Set<ChatRoomParticipantV2> participantsSet = new HashSet<>();
         participantsSet.add(addParticipants);
 
         // 초대받은 참여자의 채팅방 참여자 생성 및 저장
-        ChatRoomParticipant invitedParticipant = ChatRoomParticipant.builder()
+        ChatRoomParticipantV2 invitedParticipant = ChatRoomParticipantV2.builder()
             .userId(getUserIdByNickname)
             .activation(Boolean.TRUE)
             .build();
@@ -109,15 +109,15 @@ public class ChatMessageService {
         participantsSet.add(invitedParticipant);
 
         // 채팅방 생성 및 저장
-        ChatRoom chatRoom = ChatRoom.builder()
+        ChatRoomV2 chatRoom = ChatRoomV2.builder()
             .chatRoomType(requestDto.getChatRoomType())
-            .chatRoomParticipants(participantsSet)
+            .chatRoomParticipant(participantsSet)
             .build();
-        ChatRoom savedChatRoom = chatRoomRepository.save(chatRoom);
+        ChatRoomV2 savedChatRoom = chatRoomRepository.save(chatRoom);
 
         // 채팅방 타입이 INDIVIDUAL 인 경우, 참여자 수 제한
-        if(savedChatRoom.getChatRoomType() == ChatRoomType.INDIVIDUAL
-            && savedChatRoom.getChatRoomParticipants().size() > 2) {
+        if(savedChatRoom.getChatRoomType() == ChatRoomTypeV2.INDIVIDUAL
+            && savedChatRoom.getChatRoomParticipant().size() > 2) {
             throw new CustomException(CHAT_ROOM_INDIVIDUAL_NUMBER_LIMIT);
         }
         return savedChatRoom.toResponse();
@@ -126,12 +126,13 @@ public class ChatMessageService {
     /**
      * 채팅방 단일 조회
      */
+    @Override
     @Transactional(readOnly = true)
-    public ChatRoomResponseDto getChatRoom(UUID chatRoomId, Long userId) {
-        ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId).
+    public ChatRoomResponseDtoV2 getChatRoom(UUID chatRoomId, Long userId) {
+        ChatRoomV2 chatRoom = chatRoomRepository.findById(chatRoomId).
             orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
 
-        if(chatRoom.getChatRoomParticipants().stream()
+        if(chatRoom.getChatRoomParticipant().stream()
             .anyMatch(participant -> participant.getUserId().equals(userId))) {
             return chatRoom.toResponse();
         } else {
@@ -142,13 +143,14 @@ public class ChatMessageService {
     /**
      * 채팅방 전체 조회
      */
+    @Override
     @Transactional(readOnly = true)
-    public Page<ChatRoom> getChatRooms(Pageable pageable, Long userId) {
+    public Page<ChatRoomV2> getChatRooms(Pageable pageable, Long userId) {
         log.info("userId = {}", userId);
-        List<ChatRoom> chatRoomList = chatRoomRepository.findAll();
+        List<ChatRoomV2> chatRoomList = chatRoomRepository.findAll();
 
-        List<ChatRoom> filteredChatRooms = chatRoomList.stream()
-            .filter(chatRoom -> chatRoom.getChatRoomParticipants().stream()
+        List<ChatRoomV2> filteredChatRooms = chatRoomList.stream()
+            .filter(chatRoom -> chatRoom.getChatRoomParticipant().stream()
                 .anyMatch(participant -> participant.getUserId().equals(userId)))
             .toList();
 
@@ -159,7 +161,7 @@ public class ChatMessageService {
         // 페이지네이션 적용
         int start = (int) pageable.getOffset();
         int end = Math.min(start + pageable.getPageSize(), filteredChatRooms.size());
-        List<ChatRoom> pageContent = filteredChatRooms.subList(start, end);
+        List<ChatRoomV2> pageContent = filteredChatRooms.subList(start, end);
 
         return new PageImpl<>(pageContent, pageable, pageable.getPageSize());
     }
@@ -168,22 +170,22 @@ public class ChatMessageService {
      * 채팅방 퇴장(비활성화) -> 삭제(Batch 또는 비동기 처리)
      * -> 1:1 채팅방에서 1명의 사용자 퇴장(채팅방 참여자 비활성화로 변경)
      * -> 채팅방의 모든 참여자 퇴장 시, 채팅방/채팅방 참여자/채팅 메시지 소프트 삭제 처리
-     * TODO: 마지막 참여자 activation false 변경 안됨
      */
+    @Override
     @Transactional
     public boolean exitChatRoom(UUID chatRoomId, Long userId) {
         log.info("[exitChatRoom] chatRoomId = {}", chatRoomId);
         log.info("[exitChatRoom] userId = {}", userId);
 
-        ChatRoom chatRoom = chatRoomRepository.findByChatRoomIdAndDeletedAtNull(chatRoomId)
+        ChatRoomV2 chatRoom = chatRoomRepository.findByChatRoomIdAndDeletedAtNull(chatRoomId)
             .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
 
-        Set<ChatRoomParticipant> chatRoomParticipants = chatRoom.getChatRoomParticipants();
-        ChatRoomParticipant targetParticipant = null;
+        Set<ChatRoomParticipantV2> chatRoomParticipants = chatRoom.getChatRoomParticipant();
+        ChatRoomParticipantV2 targetParticipant = null;
         log.info("[존재하는 참여자 수] chatRoomParticipants.size() = {}", chatRoomParticipants.size());
 
         // 퇴장 요청 참여자 찾기
-        for(ChatRoomParticipant participant : chatRoomParticipants) {
+        for(ChatRoomParticipantV2 participant : chatRoomParticipants) {
             if(participant.getUserId().equals(userId)) {
                 log.info("[exitChatRoom] userId = {}", participant.getUserId());
                 log.info("[exitChatRoom] getActivation() 전 = {}", participant.getActivation());
@@ -212,7 +214,7 @@ public class ChatMessageService {
 
             // 비활성화된 참여자 ID의 List
             List<UUID> participantId = new ArrayList<>();
-            for(ChatRoomParticipant participant : chatRoomParticipants) {
+            for(ChatRoomParticipantV2 participant : chatRoomParticipants) {
                 log.info("[채팅방 참여자 소프트 삭제 처리] 전, participant.getUserId() = {}", participant.getUserId());
                 chatRoomParticipantRepository.deleteByUserId(participant.getUserId());
                 participantId.add(participant.getId());
@@ -221,7 +223,7 @@ public class ChatMessageService {
 
             // chatRoomParticipant 저장 이후, chatRoom 조회하여 삭제된 chatRoomParticipant 삭제 처리되지 않도록 chatRoom 조회 추가(불필요한 query 조회)
             // TODO: 해당 PATCH 로직에서 채팅방 참여자 비활성화만 진행하고, 비동기 또는 배치로 채팅방 삭제 구현 필요!
-            ChatRoom updatedChatRoom = chatRoomRepository.findByChatRoomIdAndDeletedAtNull(chatRoomId).orElse(null);
+            ChatRoomV2 updatedChatRoom = chatRoomRepository.findByChatRoomIdAndDeletedAtNull(chatRoomId).orElse(null);
             log.info("updatedChatRoom : {}", updatedChatRoom);
             log.info("[비활성화된 참여자 수] participantId.size()  = {}", participantId.size());
             if(participantId.size() >= 2) {
@@ -242,6 +244,7 @@ public class ChatMessageService {
     /**
      * 수신자 닉네임 검증 및 웹소켓 연결 시, 발송자 닉네임 전달
      */
+    @Override
     public Map<String, Object> validateNickname(String receiverNickname) {
         Long receiverId = feignClientService.fetchUserIdByNickname(receiverNickname);
         log.info("receiverId = {}", receiverId);
@@ -260,6 +263,7 @@ public class ChatMessageService {
      * 소켓 연결 시 사용되는
      * 채팅방 ID 유효성 검증
      */
+    @Override
     @Transactional(readOnly = true)
     public Map<String, Boolean> validateChatRoomId(UUID chatRoomId) {
         Boolean valid = chatRoomRepository.existsById(chatRoomId);
@@ -275,15 +279,16 @@ public class ChatMessageService {
      * 소켓 연결 시 사용되는 엔드포인트
      * 채팅방 ID에 해당하는 senderId(userId) 유효성 검증
      */
+    @Override
     @Transactional(readOnly = true)
     public Map<String, Boolean> validateSenderId(
         UUID chatRoomId,
         Long senderId
     ) {
-        ChatRoom chatRoom = chatRoomRepository.findByChatRoomIdAndDeletedAtNull(chatRoomId)
+        ChatRoomV2 chatRoom = chatRoomRepository.findByChatRoomIdAndDeletedAtNull(chatRoomId)
             .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
 
-        Boolean participantExists = chatRoom.getChatRoomParticipants().stream()
+        Boolean participantExists = chatRoom.getChatRoomParticipant().stream()
             .anyMatch(participant -> participant.getUserId().equals(senderId));
         log.info("participantExists {}", participantExists);
 
@@ -297,17 +302,20 @@ public class ChatMessageService {
      * 소켓 연결 중단 시, redis 삭제 호출
      * Redis key(chatRoomId:senderId)-value(SessionID, senderId, chatRoomId)
      */
+    @Override
     @Transactional(readOnly = true)
     public Boolean deleteRedisSenderId(
         UUID chatRoomId,
         String senderId
     ) {
-        String cacheKey = chatRoomId + ":"+ senderId;
+        log.info("[ChatServiceImplV2] deleteRedisSenderId 메소드 시작");
+        String cacheKey = "CHATROOM:" + chatRoomId + ":"+ senderId;
         log.info("cacheKey: {}", cacheKey);
 
         if(redisTemplate.hasKey(cacheKey)) {
-            log.info("소켓 연결 해지로 cacheKey={}인 Redis 캐시 삭제", cacheKey);
+            log.info("소켓 연결 해지 요청으로 cacheKey={}인 Redis 캐시 삭제", cacheKey);
             redisTemplate.delete(cacheKey);
+            log.info("[ChatServiceImplV2] deleteRedisSenderId 메소드 종료");
             return true;
         } else {
             log.info("cacheKey={}에 해당하는 Redis 캐시가 존재하지 않음", cacheKey);
@@ -319,8 +327,9 @@ public class ChatMessageService {
      * mongoDB 에서 채팅방(chatRoomId) 이전 메시지 불러오기(조회)
      * Page 전체 조회(sentAt ASC 정렬)
      */
+    @Override
     @Transactional(readOnly = true)
-    public Page<ChatMessageDocument> getMessagesByChatRoomId(UUID chatRoomId, Long senderId, Pageable pageable) {
+    public Page<ChatMessageDocumentV2> getMessagesByChatRoomId(UUID chatRoomId, Long senderId, Pageable pageable) {
         // 채팅방 id 및 userId 유효성 검증
         checkRoomIdAndUserId(chatRoomId, senderId);
 
@@ -330,12 +339,12 @@ public class ChatMessageService {
                 .and("deletedAt").is(null)
         ).with(pageable);
 
-        long total = mongoTemplate.count(query, ChatMessageDocument.class);
+        long total = mongoTemplate.count(query, ChatMessageDocumentV2.class);
         if(total == 0) {
             log.error("채팅방에 해당하는 메시지 내역이 존재하지 않습니다.");
         }
 
-        List<ChatMessageDocument> messageDocumentList = mongoTemplate.find(query, ChatMessageDocument.class);
+        List<ChatMessageDocumentV2> messageDocumentList = mongoTemplate.find(query, ChatMessageDocumentV2.class);
 
         return new PageImpl<>(messageDocumentList, pageable, total);
     }
@@ -344,13 +353,14 @@ public class ChatMessageService {
      * 채팅방 메시지 상세 조회
      * chatRoomId에 속하는 참여자는 메시지 고유 ID로 메시지 상세 조회 모두 가능
      */
+    @Override
     @Transactional(readOnly = true)
-    public ChatMessageResponseDto getMessageById(UUID chatRoomId, String id, Long userId) {
+    public ChatMessageResponseDtoV2 getMessageById(UUID chatRoomId, String id, Long userId) {
         // 채팅방 id 및 userId 유효성 검증
         checkRoomIdAndUserId(chatRoomId, userId);
 
         Query query = Query.query(Criteria.where("_id").is(id));
-        ChatMessageDocument responseDocument = mongoTemplate.findOne(query, ChatMessageDocument.class);
+        ChatMessageDocumentV2 responseDocument = mongoTemplate.findOne(query, ChatMessageDocumentV2.class);
 
         if(responseDocument == null) {
             log.error("chatRoomId: {} 해당 채팅방의 id:{} 메시지가 존재하지 않습니다.", chatRoomId, id);
@@ -366,68 +376,59 @@ public class ChatMessageService {
      * 웹 소켓 연결 시, Redis key(chatRoomId:senderId)-value(SessionID, senderId, chatRoomId)
      * 이전 메시지 조회로 채팅방에 처음 입장한 경우, 입장 메시지 전송
      */
+    @Override
     @Transactional
     public void connectChatRoom(
-        UUID chatRoomId,
-        Long senderId,
-        SimpMessageHeaderAccessor headerAccessor,
-        String message
-    ) {
-        if (senderId != null) {
-            // 세션 ID 가져오기
-            String sessionId = headerAccessor.getSessionId();
-            log.info("connectChatRoom sessionId: {}", sessionId);
+        UUID chatRoomId, Long senderId, SimpMessageHeaderAccessor headerAccessor) {
+        log.info("[ChatServiceImplV2] connectChatRoom 메소드 시작");
 
-            String cacheKey = chatRoomId + ":"+ senderId;
-            log.info("cacheKey: {}", cacheKey);
+        String sessionId = headerAccessor.getSessionId();
+        String cacheKey = "CHATROOM:" + chatRoomId + ":"+ senderId;
 
-            // Redis에 senderId:chatRoomId 이미 존재하는지 확인
-            if(redisTemplate.hasKey(cacheKey)) {
-                // 이미 존재하는 경우, 중복 연결 차단 메시지 전송 및 senderId가 연결된 소켓 연결 중단
-                log.warn("cacheKey {} 가 이미 존재하여 중복 연결이 차단됨", cacheKey);
-                redisTemplate.delete(cacheKey);
-                messagingTemplate.convertAndSend("/topic/chat/errors/" + senderId,
-                    "중복 로그인으로 인해 연결이 거부되었습니다. 해당 채팅방에 다시 접속해주세요.");
-            } else {
-                // 존재하지 않은 경우, Redis에 senderId, chatRoomId 저장
-                Map<String, Object> value = new HashMap<>();
-                value.put("sessionId", sessionId);
-                value.put("chatRoomId", chatRoomId);
-                value.put("senderId", senderId);
+        // Redis에 chatRoomId:senderId가 이미 존재하는지 확인
+        if(redisTemplate.hasKey(cacheKey)) {
+            // 이미 존재하는 경우, 중복 연결 차단 메시지 전송 및 senderId가 연결된 소켓 연결 중단
+            log.warn("cacheKey={} 가 이미 존재하여 중복 연결 차단 및 해당 캐시 삭제", cacheKey);
+            redisTemplate.delete(cacheKey);
 
-                redisTemplate.opsForHash().putAll(cacheKey, value);
-                redisTemplate.expire(cacheKey, 1, TimeUnit.DAYS);
+            // 카프카 에러 메시지 처리
+            String errorMessage = "중복 로그인으로 인해 연결이 거부되었습니다. 해당 채팅방에 다시 접속해주세요.";
+            ChatMessageDocumentV2 errorDocument = createErrorMessageDocument(chatRoomId, senderId, errorMessage);
+            kafkaUtil.sendKafkaEvent(CHAT_ERROR_EVENT_TOPIC, errorDocument);
+            log.info("[ChatServiceImplV2] redis 키 중복으로 웹소켓 중복 연결 차단 - Kafka 발행 완료");
+        } else {
+            // 존재하지 않은 경우, Redis에 chatRoomId:senderId 저장
+            Map<String, Object> value = new HashMap<>();
+            value.put("sessionId", sessionId);
+            value.put("chatRoomId", chatRoomId);
+            value.put("senderId", senderId);
 
-                log.info("[Redis 캐싱] cacheKey={} 과 value={} 저장", cacheKey, value);
+            redisTemplate.opsForHash().putAll(cacheKey, value);
+            redisTemplate.expire(cacheKey, 1, TimeUnit.DAYS);
 
-                // mongoDB에서 userId와 chatRoomId에 대한 메시지 유무로 처음인지 판단하고 입장 메시지 전송
-                Query query = Query.query(
-                    Criteria.where("chatRoomId").is(chatRoomId)
-                        .and("senderId").is(senderId)
-                        .and("deletedAt").is(null));
+            log.info("[Redis 캐싱] cacheKey={} 과 value={} 저장", cacheKey, value);
 
-                long messageCount = mongoTemplate.count(query, ChatMessageDocument.class);
-                log.info(">> messageCount={}", messageCount);
+            // mongoDB에서 userId와 chatRoomId에 대한 메시지 유무로 처음인지 판단하고 입장 메시지 전송
+            Query query = Query.query(
+                Criteria.where("chatRoomId").is(chatRoomId)
+                    .and("senderId").is(senderId)
+                    .and("deletedAt").is(null));
 
-                if(messageCount == 0) {
-                    // chatRoomId에서 senderId가 보낸 메시지가 없는 경우, mongoDB 메시지 저장
-                    ChatMessageDocument firstMessage = ChatMessageDocument.builder()
-                        .chatRoomId(chatRoomId)
-                        .senderId(senderId)
-                        .connectionType(ConnectionType.ENTER)
-                        .chatMessageType(ChatMessageType.TEXT)
-                        .messageContent(message)
-                        .sentAt(LocalDateTime.now())
-                        .build();
-                    try {
-                        // 처음 채팅방 접속으로 입장 메시지 전송
-                        ChatMessageDocument savedMessage = chatMessageRepository.save(firstMessage);
-                        log.info("[mongoDB 저장 성공] message={}", savedMessage.toString());
-                        messagingTemplate.convertAndSend("/topic/chat/enter/" + chatRoomId, savedMessage);
-                    } catch (Exception e) {
-                        log.error("[mongoDB 저장 실패] message={}", firstMessage, e);
-                    }
-                }
+            long messageCount = mongoTemplate.count(query, ChatMessageDocumentV2.class);
+
+            log.info("[채팅방({})의 사용자({}) 메시지 내역 조회] messageCount={}", chatRoomId, senderId, messageCount);
+
+            if(messageCount == 0) {
+                // chatRoomId에서 senderId가 보낸 메시지가 없는 경우, 입장 메시지 전송하기
+                String messageContent = senderId + "님이 입장하였습니다.";
+                Long receiverId = Long.parseLong(headerAccessor.getSessionAttributes().get("receiverId").toString());
+                String receiverNickname = headerAccessor.getSessionAttributes().get("receiverNickname").toString();
+
+                ChatMessageDocumentV2 firstMessage = createEnterMessageDocument(chatRoomId, senderId, receiverId, receiverNickname, messageContent);
+
+                // 카프카 입장 메시지 처리
+                kafkaUtil.sendKafkaEvent(CHAT_MESSAGE_EVENT_TOPIC, firstMessage);
+                log.info("[ChatServiceImplV2] connectChatRoom 메소드 종료 - Kafka 발행 완료");
             }
         }
     }
@@ -435,39 +436,29 @@ public class ChatMessageService {
     /**
      * stomp 메시지 브로커를 통한 메시지 전송
      */
+    @Override
     @Transactional
-    public ChatMessageResponseDto sendMessage(ChatMessageRequestDto requestDto) {
-        log.info("[채팅 비즈니스 sendMessage 메소드 시작] requestDto={}", requestDto);
-        // 메시지 저장 및 전달
-        ChatMessageDocument chatMessage = ChatMessageDocument.builder()
-            .senderId(requestDto.getSenderId())
-            .receiverId(requestDto.getReceiverId())
-            .receiverNickname(requestDto.getReceiverNickname())
-            .chatRoomId(requestDto.getChatRoomId())
-            .connectionType(ConnectionType.CHAT)
-            .chatMessageType(ChatMessageType.TEXT)
-            .messageContent(requestDto.getMessageContent())
-            .sentAt(LocalDateTime.now())
-            .build();
-        chatMessageRepository.save(chatMessage);
-        log.info("chatMessageContent={}", chatMessage.getMessageContent());
-        log.info("ReceiverNickname={}", requestDto.getReceiverNickname());
+    public void sendMessage(
+        ChatMessageRequestDtoV2 requestDto,
+        SimpMessageHeaderAccessor headerAccessor) {
+        log.info("[ChatServiceImplV2] sendMessage 메소드 시작");
 
-        // 수정이 필요한 사항 : 현재 보내는 사람의 닉네임을 받을 수 없어 임시로 받는 사람의 닉네임을 보냄. 추후 수정 필요
-        notificationKafkaProducerService.sendChatCreate(ChatNotificationEventDto
-                .from(requestDto.getReceiverId(), requestDto.getReceiverNickname(), requestDto.getMessageContent()));
+        // 메시지 변환
+        ChatMessageDocumentV2 chatMessage = createChatMessageDocument(requestDto);
 
-        return chatMessage.toResponse();
+        // 카프카 채팅 메시지 처리
+        kafkaUtil.sendKafkaEvent(CHAT_MESSAGE_EVENT_TOPIC, chatMessage);
+        log.info("[ChatServiceImplV2] sendMessage 메소드 종료 - Kafka 발행 완료");
     }
 
     // 채팅방 id 및 userId 유효성 검증
     private void checkRoomIdAndUserId(UUID chatRoomId, Long userId) {
         // 채팅방 유무 검증
-        ChatRoom chatRoom = chatRoomRepository.findByChatRoomIdAndDeletedAtNull(chatRoomId)
+        ChatRoomV2 chatRoom = chatRoomRepository.findByChatRoomIdAndDeletedAtNull(chatRoomId)
             .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
 
         // 채팅방 참여자만 해당 메시지 조회 가능
-        boolean isParticipant = chatRoom.getChatRoomParticipants().stream()
+        boolean isParticipant = chatRoom.getChatRoomParticipant().stream()
             .anyMatch(participant -> participant.getUserId().equals(userId));
 
         if(!isParticipant) {
@@ -484,12 +475,11 @@ public class ChatMessageService {
             Criteria.where("chatRoomId").is(chatRoomId)
                 .and("deletedAt").is(null));
 
-        List<ChatMessageDocument> chatMessages = mongoTemplate.find(query, ChatMessageDocument.class);
+        List<ChatMessageDocumentV2> chatMessages = mongoTemplate.find(query, ChatMessageDocumentV2.class);
         log.info("chatMessages.size() = {}", chatMessages.size());
 
         if (chatMessages.isEmpty()) {
             log.error("채팅방에 해당하는 메시지 내역이 존재하지 않습니다.");
-//            throw new CustomException(MESSAGE_NOT_FOUND_FOR_CHAT_ROOM);
         } else {
             // 메시지 소프트 삭제
             chatMessages.forEach(chatMessage -> {

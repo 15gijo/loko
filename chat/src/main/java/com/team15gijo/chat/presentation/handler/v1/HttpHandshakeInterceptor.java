@@ -1,4 +1,4 @@
-package com.team15gijo.chat.presentation.handler;
+package com.team15gijo.chat.presentation.handler.v1;
 
 import java.net.URI;
 import java.util.Map;
@@ -12,7 +12,7 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Slf4j
-@Component
+@Component("httpHandshakeInterceptorV1") // Spring IoC 컨테이너 내 동일한 빈 충돌로 이름 명시
 @RequiredArgsConstructor
 public class HttpHandshakeInterceptor implements HandshakeInterceptor {
 
@@ -20,19 +20,19 @@ public class HttpHandshakeInterceptor implements HandshakeInterceptor {
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
         WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
-        log.info("## HttpHandshakeInterceptor beforeHandshake 시작");
+        log.info("[HttpHandshakeInterceptor] beforeHandshake 시작");
         try {
             Long senderId = extractSenderId(request, attributes);
             log.info("# 쿼리 파라미터에서 추출된 senderId = {}", senderId);
             if (senderId == null) {
-                log.error("senderId 쿼리 파라미터 추출 실패: 연결 거부");
+                log.error("# 쿼리 파라미터에서 senderId 추출 실패: 연결 거부");
                 return false;
             } else {
-                log.info("## HttpHandshakeInterceptor beforeHandshake 종료: 쿼리 파라미터 senderId = {} 저장됨!", senderId);
+                log.info("[HttpHandshakeInterceptor] beforeHandshake 종료 - 쿼리 파라미터 senderId = {} 저장됨!", senderId);
                 return true;
             }
         } catch (Exception e) {
-            log.error("beforeHandshake 예외 발생: {}", e.getMessage());
+            log.error("[HttpHandshakeInterceptor] beforeHandshake 예외 발생: {}", e.getMessage());
             return false;
         }
     }
@@ -47,7 +47,8 @@ public class HttpHandshakeInterceptor implements HandshakeInterceptor {
     private Long extractSenderId(ServerHttpRequest request, Map<String, Object> attributes) {
         try {
             URI uri = request.getURI();
-            String senderIdParam = UriComponentsBuilder.fromUri(uri).build().getQueryParams().getFirst("senderId");
+            String senderIdParam = UriComponentsBuilder.fromUri(uri).build()
+                .getQueryParams().getFirst("senderId");
             log.info("senderIdParam = {}", senderIdParam);
             if (senderIdParam != null) {
                 Long senderId = Long.parseLong(senderIdParam);

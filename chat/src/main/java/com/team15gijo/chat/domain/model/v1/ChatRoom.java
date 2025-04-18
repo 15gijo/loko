@@ -1,4 +1,4 @@
-package com.team15gijo.chat.domain.model;
+package com.team15gijo.chat.domain.model.v1;
 
 import com.team15gijo.chat.application.dto.v1.ChatRoomResponseDto;
 import com.team15gijo.common.model.base.BaseEntity;
