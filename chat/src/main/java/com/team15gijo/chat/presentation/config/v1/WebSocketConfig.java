@@ -1,6 +1,6 @@
 package com.team15gijo.chat.presentation.config.v1;
 
-import com.team15gijo.chat.presentation.handler.HttpHandshakeInterceptor;
+import com.team15gijo.chat.presentation.handler.v1.HttpHandshakeInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -16,14 +16,14 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    private final HttpHandshakeInterceptor handshakeInterceptor;
+    private final HttpHandshakeInterceptor httpHandshakeInterceptorV1; // 빈 이름으로 주입
 
     // STOMP 엔트포인트를 "/ws-stomp" 로 설정하고 SocketJS를 활성화
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws-stomp") // ws-stomp 경로로 SocketJS Fallback를 사용해 WebSocket 접속
-            .addInterceptors(handshakeInterceptor) // HandshakeInterceptor 등록
-            .setAllowedOrigins("http://localhost:19097") // 도메인 제한 필요
+        registry.addEndpoint("/v1/ws-stomp") // ws-stomp 경로로 SocketJS Fallback를 사용해 WebSocket 접속
+            .addInterceptors(httpHandshakeInterceptorV1) // HandshakeInterceptor 등록
+            .setAllowedOrigins("http://localhost:19097/v1") // 도메인 제한 필요
             .withSockJS();
     }
 
@@ -35,8 +35,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         // 메시지 구독 주소 prefix: /topic, /queue
-        registry.enableSimpleBroker("/topic");
+        registry.enableSimpleBroker("/topic/v1");
         // 클라이언트에서 메시지 보낼 때 /app으로 시작하면 @MessageMapping 메서드로 라우팅
-        registry.setApplicationDestinationPrefixes("/app");
+        registry.setApplicationDestinationPrefixes("/app/v1");
     }
 }
