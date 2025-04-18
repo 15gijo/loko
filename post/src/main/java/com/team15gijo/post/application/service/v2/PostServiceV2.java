@@ -1,6 +1,9 @@
 package com.team15gijo.post.application.service.v2;
 
 import com.team15gijo.post.domain.model.v2.HashtagV2;
+import com.team15gijo.post.infrastructure.client.ai.AiClient;
+import com.team15gijo.post.infrastructure.client.ai.HashtagRequestDto;
+import com.team15gijo.post.infrastructure.client.ai.HashtagResponseDto;
 import com.team15gijo.post.infrastructure.kafka.util.KafkaUtil;
 import com.team15gijo.post.domain.exception.PostDomainException;
 import com.team15gijo.post.domain.exception.PostDomainExceptionCode;
@@ -14,6 +17,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,8 +28,12 @@ public class PostServiceV2 {
     private final PostRepositoryV2 postRepository;
     private final HashtagRepositoryV2 hashtagRepository;
     private final KafkaUtil kafkaUtil;
+    private final AiClient aiClient;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     private static final String FEED_EVENTS_TOPIC = "feed_events";
+    private static final String REDIS_VIEW_COUNT_HASH_KEY = "views:buffer";
+    private static final String REDIS_VIEW_DIRTY_KEY_SET = "views:dirty-keys";
 
     /**
      * 게시글 생성
@@ -33,8 +41,29 @@ public class PostServiceV2 {
     public PostV2 createPost(long userId, String username, String region, PostRequestDtoV2 request) {
         PostV2 post = PostV2.createPost(userId, username, region, request.getPostContent());
         post = postRepository.save(post);
+
+
+        // 3) AI 마이크로서비스 호출
+        HashtagResponseDto aiResp = aiClient.recommendHashtags(
+                new HashtagRequestDto(request.getPostContent())
+        );
+
+        // 4) 추천된 해시태그를 엔티티로 변환하여 Post 에 매핑
+        for (String tagName : aiResp.getHashtags()) {
+            HashtagV2 tag = hashtagRepository
+                    .findByHashtagName(tagName)
+                    .orElseGet(() -> hashtagRepository.save(
+                            HashtagV2.builder()
+                                    .hashtagName(tagName)
+                                    .build()
+                    ));
+            post.getHashtags().add(tag);
+        }
+        post = postRepository.save(post);
+
         // kafka 이벤트 발행
         kafkaUtil.sendKafkaEvent(EventType.POST_CREATED, post, FEED_EVENTS_TOPIC);
+
         return post;
     }
 
@@ -52,9 +81,8 @@ public class PostServiceV2 {
     public PostV2 getPostById(UUID postId) {
         PostV2 post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
-        // 도메인 메서드를 통해 조회수 증가
-        post.incrementViews();
-        post = postRepository.save(post);
+        // 조회수 버퍼 처리
+        bufferView(postId);
         // kafka 이벤트 발행
         kafkaUtil.sendKafkaEvent(EventType.POST_VIEWED, post, FEED_EVENTS_TOPIC);
         return post;
@@ -150,6 +178,17 @@ public class PostServiceV2 {
         postRepository.save(post);
         // kafka 이벤트 발행
         kafkaUtil.sendKafkaEvent(EventType.COMMENT_DELETED, post, FEED_EVENTS_TOPIC);
+    }
+
+    /**
+     * 조회수 버퍼 처리
+     */
+    public void bufferView(UUID postId) {
+        String postIdStr = postId.toString();
+        // 조회수 1 증가 (Hash 구조)
+        redisTemplate.opsForHash().increment(REDIS_VIEW_COUNT_HASH_KEY, postIdStr, 1);
+        // dirty check용 기록
+        redisTemplate.opsForSet().add(REDIS_VIEW_DIRTY_KEY_SET, postIdStr);
     }
 
 }

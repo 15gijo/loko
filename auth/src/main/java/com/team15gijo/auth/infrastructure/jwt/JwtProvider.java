@@ -1,6 +1,6 @@
 package com.team15gijo.auth.infrastructure.jwt;
 
-import com.team15gijo.auth.application.dto.v1.AuthLoginResponseCommand;
+import com.team15gijo.auth.infrastructure.dto.security.AuthLoginResponseCommand;
 import com.team15gijo.auth.infrastructure.exception.AuthInfraExceptionCode;
 import com.team15gijo.common.exception.CustomException;
 import io.jsonwebtoken.Jwts;
@@ -65,6 +65,7 @@ public class JwtProvider {
             throw new CustomException(AuthInfraExceptionCode.INVALID_ACCESS_TOKEN, e);
         }
     }
+
     //refresh토큰 검증 메소드
     public void validateRefreshToken(String refreshToken) {
         try {
