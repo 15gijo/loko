@@ -53,7 +53,7 @@
       fetch(`/api/v2/chats/validate/nickname/${receiverNickname}`)
       .then(response => response.json())
       .then(data => {
-        if (data.data.receiverId !== null) {
+        if (data.data.receiverId != null) {
           console.log("receiverNickname 유효성 검증 성공");
           receiverId = data.data.receiverId;
           console.log("[수신자 ID] receiverId=" + receiverId);
@@ -114,8 +114,8 @@
           });
         } else {
           // 수신자(유저)닉네임이 채팅방 참여자인지 유효하지 않을 때 오류 표시
-          console.log("receiverNickname 유효성 검증하여 receiverId가 null 입니다.");
-          alert('receiverNickname 유효성 검증하여 receiverId가 null 입니다. 다시 확인해주세요.');
+          console.log("receiverNickname(" + receiverNickname + ")이 유효하지 않아 receiverId가 null 입니다. ");
+          alert('받는 사용자 닉네임(' + receiverNickname + ')이 유효하지 않습니다. 다시 확인해주세요.');
         }
       })
       .catch(error => {
