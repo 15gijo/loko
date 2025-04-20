@@ -2,9 +2,13 @@ package com.team15gijo.search.application.service.v2;
 
 import com.team15gijo.search.application.dto.v1.CursorResultDto;
 import com.team15gijo.search.domain.model.PostDocument;
+import com.team15gijo.search.domain.model.UserDocument;
 import com.team15gijo.search.domain.repository.PostElasticsearchRepository;
+import com.team15gijo.search.domain.repository.UserElasticsearchRepository;
 import com.team15gijo.search.infrastructure.client.post.PostSearchResponseDto;
+import com.team15gijo.search.infrastructure.client.user.UserSearchResponseDto;
 import com.team15gijo.search.infrastructure.kafka.dto.PostElasticsearchRequestDto;
+import com.team15gijo.search.infrastructure.kafka.dto.UserElasticsearchRequestDto;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -24,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ElasticsearchServiceImpl implements ElasticsearchService {
 
     private final PostElasticsearchRepository postElasticsearchRepository;
+    private final UserElasticsearchRepository userElasticsearchRepository;
 
     @Override
     public void createElasticPost(PostElasticsearchRequestDto requestDto) {
@@ -60,6 +65,39 @@ public class ElasticsearchServiceImpl implements ElasticsearchService {
         LocalDateTime nextCursor = hasNext ? items.get(items.size() - 1).getCreatedAt() : null;
 
         return CursorResultDto.<PostSearchResponseDto>builder()
+                .items(items)
+                .hasNext(hasNext)
+                .nextCursor(nextCursor)
+                .build();
+    }
+
+    @Override
+    public void createElasticUser(UserElasticsearchRequestDto requestDto) {
+        UserDocument user = UserDocument.from(requestDto);
+        userElasticsearchRepository.save(user);
+    }
+
+    @Override
+    public CursorResultDto<UserSearchResponseDto> searchUser(String keyword, Long userId,
+            String nickname, String region, Long lastUserId, int size) {
+        if (lastUserId == null) {
+            lastUserId = Long.MAX_VALUE;
+        }
+
+        Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "userId"));
+
+        List<UserDocument> users = userElasticsearchRepository.searchUsers(
+                keyword, region, userId, lastUserId, nickname, pageable
+        );
+
+        List<UserSearchResponseDto> items = users.stream()
+                .map(UserSearchResponseDto::from)
+                .toList();
+
+        boolean hasNext = items.size() == size;
+        Long nextCursor = hasNext ? items.get(items.size() - 1).getUserId() : null;
+
+        return CursorResultDto.<UserSearchResponseDto>builder()
                 .items(items)
                 .hasNext(hasNext)
                 .nextCursor(nextCursor)

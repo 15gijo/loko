@@ -2,6 +2,7 @@ package com.team15gijo.search.infrastructure.kafka.service;
 
 import com.team15gijo.search.application.service.v2.ElasticsearchService;
 import com.team15gijo.search.infrastructure.kafka.dto.PostElasticsearchRequestDto;
+import com.team15gijo.search.infrastructure.kafka.dto.UserElasticsearchRequestDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -20,5 +21,12 @@ public class KafkaConsumerService {
     public void postConsumer(PostElasticsearchRequestDto dto) {
         log.info("📨 ElasticSearch에 게시글 저장을 위한 Kafka 메시지 : {}", dto);
         elasticsearchService.createElasticPost(dto);
+    }
+
+    @KafkaListener(topics = "USER_SAVE", groupId = "search-service", containerFactory = "userKafkaListenerContainerFactory")
+    @Transactional
+    public void userConsumer(UserElasticsearchRequestDto dto) {
+        log.info("📨 ElasticSearch에 게시글 저장을 위한 Kafka 메시지 : {}", dto);
+        elasticsearchService.createElasticUser(dto);
     }
 }

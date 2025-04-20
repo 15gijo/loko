@@ -12,35 +12,35 @@ public interface PostElasticsearchRepository extends ElasticsearchRepository<Pos
     List<PostDocument> findByPostContentContainingAndUsernameContainingAndRegion(String content, String username, String region);
 
     @Query("""
-{
-  "bool": {
-    "must": [
-      {
-        "term": {
-          "region.keyword": "?1"
-        }
-      },
-      {
-        "bool": {
-          "should": [
-            { "match": { "username": "?0" } },
-            { "match": { "postContent": "?0" } },
-            { "match": { "hashtags": "?0" } }
-          ]
-        }
-      }
-    ],
-    "filter": [
-      {
-        "range": {
-          "createdAt": {
-            "lt": "?2"
+    {
+      "bool": {
+        "must": [
+          {
+            "term": {
+              "region.keyword": "?1"
+            }
+          },
+          {
+            "bool": {
+              "should": [
+                { "match": { "username": "?0" } },
+                { "match": { "postContent": "?0" } },
+                { "match": { "hashtags": "?0" } }
+              ]
+            }
           }
-        }
+        ],
+        "filter": [
+          {
+            "range": {
+              "createdAt": {
+                "lt": "?2"
+              }
+            }
+          }
+        ]
       }
-    ]
-  }
-}
-""")
+    }
+    """)
     List<PostDocument> searchPosts(String keyword, String region, String createdAt, Pageable pageable);
 }

@@ -1,6 +1,6 @@
-package com.team15gijo.search.infrastructure.kafka.dto;
+package com.team15gijo.user.infrastructure.kafka.dto;
 
-import com.team15gijo.search.domain.model.UserDocument;
+import com.team15gijo.user.domain.model.UserEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,9 +18,9 @@ public class UserElasticsearchRequestDto {
     private String profile;
     private String region;
 
-    public static UserElasticsearchRequestDto from(UserDocument user) {
+    public static UserElasticsearchRequestDto from(UserEntity user) {
         return UserElasticsearchRequestDto.builder()
-                .userId(user.getUserId())
+                .userId(user.getId())
                 .username(user.getUsername())
                 .nickname(user.getNickname())
                 .profile(user.getProfile())

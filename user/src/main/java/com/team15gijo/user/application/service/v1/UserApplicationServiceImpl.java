@@ -24,6 +24,10 @@ import com.team15gijo.user.presentation.dto.request.v1.UserUpdateRequestDto;
 import com.team15gijo.user.presentation.dto.response.v1.UserReadResponseDto;
 import com.team15gijo.user.presentation.dto.response.v1.UserSignUpResponseDto;
 import com.team15gijo.user.presentation.dto.response.v1.UserUpdateResponseDto;
+import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpRequestDto;
+import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpUpdateUserIdRequestDto;
+import com.team15gijo.user.infrastructure.kafka.dto.UserElasticsearchRequestDto;
+import com.team15gijo.user.infrastructure.kafka.service.KafkaProducerService;
 import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
 import java.util.UUID;
@@ -45,6 +49,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     private final UserDomainService userDomainService;
     private final UserRepository userRepository;
     private final AuthServiceClient authServiceClient;
+    private final KafkaProducerService producerService;
 
     @Override
     @Transactional
@@ -74,6 +79,11 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         AuthSignUpUpdateUserIdRequestDto authSignUpUpdateUserIdRequestDto = new AuthSignUpUpdateUserIdRequestDto(
                 authId, savedUser.getId());
         authServiceClient.updateId(authSignUpUpdateUserIdRequestDto);
+
+        // kafka로 검색 서버에 유저 정보 전송
+        log.info("user 정보 검색서버로 kafka 전송 시작");
+        producerService.sendUserCreate(UserElasticsearchRequestDto.from(savedUser));
+        log.info("user 정보 검색서버로 kafka 전송 완료");
 
         return new UserSignUpResponseDto(
                 savedUser.getEmail(),
