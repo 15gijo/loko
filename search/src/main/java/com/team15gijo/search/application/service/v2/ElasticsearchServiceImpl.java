@@ -1,13 +1,19 @@
 package com.team15gijo.search.application.service.v2;
 
-import com.team15gijo.common.exception.CustomException;
-import com.team15gijo.search.domain.exception.SearchDomainExceptionCode;
+import com.team15gijo.search.application.dto.v1.CursorResultDto;
 import com.team15gijo.search.domain.model.PostDocument;
 import com.team15gijo.search.domain.repository.PostElasticsearchRepository;
 import com.team15gijo.search.infrastructure.client.post.PostSearchResponseDto;
+import com.team15gijo.search.infrastructure.kafka.dto.PostElasticsearchRequestDto;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,26 +26,43 @@ public class ElasticsearchServiceImpl implements ElasticsearchService {
     private final PostElasticsearchRepository postElasticsearchRepository;
 
     @Override
-    public String createElasticPost(PostSearchResponseDto responseDto) {
-        PostDocument post = PostDocument.from(responseDto);
+    public void createElasticPost(PostElasticsearchRequestDto requestDto) {
+        PostDocument post = PostDocument.from(requestDto);
         postElasticsearchRepository.save(post);
-        return "성공";
     }
 
     @Override
-    public List<PostSearchResponseDto> searchPost(String keyword, String region) {
-        List<PostDocument> posts = postElasticsearchRepository
-                .findByPostContentContainingAndRegion(keyword, region);
+    public CursorResultDto<PostSearchResponseDto> searchPost(
+            String keyword,
+            String region,
+            LocalDateTime lastCreatedAt,
+            int size
+    ) {
+        if (lastCreatedAt == null) {
+            lastCreatedAt = LocalDateTime.now();
+        }
 
-        return posts.stream()
-                .map(post -> new PostSearchResponseDto(
-                        post.getPostId(),
-                        post.getUsername(),
-                        post.getPostContent(),
-                        post.getHashtags(),
-                        post.getRegion(),
-                        post.getCreatedAt()
-                ))
+        String createdAtStr = Optional.of(lastCreatedAt)
+                .orElse(LocalDateTime.now())
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS"));
+
+        Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+
+        List<PostDocument> results = postElasticsearchRepository
+                .searchPosts(keyword, region, createdAtStr, pageable);
+
+        List<PostSearchResponseDto> items = results.stream()
+                .map(PostSearchResponseDto::from)
                 .toList();
+
+        boolean hasNext = items.size() == size;
+        LocalDateTime nextCursor = hasNext ? items.get(items.size() - 1).getCreatedAt() : null;
+
+        return CursorResultDto.<PostSearchResponseDto>builder()
+                .items(items)
+                .hasNext(hasNext)
+                .nextCursor(nextCursor)
+                .build();
     }
 }

@@ -21,10 +21,10 @@ public class UserDocument {
     @Field(type = FieldType.Long)
     private Long userId;
 
-    @Field(type = FieldType.Text)
+    @Field(type = FieldType.Text, analyzer = "nori")
     private String username;
 
-    @Field(type = FieldType.Text)
+    @Field(type = FieldType.Text, analyzer = "nori")
     private String nickname;
 
     // 1. index = false : 검색 인덱스에 포함하지 않고 단순 조회용 데이터

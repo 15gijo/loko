@@ -39,3 +39,6 @@ out/
 ### .env ###
 *.env*
 /env
+
+### log
+logs/error.log
