@@ -1,5 +1,6 @@
-package com.team15gijo.comment.infrastructure.kafka;
+package com.team15gijo.comment.infrastructure.config;
 
+import com.team15gijo.comment.infrastructure.kafka.dto.CommentCountEventDto;
 import com.team15gijo.comment.infrastructure.kafka.dto.CommentNotificationEventDto;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,6 +34,20 @@ public class CommentApplicationKafkaConfig {
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         return new DefaultKafkaProducerFactory<>(configProps);
+    }
+
+    @Bean
+    public KafkaTemplate<String, CommentCountEventDto> countTemplate() {
+        return new KafkaTemplate<>(countProducerFactory());
+    }
+
+    @Bean
+    public ProducerFactory<String, CommentCountEventDto> countProducerFactory() {
+        Map<String,Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,    "localhost:9092");
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,  StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        return new DefaultKafkaProducerFactory<>(props);
     }
 
 }
