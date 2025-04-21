@@ -6,6 +6,7 @@ import com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2;
 import com.team15gijo.chat.domain.model.v2.ChatRoomV2;
 import com.team15gijo.chat.presentation.dto.v2.ChatMessageRequestDtoV2;
 import com.team15gijo.chat.presentation.dto.v2.ChatRoomRequestDtoV2;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -50,4 +51,7 @@ public interface ChatServiceV2 {
 
     void sendMessage(
         ChatMessageRequestDtoV2 requestDto, SimpMessageHeaderAccessor headerAccessor);
+
+    Page<ChatMessageDocumentV2> searchMessages(
+        UUID chatRoomId, LocalDateTime sentAt, String messageContent, Long userId, Pageable pageable);
 }

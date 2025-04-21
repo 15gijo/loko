@@ -24,6 +24,7 @@ import com.team15gijo.chat.infrastructure.kafka.util.KafkaUtil;
 import com.team15gijo.chat.presentation.dto.v2.ChatMessageRequestDtoV2;
 import com.team15gijo.chat.presentation.dto.v2.ChatRoomRequestDtoV2;
 import com.team15gijo.common.exception.CustomException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -449,6 +450,16 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
         // 카프카 채팅 메시지 처리
         kafkaUtil.sendKafkaEvent(CHAT_MESSAGE_EVENT_TOPIC, chatMessage);
         log.info("[ChatServiceImplV2] sendMessage 메소드 종료 - Kafka 발행 완료");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ChatMessageDocumentV2> searchMessages(UUID chatRoomId, LocalDateTime sentAt, String messageContent, Long userId, Pageable pageable) {
+        log.info("[ChatServiceImplV2] searchMessages 메소드 시작");
+        // 채팅방 id 및 userId 유효성 검증
+        checkRoomIdAndUserId(chatRoomId, userId);
+
+        return chatMessageRepository.searchMessages(chatRoomId, sentAt, messageContent, pageable);
     }
 
     // 채팅방 id 및 userId 유효성 검증
