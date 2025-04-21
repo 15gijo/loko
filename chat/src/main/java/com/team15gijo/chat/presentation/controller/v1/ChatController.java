@@ -1,11 +1,11 @@
 package com.team15gijo.chat.presentation.controller.v1;
 
 import com.team15gijo.chat.application.dto.v1.ChatRoomResponseDto;
-import com.team15gijo.chat.application.service.impl.v1.ChatMessageService;
-import com.team15gijo.chat.domain.model.ChatMessageDocument;
-import com.team15gijo.chat.domain.model.ChatRoom;
+import com.team15gijo.chat.application.service.impl.v1.ChatService;
+import com.team15gijo.chat.domain.model.v1.ChatMessageDocument;
+import com.team15gijo.chat.domain.model.v1.ChatRoom;
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageRequestDto;
-import com.team15gijo.chat.presentation.dto.v1.ChatMessageResponseDto;
+import com.team15gijo.chat.application.dto.v1.ChatMessageResponseDto;
 import com.team15gijo.chat.presentation.dto.v1.ChatRoomRequestDto;
 import com.team15gijo.common.annotation.RoleGuard;
 import com.team15gijo.common.dto.ApiResponse;
@@ -36,12 +36,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @Slf4j
-@Controller
+@Controller("chatController")
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/chats")
-public class ChatMessageController {
+public class ChatController {
 
-    private final ChatMessageService chatMessageService;
+    private final ChatService chatService;
 
     /**
      * 채팅방 생성(chatRoomType, receiver)에 따른 채팅방 참여자 생성
@@ -55,7 +55,7 @@ public class ChatMessageController {
         @RequestBody ChatRoomRequestDto requestDto,
         @RequestHeader("X-User-Id") Long userId
     ) {
-        ChatRoomResponseDto response = chatMessageService.createChatRoom(requestDto, userId);
+        ChatRoomResponseDto response = chatService.createChatRoom(requestDto, userId);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.success("채팅방 생성되었습니다.", response));
     }
@@ -70,7 +70,7 @@ public class ChatMessageController {
         @PathVariable("chatRoomId") UUID chatRoomId,
         @RequestHeader("X-User-Id") Long userId
     ) {
-        ChatRoomResponseDto response = chatMessageService.getChatRoom(chatRoomId, userId);
+        ChatRoomResponseDto response = chatService.getChatRoom(chatRoomId, userId);
         return ResponseEntity.status(HttpStatus.OK)
             .body(ApiResponse.success("채팅방 조회되었습니다.", response));
     }
@@ -91,7 +91,7 @@ public class ChatMessageController {
 
         Sort.Direction direction = sortDirection.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
-        Page<ChatRoom> chatRooms = chatMessageService.getChatRooms(pageable, userId);
+        Page<ChatRoom> chatRooms = chatService.getChatRooms(pageable, userId);
         log.info("chatRooms = {}, size = {}", chatRooms.toString(), chatRooms.getSize());
         return ResponseEntity.ok(ApiResponse.success("채팅방 목록이 조회되었습니다.", chatRooms));
     }
@@ -110,7 +110,7 @@ public class ChatMessageController {
         @PathVariable("chatRoomId") UUID chatRoomId,
         @RequestHeader("X-User-Id") Long userId) {
 
-        boolean result = chatMessageService.exitChatRoom(chatRoomId, userId);
+        boolean result = chatService.exitChatRoom(chatRoomId, userId);
         String message = "";
         if(result) {
             message = chatRoomId + " 채팅방 및 참여자 모두가 삭제되었습니다.";
@@ -126,7 +126,7 @@ public class ChatMessageController {
     @GetMapping("/validate/nickname/{receiverNickname}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> validateNickname(
         @PathVariable("receiverNickname") String receiverNickname) {
-        Map<String, Object> response = chatMessageService.validateNickname(receiverNickname);
+        Map<String, Object> response = chatService.validateNickname(receiverNickname);
         return ResponseEntity.ok(ApiResponse.success("닉네임 유효성 검증 완료되었습니다.", response));
     }
 
@@ -138,7 +138,7 @@ public class ChatMessageController {
     public ResponseEntity<ApiResponse<Map<String, Boolean>>> validateChatRoomId(
         @PathVariable("chatRoomId") UUID chatRoomId
     ) {
-        Map<String, Boolean> response = chatMessageService.validateChatRoomId(chatRoomId);
+        Map<String, Boolean> response = chatService.validateChatRoomId(chatRoomId);
         return ResponseEntity.ok(ApiResponse.success("chatRoomId 유효성 검증 성공하였습니다.", response));
     }
 
@@ -151,7 +151,7 @@ public class ChatMessageController {
         @PathVariable("chatRoomId") UUID chatRoomId,
         @PathVariable("senderId") Long senderId
     ) {
-        Map<String, Boolean> response = chatMessageService.validateSenderId(chatRoomId, senderId);
+        Map<String, Boolean> response = chatService.validateSenderId(chatRoomId, senderId);
         return ResponseEntity.ok(ApiResponse.success("senderId 유효성 검증 성공하였습니다.", response));
     }
 
@@ -164,7 +164,7 @@ public class ChatMessageController {
         @PathVariable("chatRoomId") UUID chatRoomId,
         @PathVariable("senderId") String senderId
     ) {
-        Boolean response = chatMessageService.deleteRedisSenderId(chatRoomId, senderId);
+        Boolean response = chatService.deleteRedisSenderId(chatRoomId, senderId);
         return ResponseEntity.ok(ApiResponse.success("Redis 캐시 삭제 성공하였습니다.", response));
     }
 
@@ -184,7 +184,7 @@ public class ChatMessageController {
     ) {
         Sort.Direction direction = sortDirection.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
-        Page<ChatMessageDocument> chatMessages = chatMessageService.getMessagesByChatRoomId(chatRoomId, senderId, pageable);
+        Page<ChatMessageDocument> chatMessages = chatService.getMessagesByChatRoomId(chatRoomId, senderId, pageable);
         return ResponseEntity.ok(chatMessages);
     }
 
@@ -200,7 +200,7 @@ public class ChatMessageController {
         @PathVariable("id") String id,
         @RequestHeader("X-User-Id") Long userId
     ) {
-        ChatMessageResponseDto responseDto = chatMessageService.getMessageById(chatRoomId, id, userId);
+        ChatMessageResponseDto responseDto = chatService.getMessageById(chatRoomId, id, userId);
         return ResponseEntity.ok(ApiResponse.success("메시지 조회 성공했습니다.", responseDto));
     }
 
@@ -209,8 +209,8 @@ public class ChatMessageController {
      * Redis key(chatRoomId:senderId)-value(SessionID, senderId, chatRoomId)로 변경
      * @param headerAccessor : sessionID 추출
      */
-    @MessageMapping("/chat/connect/{chatRoomId}/{senderId}")
-    @SendTo("/topic/chat/{chatRoomId}")
+    @MessageMapping("/v1/chat/connect/{chatRoomId}/{senderId}")
+    @SendTo("/topic/v1/chat/{chatRoomId}")
     public void connectChatRoom(
         @DestinationVariable UUID chatRoomId,
         @DestinationVariable Long senderId,
@@ -219,7 +219,7 @@ public class ChatMessageController {
     ) {
         log.info(">> headerAccessor {}", headerAccessor);
         log.info(">> 채팅방 연결 message {}", message);
-        chatMessageService.connectChatRoom(chatRoomId, senderId, headerAccessor, message);
+        chatService.connectChatRoom(chatRoomId, senderId, headerAccessor, message);
     }
 
     /**
@@ -227,8 +227,8 @@ public class ChatMessageController {
      * "/topic"을 구독하는 서버에서 실시간 메시지 송수신 가능
      * "/app" 시작하는 경로 stomp 메시지 전송하면 @MessageMapping 으로 연결
      */
-    @MessageMapping("/chat/{chatRoomId}")
-    @SendTo("/topic/chat/{chatRoomId}")
+    @MessageMapping("/v1/chat/{chatRoomId}")
+    @SendTo("/topic/v1/chat/{chatRoomId}")
     public ChatMessageResponseDto sendMessage(
         @RequestBody ChatMessageRequestDto requestDto,
         SimpMessageHeaderAccessor headerAccessor
@@ -237,7 +237,7 @@ public class ChatMessageController {
         log.info("Sending message: {}", requestDto.toString());
 
         try {
-            return chatMessageService.sendMessage(requestDto);
+            return chatService.sendMessage(requestDto);
         } catch (Exception e) {
             headerAccessor.setMessageTypeIfNotSet(SimpMessageType.MESSAGE);
             headerAccessor.setLeaveMutable(true);
