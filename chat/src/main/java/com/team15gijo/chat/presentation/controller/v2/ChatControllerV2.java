@@ -216,7 +216,7 @@ public class ChatControllerV2 {
      * Redis key(chatRoomId:senderId)-value(SessionID, senderId, chatRoomId)로 변경
      * @param headerAccessor : sessionID 추출
      */
-    @MessageMapping("/chat/connect/{chatRoomId}/{senderId}")
+    @MessageMapping("/v2/chat/connect/{chatRoomId}/{senderId}")
     public ResponseEntity<ApiResponse<String>> connectChatRoom(
         @DestinationVariable UUID chatRoomId,
         @DestinationVariable Long senderId,
@@ -232,7 +232,7 @@ public class ChatControllerV2 {
      * "/topic"을 구독하는 서버에서 실시간 메시지 송수신 가능
      * "/app" 시작하는 경로 stomp 메시지 전송하면 @MessageMapping 으로 연결
      */
-    @MessageMapping("/chat/{chatRoomId}")
+    @MessageMapping("/v2/chat/{chatRoomId}")
     public ResponseEntity<ApiResponse<String>> sendMessage(
         @RequestBody ChatMessageRequestDtoV2 requestDto,
         SimpMessageHeaderAccessor headerAccessor
