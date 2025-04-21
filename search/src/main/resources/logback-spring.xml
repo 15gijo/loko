@@ -1,60 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-  <!-- 공통 패턴 -->
-  <property name="LOG_PATH" value="./logs"/>
-  <property name="LOG_FILE_NAME" value="api"/>
-  <property name="ERR_LOG_FILE_NAME" value="error"/>
-  <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n"/>
+  <include resource="net/logstash/logback/logstash-logback-encoder.xml"/>
 
-  <!-- 콘솔 로그 -->
-  <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder>
-      <pattern>${LOG_PATTERN}</pattern>
+  <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+    <destination>localhost:5000</destination>
+    <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+      <providers>
+        <timestamp>
+          <timeZone>Asia/Seoul</timeZone>
+        </timestamp>
+        <pattern>
+          <pattern>
+            {
+            "level": "%level",
+            "logger": "%logger",
+            "thread": "%thread",
+            "message": "%message"
+            }
+          </pattern>
+        </pattern>
+      </providers>
     </encoder>
   </appender>
 
-  <!-- info.log: INFO 전용 로그 파일 -->
-  <appender name="ApiLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${LOG_PATH}/${LOG_FILE_NAME}.log</file>
-    <filter class="ch.qos.logback.classic.filter.LevelFilter">
-      <level>INFO</level>
-      <onMatch>ACCEPT</onMatch>
-      <onMismatch>DENY</onMismatch>
-    </filter>
-    <encoder>
-      <pattern>${LOG_PATTERN}</pattern>
-    </encoder>
-    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>${LOG_PATH}/${LOG_FILE_NAME}.%d{yyyy-MM-dd}.gz</fileNamePattern>
-      <maxHistory>30</maxHistory>
-      <totalSizeCap>1GB</totalSizeCap>
-    </rollingPolicy>
-  </appender>
-
-  <!-- error.log: ERROR 전용 로그 파일 -->
-  <appender name="ErrorLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${LOG_PATH}/${ERR_LOG_FILE_NAME}.log</file>
-    <filter class="ch.qos.logback.classic.filter.LevelFilter">
-      <level>ERROR</level>
-      <onMatch>ACCEPT</onMatch>
-      <onMismatch>DENY</onMismatch>
-    </filter>
-    <encoder>
-      <pattern>${LOG_PATTERN}</pattern>
-    </encoder>
-    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>${LOG_PATH}/${ERR_LOG_FILE_NAME}.%d{yyyy-MM-dd}.gz</fileNamePattern>
-      <maxHistory>30</maxHistory>
-      <totalSizeCap>1GB</totalSizeCap>
-    </rollingPolicy>
-  </appender>
-
-  <!-- 적용 대상 전체 로그 설정 -->
   <root level="INFO">
-    <appender-ref ref="Console"/>
-    <appender-ref ref="ApiLogFile"/>
-    <appender-ref ref="ErrorLogFile"/>
+    <appender-ref ref="LOGSTASH"/>
   </root>
-
 </configuration>

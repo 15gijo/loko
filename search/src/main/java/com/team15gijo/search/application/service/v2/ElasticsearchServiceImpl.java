@@ -75,6 +75,7 @@ public class ElasticsearchServiceImpl implements ElasticsearchService {
     public void createElasticUser(UserElasticsearchRequestDto requestDto) {
         UserDocument user = UserDocument.from(requestDto);
         userElasticsearchRepository.save(user);
+
     }
 
     @Override
