@@ -1,6 +1,5 @@
 package com.team15gijo.search.domain.model;
 
-import com.team15gijo.search.infrastructure.client.post.PostSearchResponseDto;
 import com.team15gijo.search.infrastructure.kafka.dto.PostElasticsearchRequestDto;
 import java.time.LocalDateTime;
 import java.util.List;

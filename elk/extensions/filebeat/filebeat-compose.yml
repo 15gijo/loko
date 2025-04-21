@@ -16,6 +16,7 @@ services:
       - --strict.perms=false
     volumes:
       - ./extensions/filebeat/config/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro,Z
+      - "C:/Users/윤정영/Desktop/십오지조/loko/logs:/usr/share/filebeat/logs:ro"
       - type: bind
         source: /var/lib/docker/containers
         target: /var/lib/docker/containers
