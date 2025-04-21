@@ -64,6 +64,10 @@ tasks.withType(JavaCompile).configureEach {
 	options.annotationProcessorGeneratedSourcesDirectory = file("build/generated")
 }
 
+clean {
+	delete file("build/generated")
+}
+
 dependencyManagement {
 	imports {
 		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
