@@ -1,7 +1,7 @@
 package com.team15gijo.user.application.service.v1;
 
 import com.team15gijo.user.domain.model.UserEntity;
-import com.team15gijo.user.infrastructure.dto.v1.internal.UserSearchResponseDto;
+import com.team15gijo.user.presentation.dto.internal.response.v1.UserSearchResponseDto;
 import com.team15gijo.user.infrastructure.persistence.querydsl.UserQueryDslRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

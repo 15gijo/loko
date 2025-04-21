@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: follow-service
+  cloud:
+    config:
+      enabled: false #?? config server ????
+  config:
+    import: optional:file:./follow/.env[.properties] # ?? ?? env
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+
+server:
+  port: 19094
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:19090/eureka/  # Eureka ?? URL
+    register-with-eureka: true   # ?????? Eureka? ?? ??? ??
+    fetch-registry: true         # ?? ??? ??(Eureka ?????)? ???
+
+
+management:
+  zipkin:
+    tracing:
+      endpoint: "http://localhost:9411/api/v2/spans"
+  tracing:
+    sampling:
+      probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: ["*"]
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      access: unrestricted

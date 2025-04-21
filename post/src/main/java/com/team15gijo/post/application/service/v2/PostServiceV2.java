@@ -1,6 +1,9 @@
 package com.team15gijo.post.application.service.v2;
 
 import com.team15gijo.post.domain.model.v2.HashtagV2;
+import com.team15gijo.post.infrastructure.client.ai.AiClient;
+import com.team15gijo.post.infrastructure.client.ai.HashtagRequestDto;
+import com.team15gijo.post.infrastructure.client.ai.HashtagResponseDto;
 import com.team15gijo.post.infrastructure.kafka.util.KafkaUtil;
 import com.team15gijo.post.domain.exception.PostDomainException;
 import com.team15gijo.post.domain.exception.PostDomainExceptionCode;
@@ -25,6 +28,7 @@ public class PostServiceV2 {
     private final PostRepositoryV2 postRepository;
     private final HashtagRepositoryV2 hashtagRepository;
     private final KafkaUtil kafkaUtil;
+    private final AiClient aiClient;
     private final RedisTemplate<String, Object> redisTemplate;
 
     private static final String FEED_EVENTS_TOPIC = "feed_events";
@@ -37,8 +41,29 @@ public class PostServiceV2 {
     public PostV2 createPost(long userId, String username, String region, PostRequestDtoV2 request) {
         PostV2 post = PostV2.createPost(userId, username, region, request.getPostContent());
         post = postRepository.save(post);
+
+
+        // 3) AI 마이크로서비스 호출
+        HashtagResponseDto aiResp = aiClient.recommendHashtags(
+                new HashtagRequestDto(request.getPostContent())
+        );
+
+        // 4) 추천된 해시태그를 엔티티로 변환하여 Post 에 매핑
+        for (String tagName : aiResp.getHashtags()) {
+            HashtagV2 tag = hashtagRepository
+                    .findByHashtagName(tagName)
+                    .orElseGet(() -> hashtagRepository.save(
+                            HashtagV2.builder()
+                                    .hashtagName(tagName)
+                                    .build()
+                    ));
+            post.getHashtags().add(tag);
+        }
+        post = postRepository.save(post);
+
         // kafka 이벤트 발행
         kafkaUtil.sendKafkaEvent(EventType.POST_CREATED, post, FEED_EVENTS_TOPIC);
+
         return post;
     }
 

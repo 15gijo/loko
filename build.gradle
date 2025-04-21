@@ -91,6 +91,15 @@ project(':user') {
     }
 }
 
+project(':follow') {
+    dependencies {
+        implementation project(':common')
+    }
+    tasks.named('bootJar') {
+        enabled = true
+    }
+}
+
 project(':auth') {
     dependencies {
         implementation project(':common')

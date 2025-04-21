@@ -68,3 +68,7 @@ logging:
   level:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+ai:
+  service:
+    url: http://localhost:19095   # AiApplication이 띄운 포트

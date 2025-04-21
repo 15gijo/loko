@@ -17,11 +17,11 @@ spring:
         - id: user-service  # 라우트 식별자
           uri: lb://user-service  # 'user-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
           predicates:
-            - Path=/api/v1/users/**  # /users/** 경로로 들어오는 요청을 이 라우트로 처리
+            - Path=/api/v1/users/**, /api/v2/users/**  # /users/** 경로로 들어오는 요청을 이 라우트로 처리
         - id: auth-service  # 라우트 식별자
           uri: lb://auth-service  # 'auth-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
           predicates:
-            - Path=/api/v1/auth/**  # /auth/signIn 경로로 들어오는 요청을 이 라우트로 처리
+            - Path=/api/v1/auth/**, /api/v2/auth/**  # /auth/signIn 경로로 들어오는 요청을 이 라우트로 처리
         - id: search-service
           uri: lb://search-service
           predicates:
@@ -37,7 +37,11 @@ spring:
         - id: chat-service  # 라우트 식별자
           uri: lb://chat-service  # 'chat-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
           predicates:
-            - Path=/api/v1/chats/**  # /chats 경로로 들어오는 요청을 이 라우트로 처리
+            - Path=/api/v1/chats/**, /api/v2/chats/**   # /chats 경로로 들어오는 요청을 이 라우트로 처리
+        - id: follow-service
+          uri: lb://follow-service
+          predicates:
+            - Path=/api/v2/follow/**
       discovery:
         locator:
           enabled: true  # 서비스 디스커버리를 통해 동적으로 라우트를 생성하도록 설정, 나중에 끄자
