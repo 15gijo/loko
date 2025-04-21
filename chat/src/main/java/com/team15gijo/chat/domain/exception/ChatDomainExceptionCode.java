@@ -13,7 +13,8 @@ public enum ChatDomainExceptionCode implements ExceptionCode {
     CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방이 존재하지 않습니다."),
     CHAT_ROOM_USER_ID_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방 유저 아이디를 찾을 수 없습니다."),
     MESSAGE_NOT_FOUND_FOR_CHAT_ROOM(HttpStatus.NOT_FOUND, "채팅방에 해당하는 메시지 내역이 찾을 수 없습니다."),
-    MESSAGE_ID_NOT_FOUND(HttpStatus.NOT_FOUND,"채팅 메시지가 존재하지 않습니다.");
+    MESSAGE_ID_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅 메시지가 존재하지 않습니다."),
+    SENT_AT_DATETIME_PARSE(HttpStatus.BAD_REQUEST, "sentAt 형식이 유효하지 않습니다. 'yyyy-MM-dd' 형식이어야 합니다.");
 
     private final HttpStatus httpStatus;
     private final String message;
