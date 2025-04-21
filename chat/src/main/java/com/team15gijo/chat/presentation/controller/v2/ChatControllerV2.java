@@ -1,5 +1,7 @@
 package com.team15gijo.chat.presentation.controller.v2;
 
+import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.SENT_AT_DATETIME_PARSE;
+
 import com.team15gijo.chat.application.dto.v2.ChatMessageResponseDtoV2;
 import com.team15gijo.chat.application.dto.v2.ChatRoomResponseDtoV2;
 import com.team15gijo.chat.application.service.impl.v2.ChatServiceImplV2;
@@ -9,6 +11,7 @@ import com.team15gijo.chat.presentation.dto.v2.ChatMessageRequestDtoV2;
 import com.team15gijo.chat.presentation.dto.v2.ChatRoomRequestDtoV2;
 import com.team15gijo.common.annotation.RoleGuard;
 import com.team15gijo.common.dto.ApiResponse;
+import com.team15gijo.common.exception.CustomException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -268,7 +271,9 @@ public class ChatControllerV2 {
         @RequestHeader("X-User-Id") Long userId
     ) {
         log.info("[ChatControllerV2] searchMessages 메소드 시작");
-        Sort.Direction direction = sortDirection.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("desc")
+            ? Sort.Direction.DESC
+            : Sort.Direction.ASC;
         log.info(">> direction={}", direction);
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
 
@@ -283,7 +288,7 @@ public class ChatControllerV2 {
                 log.info(">> parsedSentAt: {}", parsedSentAt);
             } catch (DateTimeParseException e) {
                 log.warn(">> sentAt 형식이 유효하지 않습니다. 'yyyy-MM-dd' 형식이어야 합니다. 입력값: {}", sentAt);
-                parsedSentAt = null; // 유효하지 않으면 무시
+                throw new CustomException(SENT_AT_DATETIME_PARSE);
             }
         }
         log.info(">> messageContent: {}", messageContent);
