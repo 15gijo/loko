@@ -29,9 +29,9 @@ public class FeedDeprecatedService {
      */
     public ApiResponse<PostFeedPageResponseDto> getRecentFeedBase(LocalDateTime cursor, int pageSize, String region) {
 
-        // TODO: 요청한 유저의 지역 가져오기 (token or user-service 요청)
-//        String token = "";
-//        String region = getRegionFromToken(token); //임시 지역
+        if (cursor == null) {
+            cursor = LocalDateTime.now();
+        }
 
         ApiResponse<PostFeedPageResponseDto> response = feignClientService.fetchRecentPostsByRegion(region, cursor, pageSize);
         return response;
@@ -42,9 +42,6 @@ public class FeedDeprecatedService {
      * 동일 지역 정보를 가진 피드 최신순 조회 (cache)
      */
     public ApiResponse<PostFeedPageResponseDto> getRecentFeedCache(LocalDateTime cursor, int pageSize, String region) throws JsonProcessingException {
-        // TODO: 요청한 유저의 지역 가져오기 (token or user-service 요청)
-//        String token = "";
-//        String region = getRegionFromToken(token); //임시 지역
 
         log.info("getRecentFeedCache called, region: {}", region);
         if(cursor == null) { //최초 요청만 캐싱
@@ -75,9 +72,4 @@ public class FeedDeprecatedService {
 
     }
 
-
-    private String getRegionFromToken(String token) {
-        // TODO: token 혹은 header에서 값 가져오기
-        return "송파구";
-    }
 }
