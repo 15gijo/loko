@@ -12,6 +12,7 @@ import com.team15gijo.common.dto.ApiResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -276,8 +277,14 @@ public class ChatControllerV2 {
         if(sentAt != null && !sentAt.isEmpty()) {
             // 기본적으로 서버에서 JVM의 로컬 타임존(KST)
             // MongoDB에는 UTC 기준으로 조건 불일치로 sentAt 파싱 시, ZoneOffset.UTC로 고정
-            parsedSentAt = LocalDate.parse(sentAt).atStartOfDay(ZoneOffset.UTC).toLocalDateTime();
-            log.info(">> parsedSentAt: {}", parsedSentAt);
+            try {
+                // yyyy-MM-dd 형식만 유효하도록 검증
+                parsedSentAt = LocalDate.parse(sentAt).atStartOfDay(ZoneOffset.UTC).toLocalDateTime();
+                log.info(">> parsedSentAt: {}", parsedSentAt);
+            } catch (DateTimeParseException e) {
+                log.warn(">> sentAt 형식이 유효하지 않습니다. 'yyyy-MM-dd' 형식이어야 합니다. 입력값: {}", sentAt);
+                parsedSentAt = null; // 유효하지 않으면 무시
+            }
         }
         log.info(">> messageContent: {}", messageContent);
         Page<ChatMessageDocumentV2> messages = chatService.searchMessages(chatRoomId, parsedSentAt, messageContent, userId, pageable);
