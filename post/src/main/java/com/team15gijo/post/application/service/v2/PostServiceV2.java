@@ -4,6 +4,7 @@ import com.team15gijo.post.domain.model.v2.HashtagV2;
 import com.team15gijo.post.infrastructure.client.ai.AiClient;
 import com.team15gijo.post.infrastructure.client.ai.HashtagRequestDto;
 import com.team15gijo.post.infrastructure.client.ai.HashtagResponseDto;
+import com.team15gijo.post.infrastructure.kafka.dto.v1.CommentCountEventDto;
 import com.team15gijo.post.infrastructure.kafka.util.KafkaUtil;
 import com.team15gijo.post.domain.exception.PostDomainException;
 import com.team15gijo.post.domain.exception.PostDomainExceptionCode;
@@ -34,6 +35,10 @@ public class PostServiceV2 {
     private static final String FEED_EVENTS_TOPIC = "feed_events";
     private static final String REDIS_VIEW_COUNT_HASH_KEY = "views:buffer";
     private static final String REDIS_VIEW_DIRTY_KEY_SET = "views:dirty-keys";
+
+    private static final String REDIS_COMMENT_COUNT_HASH   = "comments:buffer";
+    private static final String REDIS_COMMENT_DIRTY_SET    = "comments:dirty-keys";
+
 
     /**
      * 게시글 생성
@@ -156,29 +161,53 @@ public class PostServiceV2 {
     }
 
     /**
-     * 게시글의 댓글 수(commentCount)를 증가시키는 메서드
+     * 댓글 수 증가 (버퍼+비동기) + 기존 피드 이벤트
      */
     @Transactional
     public void addCommentCount(UUID postId) {
+        // 1) 피드 서비스용 이벤트 (기존 로직 그대로)
         PostV2 post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
-        // 도메인 메서드를 통해 댓글 수 증가
-        post.incrementCommentCount();
-        postRepository.save(post);
-        // kafka 이벤트 발행
         kafkaUtil.sendKafkaEvent(EventType.COMMENT_CREATED, post, FEED_EVENTS_TOPIC);
+
+        // 2) Redis 버퍼에 즉시 +1
+        String key = postId.toString();
+        redisTemplate.opsForHash().increment(REDIS_COMMENT_COUNT_HASH, key, 1);
+        redisTemplate.opsForSet().add(REDIS_COMMENT_DIRTY_SET, key);
+
+        // 3) 비동기 카운트 업데이트용 이벤트 발행
+        kafkaUtil.sendCommentCountEvent(
+                CommentCountEventDto.builder()
+                        .postId(postId)
+                        .delta(1)
+                        .build()
+        );
     }
 
+    /**
+     * 댓글 수 감소 (버퍼+비동기) + 기존 피드 이벤트
+     */
     @Transactional
     public void minusCommentCount(UUID postId) {
+        // 1) 피드 서비스용 이벤트 (기존 로직 그대로)
         PostV2 post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
-        // 도메인 메서드를 통해 댓글 수 증가
-        post.decrementCommentCount();
-        postRepository.save(post);
-        // kafka 이벤트 발행
         kafkaUtil.sendKafkaEvent(EventType.COMMENT_DELETED, post, FEED_EVENTS_TOPIC);
+
+        // 2) Redis 버퍼에 즉시 -1
+        String key = postId.toString();
+        redisTemplate.opsForHash().increment(REDIS_COMMENT_COUNT_HASH, key, -1);
+        redisTemplate.opsForSet().add(REDIS_COMMENT_DIRTY_SET, key);
+
+        // 3) 비동기 카운트 업데이트용 이벤트 발행
+        kafkaUtil.sendCommentCountEvent(
+                CommentCountEventDto.builder()
+                        .postId(postId)
+                        .delta(-1)
+                        .build()
+        );
     }
+
 
     /**
      * 조회수 버퍼 처리

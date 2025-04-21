@@ -1,6 +1,7 @@
 package com.team15gijo.post.infrastructure.kafka.util;
 
 import com.team15gijo.post.domain.model.v2.PostV2;
+import com.team15gijo.post.infrastructure.kafka.dto.v1.CommentCountEventDto;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.CommentCreatedEventDto;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.CommentDeletedEventDto;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.EventType;
@@ -21,6 +22,8 @@ public class KafkaUtil {
 
     private final ProducerService producerService;
 
+    private static final String COMMENT_COUNT_EVENTS_TOPIC = "COMMENT_COUNT_EVENTS";
+
     /**
      * kafka 이벤트 발행
      */
@@ -28,6 +31,15 @@ public class KafkaUtil {
         if (topic == null || post == null || eventType == null) return;
         FeedEventDto feedEventDto = createEventMessageByType(eventType, post);
         producerService.sendMessage(topic, null, feedEventDto);
+    }
+
+    /** 댓글 수 증분/감소 전용 비동기 이벤트 발행 */
+    public void sendCommentCountEvent(CommentCountEventDto evt) {
+        producerService.sendCommentCountMessage(
+                COMMENT_COUNT_EVENTS_TOPIC,
+                evt.getPostId().toString(),
+                evt
+        );
     }
 
     public FeedEventDto createEventMessageByType(EventType eventType, PostV2 post) {
