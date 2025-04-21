@@ -1,4 +1,4 @@
-package com.team15gijo.chat.infrastructure.config;
+package com.team15gijo.chat.infrastructure.utils;
 
 import java.util.regex.Pattern;
 
