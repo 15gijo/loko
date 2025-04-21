@@ -1,0 +1,361 @@
+version: '3.8'
+
+services:
+  eureka:
+    build:
+      context: ./eureka
+    container_name: eureka
+    ports:
+      - "19090:19090"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - msa-network
+
+  gateway:
+    build:
+      context: ./gateway
+    container_name: gateway
+    ports:
+      - "19091:19091"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:19090/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    depends_on:
+      - eureka
+    networks:
+      - msa-network
+
+  auth:
+    build:
+      context: ./auth
+    container_name: auth
+    ports:
+      - "19092:19092"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:19090/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/loko
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_JPA_DATABASE_PLATFORM=${SPRING_JPA_DATABASE_PLATFORM}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - ACCESS_TOKEN_EXPIRATION=${ACCESS_TOKEN_EXPIRATION}
+      - REFRESH_TOKEN_EXPIRATION=${REFRESH_TOKEN_EXPIRATION}
+      - JWT_ADMIN_SECRET_KEY=${JWT_ADMIN_SECRET_KEY}
+    depends_on:
+      - eureka
+      - postgres
+      - mongodb
+      - zipkin
+      - redis-stack-compose
+      - kafka
+      - zookeeper
+      - prometheus
+    networks:
+      - msa-network
+
+  user:
+    build:
+      context: ./user
+    container_name: user
+    ports:
+      - "19093:19093"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:19090/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/loko
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_JPA_DATABASE_PLATFORM=${SPRING_JPA_DATABASE_PLATFORM}
+    depends_on:
+      - eureka
+      - postgres
+      - mongodb
+      - zipkin
+      - redis-stack-compose
+      - kafka
+      - zookeeper
+      - prometheus
+    networks:
+      - msa-network
+
+  post:
+    build:
+      context: ./post
+    container_name: post
+    ports:
+      - "19101:19101"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:19090/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/loko
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_JPA_DATABASE_PLATFORM=${SPRING_JPA_DATABASE_PLATFORM}
+    depends_on:
+      - eureka
+      - postgres
+      - mongodb
+      - zipkin
+      - redis-stack-compose
+      - kafka
+      - zookeeper
+      - prometheus
+    networks:
+      - msa-network
+
+  feed:
+    build:
+      context: ./feed
+    container_name: feed
+    ports:
+      - "19100:19100"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:19090/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/loko
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_JPA_DATABASE_PLATFORM=${SPRING_JPA_DATABASE_PLATFORM}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    depends_on:
+      - eureka
+      - postgres
+      - mongodb
+      - zipkin
+      - redis-stack-compose
+      - kafka
+      - zookeeper
+      - prometheus
+    networks:
+      - msa-network
+
+  chat:
+    build:
+      context: ./chat
+    container_name: chat
+    ports:
+      - "19097:19097"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:19090/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_URL=jdbc:postgresql://postgres:5432/loko
+      - DB_USER=${SPRING_DATASOURCE_USERNAME}
+      - DB_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - MONGO_URL=${MONGO_URL}
+      - REDIS_SERVER_PORT=${REDIS_SERVER_PORT}
+      - REDIS_USERNAME=${REDIS_USERNAME}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - CHAT_SEVER_PORT=${CHAT_SEVER_PORT}
+      - EUREKA_SEVER_PORT=${EUREKA_SEVER_PORT}
+      - ZIPKIN_SEVER_PORT=${ZIPKIN_SEVER_PORT}
+    depends_on:
+      - eureka
+      - postgres
+      - mongodb
+      - zipkin
+      - redis-stack-compose
+      - kafka
+      - zookeeper
+      - prometheus
+    networks:
+      - msa-network
+
+  comment:
+    build:
+      context: ./comment
+    container_name: comment
+    ports:
+      - "19102:19102"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:19090/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/loko
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_JPA_DATABASE_PLATFORM=${SPRING_JPA_DATABASE_PLATFORM}
+    depends_on:
+      - eureka
+      - postgres
+      - mongodb
+      - zipkin
+      - redis-stack-compose
+      - kafka
+      - zookeeper
+      - prometheus
+    networks:
+      - msa-network
+
+  search:
+    build:
+      context: ./search
+    container_name: search
+    ports:
+      - "19096:19096"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:19090/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/loko
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_JPA_DATABASE_PLATFORM=${SPRING_JPA_DATABASE_PLATFORM}
+    depends_on:
+      - eureka
+      - postgres
+      - mongodb
+      - zipkin
+      - redis-stack-compose
+      - kafka
+      - zookeeper
+      - prometheus
+    networks:
+      - msa-network
+
+  notification:
+    build:
+      context: ./notification
+    container_name: notification
+    ports:
+      - "19098:19098"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:19090/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/loko
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_JPA_DATABASE_PLATFORM=${SPRING_JPA_DATABASE_PLATFORM}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    depends_on:
+      - eureka
+      - postgres
+      - mongodb
+      - zipkin
+      - redis-stack-compose
+      - kafka
+      - zookeeper
+      - prometheus
+    networks:
+      - msa-network
+
+  postgres:
+    image: postgres:16.2
+    container_name: postgres
+    environment:
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      POSTGRES_DB: loko
+    ports:
+      - "5433:5432"
+    networks:
+      - msa-network
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  mongodb:
+    image: mongo:latest
+    container_name: monogo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: fifteen
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    networks:
+      - msa-network
+
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - msa-network
+
+  redis-stack-compose:
+    image: redis/redis-stack
+    container_name: redis-stack-compose
+    restart: always
+    command: [ "redis-server", "--requirepass", "systempass" ]
+    ports:
+      - 6379:6379
+    networks:
+      - msa-network
+
+  redis-insight:
+    image: redislabs/redisinsight
+    container_name: redis-insight
+    restart: always
+    ports:
+      - 5540:5540
+    networks:
+      - msa-network
+
+  zookeeper:
+    image: wurstmeister/zookeeper:latest
+    container_name: zookeeper
+    platform: linux/amd64
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - msa-network
+
+  kafka:
+    image: wurstmeister/kafka:latest
+    container_name: kafka
+    platform: linux/amd64
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:29092,OUTSIDE://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - msa-network
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    platform: linux/amd64
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+      KAFKA_CLUSTERS_0_READONLY: "false"
+    networks:
+      - msa-network
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+networks:
+  msa-network:
+    driver: bridge
+
+volumes:
+  pgdata:
+  mongodb-data:
