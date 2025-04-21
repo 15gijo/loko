@@ -1,6 +1,6 @@
 package com.team15gijo.chat.domain.repository.v2;
 
-import static com.team15gijo.chat.infrastructure.config.RegexUtils.escapeRegex;
+import static com.team15gijo.chat.infrastructure.utils.RegexUtils.escapeRegex;
 
 import com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2;
 import com.team15gijo.chat.domain.model.v2.QChatMessageDocumentV2;
