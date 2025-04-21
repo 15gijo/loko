@@ -1,4 +1,4 @@
-package com.team15gijo.chat.infrastructure.kafka;
+package com.team15gijo.chat.infrastructure.config;
 
 import com.team15gijo.chat.infrastructure.kafka.dto.ChatNotificationEventDto;
 import java.util.HashMap;
@@ -16,7 +16,7 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 
 @EnableKafka
 @Configuration
-public class ChatApplicationKafkaConfig {
+public class ChatNotificationKafkaConfig {
 
     /**
      *  Kafka Producer Config
