@@ -41,4 +41,4 @@ out/
 /env
 
 ### log
-logs/error.log
+logs/
