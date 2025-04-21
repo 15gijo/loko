@@ -89,6 +89,11 @@ public class ChatMessageCustomRepositoryV2Impl implements ChatMessageCustomRepos
         long totalCount = mongoTemplate.count(countQuery, ChatMessageDocumentV2.class);
         log.info(">> totalCount={}", totalCount);
 
+        // 메시지 totalCount 가 많을 경우, 에러 로그 추가
+        if (totalCount > 1000) {
+            log.warn(">> chatRoomId={}의 레코드={}이다. 추후 검색 기준 구체화가 필요하다.", chatRoomId, totalCount);
+        }
+
         return new PageImpl<>(content, pageable, totalCount);
     }
 }
