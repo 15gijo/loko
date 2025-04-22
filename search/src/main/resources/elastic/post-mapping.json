@@ -1,0 +1,32 @@
+{
+  "properties": {
+    "postId": {
+      "type": "keyword"
+    },
+    "username": {
+      "type": "text",
+      "analyzer": "korean"
+    },
+    "postContent": {
+      "type": "text",
+      "analyzer": "korean"
+    },
+    "hashtags": {
+      "type": "text",
+      "analyzer": "korean"
+    },
+    "region": {
+      "type": "text",
+      "analyzer": "korean",
+      "fields": {
+        "keyword": {
+          "type": "keyword"
+        }
+      }
+    },
+    "createdAt": {
+      "type": "date",
+      "format": "yyyy-MM-dd'T'HH:mm:ss.SSS||epoch_millis"
+    }
+  }
+}

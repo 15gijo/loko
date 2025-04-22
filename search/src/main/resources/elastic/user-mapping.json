@@ -1,0 +1,27 @@
+{
+  "properties": {
+    "userId": {
+      "type": "keyword"
+    },
+    "username": {
+      "type": "text",
+      "analyzer": "korean"
+    },
+    "nickname": {
+      "type": "text",
+      "analyzer": "korean"
+    },
+    "profile": {
+      "type": "text"
+    },
+    "region": {
+      "type": "text",
+      "analyzer": "korean",
+      "fields": {
+        "keyword": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}

@@ -68,6 +68,9 @@ project(':eureka') {
     tasks.named('jar') {
         enabled = true
     }
+    tasks.named('bootJar') {
+        enabled = true
+    }
 }
 
 project(':gateway') {
@@ -115,9 +118,6 @@ project(':chat') {
     }
 }
 
-
-
-
 project(':search') {
     dependencies {
         implementation project(':common')
@@ -140,6 +140,33 @@ project(':notification') {
 }
 
 project(':feed') {
+    dependencies {
+        implementation project(':common')
+    }
+    tasks.named('bootJar') {
+        enabled = true
+    }
+}
+
+project(':comment') {
+    dependencies {
+        implementation project(':common')
+    }
+    tasks.named('bootJar') {
+        enabled = true
+    }
+}
+
+project(':post') {
+    dependencies {
+        implementation project(':common')
+    }
+    tasks.named('bootJar') {
+        enabled = true
+    }
+}
+
+project(':ai') {
     dependencies {
         implementation project(':common')
     }
