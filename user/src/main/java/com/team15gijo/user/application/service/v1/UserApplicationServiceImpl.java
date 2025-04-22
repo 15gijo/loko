@@ -11,12 +11,11 @@ import com.team15gijo.user.domain.repository.UserRepository;
 import com.team15gijo.user.domain.service.UserDomainService;
 import com.team15gijo.user.infrastructure.client.AuthServiceClient;
 import com.team15gijo.user.infrastructure.dto.UserFeignInfoResponseDto;
-import com.team15gijo.user.infrastructure.dto.request.v1.AuthSignUpRequestDto;
-import com.team15gijo.user.infrastructure.dto.request.v1.AuthSignUpUpdateUserIdRequestDto;
-import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
-import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
 import com.team15gijo.user.infrastructure.dto.request.v1.AuthIdentifierUpdateRequestDto;
 import com.team15gijo.user.infrastructure.dto.request.v1.AuthPasswordUpdateRequestDto;
+import com.team15gijo.user.infrastructure.dto.request.v1.AuthSignUpRequestDto;
+import com.team15gijo.user.infrastructure.dto.request.v1.AuthSignUpUpdateUserIdRequestDto;
+import com.team15gijo.user.presentation.dto.internal.response.v1.UserInfoFollowResponseDto;
 import com.team15gijo.user.presentation.dto.request.v1.AdminUserStatusUpdateRequestDto;
 import com.team15gijo.user.presentation.dto.request.v1.UserEmailUpdateRequestDto;
 import com.team15gijo.user.presentation.dto.request.v1.UserPasswordUpdateRequestDto;
@@ -25,6 +24,8 @@ import com.team15gijo.user.presentation.dto.request.v1.UserUpdateRequestDto;
 import com.team15gijo.user.presentation.dto.response.v1.UserReadResponseDto;
 import com.team15gijo.user.presentation.dto.response.v1.UserSignUpResponseDto;
 import com.team15gijo.user.presentation.dto.response.v1.UserUpdateResponseDto;
+import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
+import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -249,6 +250,21 @@ public class UserApplicationServiceImpl implements UserApplicationService {
 
         //삭제
         userRepository.deleteById(userId);
+    }
+
+    //internal
+    @Override
+    public UserInfoFollowResponseDto getUserInfoForFollow(Long userId) {
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_NOT_FOUND));
+
+        return new UserInfoFollowResponseDto(
+                user.getId(),
+                user.getUsername(),
+                user.getNickname(),
+                user.getProfile()
+        );
     }
 
     //internal
