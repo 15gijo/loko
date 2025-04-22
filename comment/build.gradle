@@ -24,6 +24,10 @@ ext {
 dependencies {
 	implementation project(':common')
 
+
+	//redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
 	//prometheus
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'

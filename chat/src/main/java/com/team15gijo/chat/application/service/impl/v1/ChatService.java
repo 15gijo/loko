@@ -373,60 +373,57 @@ public class ChatService {
         SimpMessageHeaderAccessor headerAccessor,
         String message
     ) {
-        if (senderId != null) {
-            // 세션 ID 가져오기
-            String sessionId = headerAccessor.getSessionId();
-            log.info("connectChatRoom sessionId: {}", sessionId);
+        String sessionId = headerAccessor.getSessionId();
+        log.info("connectChatRoom sessionId: {}", sessionId);
 
-            String cacheKey = chatRoomId + ":"+ senderId;
-            log.info("cacheKey: {}", cacheKey);
+        String cacheKey = chatRoomId + ":"+ senderId;
+        log.info("cacheKey: {}", cacheKey);
 
-            // Redis에 senderId:chatRoomId 이미 존재하는지 확인
-            if(redisTemplate.hasKey(cacheKey)) {
-                // 이미 존재하는 경우, 중복 연결 차단 메시지 전송 및 senderId가 연결된 소켓 연결 중단
-                log.warn("cacheKey {} 가 이미 존재하여 중복 연결이 차단됨", cacheKey);
-                redisTemplate.delete(cacheKey);
-                messagingTemplate.convertAndSend("/topic/chat/errors/" + senderId,
-                    "중복 로그인으로 인해 연결이 거부되었습니다. 해당 채팅방에 다시 접속해주세요.");
-            } else {
-                // 존재하지 않은 경우, Redis에 senderId, chatRoomId 저장
-                Map<String, Object> value = new HashMap<>();
-                value.put("sessionId", sessionId);
-                value.put("chatRoomId", chatRoomId);
-                value.put("senderId", senderId);
+        // Redis에 senderId:chatRoomId 이미 존재하는지 확인
+        if(redisTemplate.hasKey(cacheKey)) {
+            // 이미 존재하는 경우, 중복 연결 차단 메시지 전송 및 senderId가 연결된 소켓 연결 중단
+            log.warn("cacheKey {} 가 이미 존재하여 중복 연결이 차단됨", cacheKey);
+            redisTemplate.delete(cacheKey);
+            messagingTemplate.convertAndSend("/topic/v1/chat/errors/" + senderId,
+                "중복 로그인으로 인해 연결이 거부되었습니다. 해당 채팅방에 다시 접속해주세요.");
+        } else {
+            // 존재하지 않은 경우, Redis에 senderId, chatRoomId 저장
+            Map<String, Object> value = new HashMap<>();
+            value.put("sessionId", sessionId);
+            value.put("chatRoomId", chatRoomId);
+            value.put("senderId", senderId);
 
-                redisTemplate.opsForHash().putAll(cacheKey, value);
-                redisTemplate.expire(cacheKey, 1, TimeUnit.DAYS);
+            redisTemplate.opsForHash().putAll(cacheKey, value);
+            redisTemplate.expire(cacheKey, 1, TimeUnit.DAYS);
 
-                log.info("[Redis 캐싱] cacheKey={} 과 value={} 저장", cacheKey, value);
+            log.info("[Redis 캐싱] cacheKey={} 과 value={} 저장", cacheKey, value);
 
-                // mongoDB에서 userId와 chatRoomId에 대한 메시지 유무로 처음인지 판단하고 입장 메시지 전송
-                Query query = Query.query(
-                    Criteria.where("chatRoomId").is(chatRoomId)
-                        .and("senderId").is(senderId)
-                        .and("deletedAt").is(null));
+            // mongoDB에서 userId와 chatRoomId에 대한 메시지 유무로 처음인지 판단하고 입장 메시지 전송
+            Query query = Query.query(
+                Criteria.where("chatRoomId").is(chatRoomId)
+                    .and("senderId").is(senderId)
+                    .and("deletedAt").is(null));
 
-                long messageCount = mongoTemplate.count(query, ChatMessageDocument.class);
-                log.info(">> messageCount={}", messageCount);
+            long messageCount = mongoTemplate.count(query, ChatMessageDocument.class);
+            log.info(">> messageCount={}", messageCount);
 
-                if(messageCount == 0) {
-                    // chatRoomId에서 senderId가 보낸 메시지가 없는 경우, mongoDB 메시지 저장
-                    ChatMessageDocument firstMessage = ChatMessageDocument.builder()
-                        .chatRoomId(chatRoomId)
-                        .senderId(senderId)
-                        .connectionType(ConnectionType.ENTER)
-                        .chatMessageType(ChatMessageType.TEXT)
-                        .messageContent(message)
-                        .sentAt(LocalDateTime.now())
-                        .build();
-                    try {
-                        // 처음 채팅방 접속으로 입장 메시지 전송
-                        ChatMessageDocument savedMessage = chatMessageRepository.save(firstMessage);
-                        log.info("[mongoDB 저장 성공] message={}", savedMessage.toString());
-                        messagingTemplate.convertAndSend("/topic/chat/enter/" + chatRoomId, savedMessage);
-                    } catch (Exception e) {
-                        log.error("[mongoDB 저장 실패] message={}", firstMessage, e);
-                    }
+            if(messageCount == 0) {
+                // chatRoomId에서 senderId가 보낸 메시지가 없는 경우, mongoDB 메시지 저장
+                ChatMessageDocument firstMessage = ChatMessageDocument.builder()
+                    .chatRoomId(chatRoomId)
+                    .senderId(senderId)
+                    .connectionType(ConnectionType.ENTER)
+                    .chatMessageType(ChatMessageType.TEXT)
+                    .messageContent(message)
+                    .sentAt(LocalDateTime.now())
+                    .build();
+                try {
+                    // 처음 채팅방 접속으로 입장 메시지 전송
+                    ChatMessageDocument savedMessage = chatMessageRepository.save(firstMessage);
+                    log.info("[mongoDB 저장 성공] message={}", savedMessage.toString());
+                    messagingTemplate.convertAndSend("/topic/v1/chat/enter/" + chatRoomId, savedMessage);
+                } catch (Exception e) {
+                    log.error("[mongoDB 저장 실패] message={}", firstMessage, e);
                 }
             }
         }
@@ -440,10 +437,10 @@ public class ChatService {
         log.info("[채팅 비즈니스 sendMessage 메소드 시작] requestDto={}", requestDto);
         // 메시지 저장 및 전달
         ChatMessageDocument chatMessage = ChatMessageDocument.builder()
+            .chatRoomId(requestDto.getChatRoomId())
             .senderId(requestDto.getSenderId())
             .receiverId(requestDto.getReceiverId())
             .receiverNickname(requestDto.getReceiverNickname())
-            .chatRoomId(requestDto.getChatRoomId())
             .connectionType(ConnectionType.CHAT)
             .chatMessageType(ChatMessageType.TEXT)
             .messageContent(requestDto.getMessageContent())

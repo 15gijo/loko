@@ -1,5 +1,7 @@
 package com.team15gijo.chat.presentation.controller.v2;
 
+import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.SENT_AT_DATETIME_PARSE;
+
 import com.team15gijo.chat.application.dto.v2.ChatMessageResponseDtoV2;
 import com.team15gijo.chat.application.dto.v2.ChatRoomResponseDtoV2;
 import com.team15gijo.chat.application.service.impl.v2.ChatServiceImplV2;
@@ -9,6 +11,11 @@ import com.team15gijo.chat.presentation.dto.v2.ChatMessageRequestDtoV2;
 import com.team15gijo.chat.presentation.dto.v2.ChatRoomRequestDtoV2;
 import com.team15gijo.common.annotation.RoleGuard;
 import com.team15gijo.common.dto.ApiResponse;
+import com.team15gijo.common.exception.CustomException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -209,7 +216,7 @@ public class ChatControllerV2 {
      * Redis key(chatRoomId:senderId)-value(SessionID, senderId, chatRoomId)로 변경
      * @param headerAccessor : sessionID 추출
      */
-    @MessageMapping("/chat/connect/{chatRoomId}/{senderId}")
+    @MessageMapping("/v2/chat/connect/{chatRoomId}/{senderId}")
     public ResponseEntity<ApiResponse<String>> connectChatRoom(
         @DestinationVariable UUID chatRoomId,
         @DestinationVariable Long senderId,
@@ -225,7 +232,7 @@ public class ChatControllerV2 {
      * "/topic"을 구독하는 서버에서 실시간 메시지 송수신 가능
      * "/app" 시작하는 경로 stomp 메시지 전송하면 @MessageMapping 으로 연결
      */
-    @MessageMapping("/chat/{chatRoomId}")
+    @MessageMapping("/v2/chat/{chatRoomId}")
     public ResponseEntity<ApiResponse<String>> sendMessage(
         @RequestBody ChatMessageRequestDtoV2 requestDto,
         SimpMessageHeaderAccessor headerAccessor
@@ -243,5 +250,51 @@ public class ChatControllerV2 {
             headerAccessor.setHeader("error", e.getMessage()); // 오류 메시지 헤더에 추가
             throw e;
         }
+    }
+
+    /**
+     * 메시지 queryDSl 적용(날짜별/메시지 검색)
+     *  정규 표현식의 모든 메타 문자를 자동으로 이스케이프 처리
+     *  "^" :  URL 인코딩 시 403 Bad Request 발생으로 -> "%5E" 입력하면 "^"로 검색 처리
+     *  "+" : URL 인코딩 시 " "(공백 문자) 전달되어 메시지 전체 조회됨 -> "%2B" 입력하면 "+"로 검색 처리
+     */
+    @RoleGuard(min = "USER")
+    @GetMapping("/message/search")
+    public  ResponseEntity<ApiResponse<Page<ChatMessageDocumentV2>>> searchMessages(
+        @RequestParam UUID chatRoomId,
+        @RequestParam(required = false) String sentAt,
+        @RequestParam(required = false) String messageContent,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "30") int size,
+        @RequestParam(defaultValue = "sentAt") String sortField,
+        @RequestParam(defaultValue = "asc") String sortDirection,
+        @RequestHeader("X-User-Id") Long userId
+    ) {
+        log.info("[ChatControllerV2] searchMessages 메소드 시작");
+        Sort.Direction direction = sortDirection.equalsIgnoreCase("desc")
+            ? Sort.Direction.DESC
+            : Sort.Direction.ASC;
+        log.info(">> direction={}", direction);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
+
+        log.info(">> sentAt: {}", sentAt);
+        LocalDateTime parsedSentAt = null;
+        if(sentAt != null && !sentAt.isEmpty()) {
+            // 기본적으로 서버에서 JVM의 로컬 타임존(KST)
+            // MongoDB에는 UTC 기준으로 조건 불일치로 sentAt 파싱 시, ZoneOffset.UTC로 고정
+            try {
+                // yyyy-MM-dd 형식만 유효하도록 검증
+                parsedSentAt = LocalDate.parse(sentAt).atStartOfDay(ZoneOffset.UTC).toLocalDateTime();
+                log.info(">> parsedSentAt: {}", parsedSentAt);
+            } catch (DateTimeParseException e) {
+                log.warn(">> sentAt 형식이 유효하지 않습니다. 'yyyy-MM-dd' 형식이어야 합니다. 입력값: {}", sentAt);
+                throw new CustomException(SENT_AT_DATETIME_PARSE);
+            }
+        }
+        log.info(">> messageContent: {}", messageContent);
+        Page<ChatMessageDocumentV2> messages = chatService.searchMessages(chatRoomId, parsedSentAt, messageContent, userId, pageable);
+
+        log.info("[ChatControllerV2] searchMessages 메소드 종료");
+        return ResponseEntity.ok(ApiResponse.success("채팅 메시지 내역이 검색되었습니다.", messages));
     }
 }

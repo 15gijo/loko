@@ -1,5 +1,6 @@
 package com.team15gijo.chat.domain.model.v2;
 
+import com.querydsl.core.annotations.QueryEntity;
 import com.team15gijo.chat.application.dto.v2.ChatMessageResponseDtoV2;
 import com.team15gijo.chat.presentation.dto.v2.ChatMessageRequestDtoV2;
 import jakarta.persistence.Column;
@@ -12,6 +13,7 @@ import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+@QueryEntity
 @Getter
 @Builder
 @Document(collection = "chat")

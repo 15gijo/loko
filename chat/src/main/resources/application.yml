@@ -71,6 +71,8 @@ management:
 logging:
   level:
     com.team15gijo.chat.presentation.handler: DEBUG
+    org.springframework.web.socket: DEBUG
+    org.springframework.messaging: DEBUG
 
 feign:
   client:
