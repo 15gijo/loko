@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 public interface ChatRoomParticipantRepositoryV2 extends
     JpaRepository<ChatRoomParticipantV2, Long> {
 
+    // 채팅방 참여자 배치 소프트 삭제
     @Transactional
     @Modifying
     @Query("UPDATE ChatRoomParticipantV2 p " +
@@ -21,5 +22,8 @@ public interface ChatRoomParticipantRepositoryV2 extends
         "    p.updatedAt = :now, " +
         "    p.updatedBy = :userId " +
         "WHERE p IN :participants")
-    void softDeleteAllInBatch(@Param("participants") List<ChatRoomParticipantV2> participants, Long userId, LocalDateTime now);
+    void softDeleteAllInBatch(
+        @Param("participants") List<ChatRoomParticipantV2> participants,
+        @Param("userId") Long userId,
+        @Param("now") LocalDateTime now);
 }
