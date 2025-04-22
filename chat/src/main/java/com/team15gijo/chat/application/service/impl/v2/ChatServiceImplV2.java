@@ -63,7 +63,6 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
     private static final String CHAT_MESSAGE_EVENT_TOPIC = "chat_message_event";
     private static final String CHAT_ERROR_EVENT_TOPIC = "chat_error_event";
     private final KafkaUtil kafkaUtil;
-    private final ChatRoomParticipantRepositoryV2 chatRoomParticipantRepositoryV2;
 
     /**
      * 1차 MVP 1:1 채팅만 구현
@@ -224,7 +223,7 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
                 log.info("[ChatServiceImplV2] 비활성화된 참여자 {}명", nonActiveParticipants.size());
                 log.info("[ChatServiceImplV2] 비활성화된 참여자 소프트 삭제 전");
                 log.info("[ChatServiceImplV2] nonActiveParticipants={}, userId={}", nonActiveParticipants, userId);
-                chatRoomParticipantRepositoryV2.softDeleteAllInBatch(
+                chatRoomParticipantRepository.softDeleteAllInBatch(
                     nonActiveParticipants, userId, LocalDateTime.now()
                 );
                 log.info("[ChatServiceImplV2] 비활성화된 참여자 일괄 소프트 삭제 완료");
