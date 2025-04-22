@@ -1,32 +1,24 @@
 {
-  "settings": {
-    "analysis": {
-      "analyzer": {
-        "my_nori_analyzer": {
-          "type": "custom",
-          "tokenizer": "nori_tokenizer",
-          "filter": [
-            "nori_readingform",
-            "nori_part_of_speech",
-            "synonym_filter"
-          ]
-        },
-        "korean": {
-          "type": "nori"
-        }
+  "analysis": {
+    "tokenizer": {
+      "nori_none_token": {
+        "type": "nori_tokenizer",
+        "decompound_mode": "none"
       },
-      "filter": {
-        "synonym_filter": {
-          "type": "synonym",
-          "synonyms": [
-            "검색,서치",
-            "회원,유저"
-          ]
-        }
+      "nori_discard_token": {
+        "type": "nori_tokenizer",
+        "decompound_mode": "discard"
+      },
+      "nori_mixed_token": {
+        "type": "nori_tokenizer",
+        "decompound_mode": "mixed"
+      }
+    },
+    "analyzer": {
+      "korean": {
+        "type": "custom",
+        "tokenizer": "nori_mixed_token"
       }
     }
-  },
-  "mappings": {
-    "properties": { … }
   }
 }

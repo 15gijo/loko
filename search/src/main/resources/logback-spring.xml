@@ -3,6 +3,14 @@
 
   <include resource="net/logstash/logback/logstash-logback-encoder.xml"/>
 
+  <!-- 콘솔 출력용 Appender -->
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+      <charset>UTF-8</charset>
+    </encoder>
+  </appender>
+
   <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
     <destination>localhost:5000</destination>
     <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
@@ -25,6 +33,7 @@
   </appender>
 
   <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
     <appender-ref ref="LOGSTASH"/>
   </root>
 </configuration>
