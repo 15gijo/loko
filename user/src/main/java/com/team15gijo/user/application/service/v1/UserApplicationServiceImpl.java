@@ -24,8 +24,6 @@ import com.team15gijo.user.presentation.dto.request.v1.UserUpdateRequestDto;
 import com.team15gijo.user.presentation.dto.response.v1.UserReadResponseDto;
 import com.team15gijo.user.presentation.dto.response.v1.UserSignUpResponseDto;
 import com.team15gijo.user.presentation.dto.response.v1.UserUpdateResponseDto;
-import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpRequestDto;
-import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpUpdateUserIdRequestDto;
 import com.team15gijo.user.infrastructure.kafka.dto.UserElasticsearchRequestDto;
 import com.team15gijo.user.infrastructure.kafka.service.KafkaProducerService;
 import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
