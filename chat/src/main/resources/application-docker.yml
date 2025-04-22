@@ -1,7 +1,7 @@
 management:
   zipkin:
     tracing:
-      endpoint: "http://zipkin:${ZIPKIN_SEVER_PORT}/api/v2/spans"
+      endpoint: "http://zipkin:${ZIPKIN_SERVER_PORT}/api/v2/spans"
   tracing:
     sampling:
       probability: 1.0

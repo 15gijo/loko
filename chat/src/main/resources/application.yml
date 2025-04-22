@@ -42,19 +42,19 @@ spring:
       password: ${REDIS_PASSWORD}
 
 server:
-  port: ${CHAT_SEVER_PORT}
+  port: ${CHAT_SERVER_PORT}
 
 eureka:
   client:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://localhost:${EUREKA_SEVER_PORT}/eureka/
+      defaultZone: http://localhost:${EUREKA_SERVER_PORT}/eureka/
 
 management:
   zipkin:
     tracing:
-      endpoint: "http://localhost:${ZIPKIN_SEVER_PORT}/api/v2/spans"
+      endpoint: "http://localhost:${ZIPKIN_SERVER_PORT}/api/v2/spans"
   tracing:
     sampling:
       probability: 1.0
