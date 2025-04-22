@@ -25,7 +25,6 @@ import com.team15gijo.chat.presentation.dto.v2.ChatMessageRequestDtoV2;
 import com.team15gijo.chat.presentation.dto.v2.ChatRoomRequestDtoV2;
 import com.team15gijo.common.exception.CustomException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,7 +32,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -148,24 +146,19 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
     @Override
     @Transactional(readOnly = true)
     public Page<ChatRoomV2> getChatRooms(Pageable pageable, Long userId) {
-        log.info("userId = {}", userId);
-        List<ChatRoomV2> chatRoomList = chatRoomRepository.findAll();
+        log.info("[ChatServiceImplV2] getChatRooms 메서드 시작");
+        log.info("[ChatServiceImplV2] userId = {}", userId);
 
-        List<ChatRoomV2> filteredChatRooms = chatRoomList.stream()
-            .filter(chatRoom -> chatRoom.getChatRoomParticipant().stream()
-                .anyMatch(participant -> participant.getUserId().equals(userId)))
-            .toList();
+        Page<ChatRoomV2> chatRoomPage = chatRoomRepository.findChatRoomByParticipantUserId(
+            userId, pageable);
+        log.info("[ChatServiceImplV2] chatRoomPage.getTotalElements() = {}", chatRoomPage.getTotalElements());
 
-        if(filteredChatRooms.isEmpty()) {
+        if(chatRoomPage.isEmpty()) {
+            log.error("[ChatServiceImplV2] userId = {}에 해당하는 채팅방이 존재하지 않습니다.", userId);
             throw new CustomException(CHAT_ROOM_NOT_FOUND);
         }
-
-        // 페이지네이션 적용
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), filteredChatRooms.size());
-        List<ChatRoomV2> pageContent = filteredChatRooms.subList(start, end);
-
-        return new PageImpl<>(pageContent, pageable, pageable.getPageSize());
+        log.info("[ChatServiceImplV2] getChatRooms 메서드 종료");
+        return chatRoomPage;
     }
 
     /**
@@ -178,7 +171,7 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
     public boolean exitChatRoom(UUID chatRoomId, Long userId) {
         log.info("[ChatServiceImplV2 - exitChatRoom] chatRoomId = {}", chatRoomId);
         log.info("[ChatServiceImplV2 - exitChatRoom] userId = {}", userId);
-
+        // TODO: 채팅방에 포함된 userId 검증 이후, 해당하는 사용자가 아니면 예외 처리 추가 필요!
         ChatRoomV2 chatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
             .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
 

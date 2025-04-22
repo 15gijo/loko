@@ -96,8 +96,10 @@ public class ChatControllerV2 {
 
         Sort.Direction direction = sortDirection.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
+
         Page<ChatRoomV2> chatRooms = chatService.getChatRooms(pageable, userId);
         log.info("chatRooms = {}, size = {}", chatRooms.toString(), chatRooms.getSize());
+
         return ResponseEntity.ok(ApiResponse.success("채팅방 목록이 조회되었습니다.", chatRooms));
     }
 
