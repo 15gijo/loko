@@ -47,12 +47,9 @@ public class ElasticsearchServiceImpl implements ElasticsearchService {
             lastCreatedAt = LocalDateTime.now();
         }
 
-        String createdAtStr = Optional.of(lastCreatedAt)
-                .orElse(LocalDateTime.now())
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS"));
+        String createdAtStr = lastCreatedAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS"));
 
         Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-
 
         List<PostDocument> results = postElasticsearchRepository
                 .searchPosts(keyword, region, createdAtStr, pageable);

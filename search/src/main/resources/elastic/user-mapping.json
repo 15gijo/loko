@@ -1,7 +1,7 @@
 {
   "properties": {
     "userId": {
-      "type": "keyword"
+      "type": "long"
     },
     "username": {
       "type": "text",
@@ -12,7 +12,8 @@
       "analyzer": "korean"
     },
     "profile": {
-      "type": "text"
+      "type": "text",
+      "index": false
     },
     "region": {
       "type": "text",

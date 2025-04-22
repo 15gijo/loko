@@ -11,7 +11,7 @@ public class ElasticsearchKafkaProducerService {
 
     private final KafkaTemplate<String, PostElasticsearchRequestDto> searchKafkaTemplate;
 
-    public void sendCommentCreate(PostElasticsearchRequestDto dto) {
+    public void sendPostCreate(PostElasticsearchRequestDto dto) {
         searchKafkaTemplate.send("POST_SAVE", dto);
     }
 

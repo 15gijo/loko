@@ -26,7 +26,7 @@ public class KafkaConsumerService {
     @KafkaListener(topics = "USER_SAVE", groupId = "search-service", containerFactory = "userKafkaListenerContainerFactory")
     @Transactional
     public void userConsumer(UserElasticsearchRequestDto dto) {
-        log.info("📨 ElasticSearch에 게시글 저장을 위한 Kafka 메시지 : {}", dto);
+        log.info("📨 ElasticSearch에 사용자 저장을 위한 Kafka 메시지 : {}", dto);
         elasticsearchService.createElasticUser(dto);
     }
 }

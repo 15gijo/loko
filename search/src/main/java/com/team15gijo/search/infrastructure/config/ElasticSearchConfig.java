@@ -26,23 +26,4 @@ public class ElasticSearchConfig extends ElasticsearchConfiguration {
                 .withBasicAuth(username, password)
                 .build();
     }
-
-//    @Bean
-//    public ObjectMapper objectMapper() {
-//        return new ObjectMapper()
-//                .registerModule(new JavaTimeModule())
-//                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-//    }
-//
-//    @Bean(name = "customElasticsearchClient")
-//    public ElasticsearchClient elasticsearchClient(RestClient restClient, ObjectMapper objectMapper) {
-//        ElasticsearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper(objectMapper));
-//        return new ElasticsearchClient(transport);
-//    }
-//
-//    @Bean(name = "customElasticsearchOperations")
-//    public ElasticsearchOperations elasticsearchOperations(RestClient restClient, ObjectMapper objectMapper) {
-//        ElasticsearchClient client = elasticsearchClient(restClient, objectMapper);
-//        return new ElasticsearchTemplate(client);
-//    }
 }

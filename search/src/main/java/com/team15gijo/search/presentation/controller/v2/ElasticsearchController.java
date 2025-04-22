@@ -49,10 +49,10 @@ public class ElasticsearchController {
             @RequestHeader("X-User-Id") Long userId,
             @RequestHeader("X-User-Nickname") String encodedNickname,
             @RequestHeader("X-User-Region") String encodedRegion) {
-        log.info("게시글 검색 시작");
+        log.info("유저 검색 시작");
         String region = URLDecoder.decode(encodedRegion, StandardCharsets.UTF_8);
         String nickname = URLDecoder.decode(encodedNickname, StandardCharsets.UTF_8);
-        log.info("region : {}, nickname: {}, size : {}, keyword : {}, lastCreatedAt : {}", region, nickname, size, keyword, lastUserId);
+        log.info("region : {}, nickname: {}, size : {}, keyword : {}, lastUserId : {}", region, nickname, size, keyword, lastUserId);
         return ResponseEntity.ok(ApiResponse.success("유저 검색 성공", elasticsearchService.searchUser(keyword, userId, nickname, region, lastUserId, size)));
     }
 

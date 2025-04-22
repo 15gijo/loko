@@ -1,8 +1,6 @@
 package com.team15gijo.search.infrastructure.client.user;
 
-import com.team15gijo.search.domain.model.PostDocument;
 import com.team15gijo.search.domain.model.UserDocument;
-import com.team15gijo.search.infrastructure.client.post.PostSearchResponseDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

@@ -54,6 +54,9 @@ public class PostDocument {
     private LocalDateTime createdAt;
 
     public static PostDocument from(PostElasticsearchRequestDto dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("PostElasticsearchRequestDto cannot be null");
+        }
         return PostDocument.builder()
                 .postId(dto.getPostId())
                 .username(dto.getUsername())

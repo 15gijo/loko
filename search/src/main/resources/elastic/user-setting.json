@@ -1,9 +1,32 @@
 {
-  "analysis": {
-    "analyzer": {
-      "korean": {
-        "type": "nori"
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "my_nori_analyzer": {
+          "type": "custom",
+          "tokenizer": "nori_tokenizer",
+          "filter": [
+            "nori_readingform",
+            "nori_part_of_speech",
+            "synonym_filter"
+          ]
+        },
+        "korean": {
+          "type": "nori"
+        }
+      },
+      "filter": {
+        "synonym_filter": {
+          "type": "synonym",
+          "synonyms": [
+            "검색,서치",
+            "회원,유저"
+          ]
+        }
       }
     }
+  },
+  "mappings": {
+    "properties": { … }
   }
 }
