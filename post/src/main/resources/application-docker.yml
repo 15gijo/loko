@@ -12,3 +12,12 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  data:
+    redis:
+      host: redis-stack-compose
+      port: 6379
+      password: ${REDIS_PASSWORD}
+
+ai:
+  service:
+    url: http://ai:19095

@@ -165,3 +165,12 @@ project(':post') {
         enabled = true
     }
 }
+
+project(':ai') {
+    dependencies {
+        implementation project(':common')
+    }
+    tasks.named('bootJar') {
+        enabled = true
+    }
+}

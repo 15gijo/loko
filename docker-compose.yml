@@ -44,6 +44,7 @@ services:
       - ACCESS_TOKEN_EXPIRATION=${ACCESS_TOKEN_EXPIRATION}
       - REFRESH_TOKEN_EXPIRATION=${REFRESH_TOKEN_EXPIRATION}
       - JWT_ADMIN_SECRET_KEY=${JWT_ADMIN_SECRET_KEY}
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
     depends_on:
       - eureka
       - postgres
@@ -94,6 +95,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - SPRING_JPA_DATABASE_PLATFORM=${SPRING_JPA_DATABASE_PLATFORM}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     depends_on:
       - eureka
       - postgres
@@ -148,9 +150,9 @@ services:
       - REDIS_SERVER_PORT=${REDIS_SERVER_PORT}
       - REDIS_USERNAME=${REDIS_USERNAME}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - CHAT_SEVER_PORT=${CHAT_SEVER_PORT}
-      - EUREKA_SEVER_PORT=${EUREKA_SEVER_PORT}
-      - ZIPKIN_SEVER_PORT=${ZIPKIN_SEVER_PORT}
+      - CHAT_SERVER_PORT=${CHAT_SERVER_PORT}
+      - EUREKA_SERVER_PORT=${EUREKA_SERVER_PORT}
+      - ZIPKIN_SERVER_PORT=${ZIPKIN_SERVER_PORT}
     depends_on:
       - eureka
       - postgres
@@ -176,6 +178,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - SPRING_JPA_DATABASE_PLATFORM=${SPRING_JPA_DATABASE_PLATFORM}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     depends_on:
       - eureka
       - postgres
@@ -227,6 +230,58 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - SPRING_JPA_DATABASE_PLATFORM=${SPRING_JPA_DATABASE_PLATFORM}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+    depends_on:
+      - eureka
+      - postgres
+      - mongodb
+      - zipkin
+      - redis-stack-compose
+      - kafka
+      - zookeeper
+      - prometheus
+    networks:
+      - msa-network
+
+  ai:
+    build:
+      context: ./ai
+    container_name: ai
+    ports:
+      - "19095:19095"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:19090/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/loko
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_JPA_DATABASE_PLATFORM=${SPRING_JPA_DATABASE_PLATFORM}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_API_URL=${GEMINI_API_URL}
+    depends_on:
+      - eureka
+      - postgres
+      - mongodb
+      - zipkin
+      - redis-stack-compose
+      - kafka
+      - zookeeper
+      - prometheus
+    networks:
+      - msa-network
+
+  follow:
+    build:
+      context: ./follow
+    container_name: follow
+    ports:
+      - "19094:19094"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka:19090/eureka
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/loko
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_JPA_DATABASE_PLATFORM=${SPRING_JPA_DATABASE_PLATFORM}
     depends_on:
       - eureka
       - postgres
