@@ -1,8 +1,6 @@
-package com.team15gijo.search.infrastructure.client.user;
+package com.team15gijo.search.infrastructure.kafka.dto;
 
-import com.team15gijo.search.domain.model.PostDocument;
 import com.team15gijo.search.domain.model.UserDocument;
-import com.team15gijo.search.infrastructure.client.post.PostSearchResponseDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,15 +10,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class UserSearchResponseDto {
+public class UserElasticsearchRequestDto {
+
     private Long userId;
     private String username;
     private String nickname;
     private String profile;
     private String region;
 
-    public static UserSearchResponseDto from(UserDocument user) {
-        return UserSearchResponseDto.builder()
+    public static UserElasticsearchRequestDto from(UserDocument user) {
+        return UserElasticsearchRequestDto.builder()
                 .userId(user.getUserId())
                 .username(user.getUsername())
                 .nickname(user.getNickname())

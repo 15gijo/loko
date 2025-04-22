@@ -5,6 +5,8 @@ import com.team15gijo.post.infrastructure.client.ai.AiClient;
 import com.team15gijo.post.infrastructure.client.ai.HashtagRequestDto;
 import com.team15gijo.post.infrastructure.client.ai.HashtagResponseDto;
 import com.team15gijo.post.infrastructure.kafka.dto.v1.CommentCountEventDto;
+import com.team15gijo.post.infrastructure.kafka.dto.v2.PostElasticsearchRequestDto;
+import com.team15gijo.post.infrastructure.kafka.service.v2.ElasticsearchKafkaProducerService;
 import com.team15gijo.post.infrastructure.kafka.util.KafkaUtil;
 import com.team15gijo.post.domain.exception.PostDomainException;
 import com.team15gijo.post.domain.exception.PostDomainExceptionCode;
@@ -31,6 +33,7 @@ public class PostServiceV2 {
     private final KafkaUtil kafkaUtil;
     private final AiClient aiClient;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ElasticsearchKafkaProducerService elasticsearchKafkaProducerService;
 
     private static final String FEED_EVENTS_TOPIC = "feed_events";
     private static final String REDIS_VIEW_COUNT_HASH_KEY = "views:buffer";
@@ -68,6 +71,10 @@ public class PostServiceV2 {
 
         // kafka 이벤트 발행
         kafkaUtil.sendKafkaEvent(EventType.POST_CREATED, post, FEED_EVENTS_TOPIC);
+
+        // 엘라스틱 서치 저장 Kafka 이벤트 발행
+        PostElasticsearchRequestDto dto = PostElasticsearchRequestDto.fromV2(post);
+        elasticsearchKafkaProducerService.sendCommentCreate(dto);
 
         return post;
     }
