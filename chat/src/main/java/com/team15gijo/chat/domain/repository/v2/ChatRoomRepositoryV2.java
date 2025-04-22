@@ -6,5 +6,5 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ChatRoomRepositoryV2 extends JpaRepository<ChatRoomV2, UUID> {
-    Optional<ChatRoomV2> findByChatRoomIdAndDeletedAtNull(UUID chatRoomId);
+    Optional<ChatRoomV2> findByChatRoomId(UUID chatRoomId);
 }

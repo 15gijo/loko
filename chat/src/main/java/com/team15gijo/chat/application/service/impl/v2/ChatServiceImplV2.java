@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -169,29 +170,29 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
 
     /**
      * 채팅방 퇴장(비활성화) -> 삭제(Batch 또는 비동기 처리)
-     * -> 1:1 채팅방에서 1명의 사용자 퇴장(채팅방 참여자 비활성화로 변경)
-     * -> 채팅방의 모든 참여자 퇴장 시, 채팅방/채팅방 참여자/채팅 메시지 소프트 삭제 처리
+     * -> 1:1 채팅방에서 각 1명의 사용자 퇴장(채팅방 참여자 비활성화로 변경)
+     * -> 채팅방의 모든 참여자 퇴장 시, 채팅방 & 채팅방참여자 & 채팅메시지 모두 소프트 삭제
      */
     @Override
     @Transactional
     public boolean exitChatRoom(UUID chatRoomId, Long userId) {
-        log.info("[exitChatRoom] chatRoomId = {}", chatRoomId);
-        log.info("[exitChatRoom] userId = {}", userId);
+        log.info("[ChatServiceImplV2 - exitChatRoom] chatRoomId = {}", chatRoomId);
+        log.info("[ChatServiceImplV2 - exitChatRoom] userId = {}", userId);
 
-        ChatRoomV2 chatRoom = chatRoomRepository.findByChatRoomIdAndDeletedAtNull(chatRoomId)
+        ChatRoomV2 chatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
             .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
 
         Set<ChatRoomParticipantV2> chatRoomParticipants = chatRoom.getChatRoomParticipant();
         ChatRoomParticipantV2 targetParticipant = null;
-        log.info("[존재하는 참여자 수] chatRoomParticipants.size() = {}", chatRoomParticipants.size());
+        log.info("[ChatServiceImplV2 - 존재하는 참여자 수] chatRoomParticipants.size() = {}", chatRoomParticipants.size());
 
         // 퇴장 요청 참여자 찾기
         for(ChatRoomParticipantV2 participant : chatRoomParticipants) {
             if(participant.getUserId().equals(userId)) {
-                log.info("[exitChatRoom] userId = {}", participant.getUserId());
-                log.info("[exitChatRoom] getActivation() 전 = {}", participant.getActivation());
+                log.info("[ChatServiceImplV2] participant.getUserId() = {}", participant.getUserId());
+                log.info("[ChatServiceImplV2] getActivation() 전 = {}", participant.getActivation());
                 participant.nonActivate();
-                log.info("[exitChatRoom] getActivation() 후 = {}", participant.getActivation());
+                log.info("[ChatServiceImplV2] getActivation() 후 = {}", participant.getActivation());
 
                 targetParticipant = participant;
                 break;
@@ -200,44 +201,47 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
 
         // 비활성화된 참여자 있다면 저장
         if(targetParticipant != null) {
-            log.info("[퇴장 원하는 사용자 비활성화 업데이트] chatRoomParticipantRepository.save(participant)");
+            log.info("[ChatServiceImplV2] 퇴장 원하는 사용자 비활성화 업데이트");
             chatRoomParticipantRepository.save(targetParticipant);
         }
 
         // 모든 참여자가 비활성 상태인지 확인 -> 모두 비활성화면 return TRUE
         boolean allParticipantsNonactive = chatRoomParticipants.stream()
             .allMatch(participant -> !participant.getActivation());
-        log.info("[exitChatRoom] allParticipantsNonactive = {}", allParticipantsNonactive);
 
         // 모든 채팅방 참여자가 비활성화 상태면 채팅방 및 참여자 소프트삭제 처리
         if(allParticipantsNonactive) {
-            log.info("[exitChatRoom] 모든 채팅방 참여자 비활성화 상태");
+            log.info("[ChatServiceImplV2] 채팅방 참여자 비활성화 상태 - allParticipantsNonactive={}", allParticipantsNonactive);
 
-            // 비활성화된 참여자 ID의 List
-            List<UUID> participantId = new ArrayList<>();
-            for(ChatRoomParticipantV2 participant : chatRoomParticipants) {
-                log.info("[채팅방 참여자 소프트 삭제 처리] 전, participant.getUserId() = {}", participant.getUserId());
-                chatRoomParticipantRepository.deleteByUserId(participant.getUserId());
-                participantId.add(participant.getId());
-                log.info("[채팅방 참여자 소프트 삭제 처리] 후");
+            // 비활성화된 참여자 List
+            List<ChatRoomParticipantV2> nonActiveParticipants = chatRoomParticipants.stream()
+                .filter(participant -> !participant.getActivation())
+                .toList();
+
+            // bulk 로 쿼리문 1개만 사용하여 참여자 모두 삭제 처리
+            if(!nonActiveParticipants.isEmpty()) {
+                log.info("[ChatServiceImplV2] 비활성화된 참여자 {}명", nonActiveParticipants.size());
+                log.info("[ChatServiceImplV2] 비활성화된 참여자 소프트 삭제 전");
+                log.info("[ChatServiceImplV2] nonActiveParticipants={}, userId={}", nonActiveParticipants, userId);
+                chatRoomParticipantRepository.softDeleteAllInBatch(
+                    nonActiveParticipants, userId, LocalDateTime.now()
+                );
+                log.info("[ChatServiceImplV2] 비활성화된 참여자 일괄 소프트 삭제 완료");
             }
 
-            // chatRoomParticipant 저장 이후, chatRoom 조회하여 삭제된 chatRoomParticipant 삭제 처리되지 않도록 chatRoom 조회 추가(불필요한 query 조회)
+            // chatRoomParticipant 소프트 삭제 이후, chatRoom 소프트 삭제 처리
             // TODO: 해당 PATCH 로직에서 채팅방 참여자 비활성화만 진행하고, 비동기 또는 배치로 채팅방 삭제 구현 필요!
-            ChatRoomV2 updatedChatRoom = chatRoomRepository.findByChatRoomIdAndDeletedAtNull(chatRoomId).orElse(null);
-            log.info("updatedChatRoom : {}", updatedChatRoom);
-            log.info("[비활성화된 참여자 수] participantId.size()  = {}", participantId.size());
-            if(participantId.size() >= 2) {
-                log.info("[채팅방 삭제] 전");
-                chatRoomRepository.delete(chatRoom);
-                log.info("[채팅방 삭제] 후");
-            }
+            log.info("[ChatServiceImplV2] chatRoom={} 채팅방 소프트 삭제 전", chatRoom);
+            chatRoomRepository.delete(chatRoom);
+            log.info("[ChatServiceImplV2] updatedChatRoom={} 채팅방 소프트 삭제 완료", chatRoom);
 
             // 채팅방 모든 참여자 userId 메시지 소프트 삭제 메소드
             deleteChatMessageForChatRoomId(chatRoomId, userId);
 
+            log.info("[ChatServiceImplV2] 채팅방 삭제에 따른 채팅방/참여자/메시지 소프트 삭제 모두 성공");
             return true;
         } else {
+            log.info("[ChatServiceImplV2] 채팅방 참여자 일부 활성화 상태로 삭제 불가 - allParticipantsNonactive={}", allParticipantsNonactive);
             return false;
         }
     }
@@ -286,7 +290,7 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
         UUID chatRoomId,
         Long senderId
     ) {
-        ChatRoomV2 chatRoom = chatRoomRepository.findByChatRoomIdAndDeletedAtNull(chatRoomId)
+        ChatRoomV2 chatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
             .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
 
         Boolean participantExists = chatRoom.getChatRoomParticipant().stream()
@@ -465,7 +469,7 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
     // 채팅방 id 및 userId 유효성 검증
     private void checkRoomIdAndUserId(UUID chatRoomId, Long userId) {
         // 채팅방 유무 검증
-        ChatRoomV2 chatRoom = chatRoomRepository.findByChatRoomIdAndDeletedAtNull(chatRoomId)
+        ChatRoomV2 chatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
             .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
 
         // 채팅방 참여자만 해당 메시지 조회 가능
@@ -479,26 +483,24 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
 
     // 채팅방의 메시지 소프트 삭제
     private void deleteChatMessageForChatRoomId(UUID chatRoomId, Long userId) {
-        log.info(">> 메시지 소프트 삭제 시작");
-
+        log.info("[ChatServiceImplV2] deleteChatMessageForChatRoomId - 메시지 소프트 삭제 전");
         // 채팅방의 모든 메시지 조회
         Query query = Query.query(
             Criteria.where("chatRoomId").is(chatRoomId)
                 .and("deletedAt").is(null));
 
         List<ChatMessageDocumentV2> chatMessages = mongoTemplate.find(query, ChatMessageDocumentV2.class);
-        log.info("chatMessages.size() = {}", chatMessages.size());
+        log.info("[ChatServiceImplV2] chatMessages.size()={}", chatMessages.size());
 
         if (chatMessages.isEmpty()) {
             log.error("채팅방에 해당하는 메시지 내역이 존재하지 않습니다.");
         } else {
             // 메시지 소프트 삭제
             chatMessages.forEach(chatMessage -> {
-                log.info("[소프트삭제 처리]chatMessage.getSenderId() = {}", chatMessage.getSenderId());
                 chatMessage.softDelete(userId);
                 chatMessageRepository.save(chatMessage);
             });
-            log.info(">> 메시지 소프트 삭제 완료 : 채팅방 삭제에 따른 채팅방/참여자/메시지 삭제 완료");
+            log.info("[ChatServiceImplV2] deleteChatMessageForChatRoomId - 메시지 일괄 소프트 삭제 완료");
         }
     }
 }
