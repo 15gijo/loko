@@ -17,6 +17,7 @@ import lombok.NoArgsConstructor;
 public class ChatMessageEventDto {
     private UUID chatRoomId; // 채팅방 id
     private Long senderId; // 보내는 사람 id
+    private String senderNickname; // 보내는 사람 닉네임
     private Long receiverId; // 받는 사람 id
     private String receiverNickname; // 받는 사람 닉네임
     private ConnectionTypeV2 connectionType; // 메시지 연결 종류(ENTER, CHAT, EXIT)
@@ -28,6 +29,7 @@ public class ChatMessageEventDto {
         return ChatMessageEventDto.builder()
             .chatRoomId(chatMessage.getChatRoomId())
             .senderId(chatMessage.getSenderId())
+            .senderNickname(chatMessage.getSenderNickname())
             .receiverId(chatMessage.getReceiverId())
             .receiverNickname(chatMessage.getReceiverNickname())
             .connectionType(chatMessage.getConnectionType())
@@ -41,6 +43,7 @@ public class ChatMessageEventDto {
         return ChatMessageDocumentV2.builder()
             .chatRoomId(chatMessageEventDto.getChatRoomId())
             .senderId(chatMessageEventDto.getSenderId())
+            .senderNickname(chatMessageEventDto.getSenderNickname())
             .receiverId(chatMessageEventDto.getReceiverId())
             .receiverNickname(chatMessageEventDto.getReceiverNickname())
             .connectionType(chatMessageEventDto.getConnectionType())
