@@ -1,7 +1,6 @@
 package com.team15gijo.search.infrastructure.kafka.dto;
 
 import com.team15gijo.search.domain.model.PostDocument;
-import com.team15gijo.search.infrastructure.client.post.PostSearchResponseDto;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -21,10 +20,9 @@ public class PostElasticsearchRequestDto {
     private String postContent;
     private List<String> hashtags;
     private String region;
-
-//    private int views;
-//    private int commentCount;
-//    private int likeCount;
+    private int views;
+    private int commentCount;
+    private int likeCount;
     private LocalDateTime createdAt;
 
     public static PostElasticsearchRequestDto from(PostDocument postDocument) {
@@ -34,6 +32,9 @@ public class PostElasticsearchRequestDto {
                 .postContent(postDocument.getPostContent())
                 .hashtags(postDocument.getHashtags())
                 .region(postDocument.getRegion())
+                .views(postDocument.getViews())
+                .commentCount(postDocument.getCommentCount())
+                .likeCount(postDocument.getLikeCount())
                 .createdAt(postDocument.getCreatedAt())
                 .build();
     }

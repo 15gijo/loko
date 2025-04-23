@@ -1,4 +1,4 @@
-package com.team15gijo.search.infrastructure.client.post;
+package com.team15gijo.search.application.dto.v2;
 
 import com.team15gijo.search.domain.model.PostDocument;
 import java.time.LocalDateTime;

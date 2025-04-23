@@ -24,9 +24,9 @@ public class PostElasticsearchRequestDto {
     private List<String> hashtags;
     private String region;
 
-//    private int views;
-//    private int commentCount;
-//    private int likeCount;
+    private int views;
+    private int commentCount;
+    private int likeCount;
     private LocalDateTime createdAt;
 
     public static PostElasticsearchRequestDto fromV1(Post post) {
@@ -45,6 +45,9 @@ public class PostElasticsearchRequestDto {
                                 : List.of()
                 )
                 .region(post.getRegion())
+                .views(post.getViews())
+                .commentCount(post.getCommentCount())
+                .likeCount(post.getLikeCount())
                 .createdAt(post.getCreatedAt())
                 .build();
     }
@@ -65,6 +68,9 @@ public class PostElasticsearchRequestDto {
                                 : List.of()
                 )
                 .region(post.getRegion())
+                .views(post.getViews())
+                .commentCount(post.getCommentCount())
+                .likeCount(post.getLikeCount())
                 .createdAt(post.getCreatedAt())
                 .build();
     }

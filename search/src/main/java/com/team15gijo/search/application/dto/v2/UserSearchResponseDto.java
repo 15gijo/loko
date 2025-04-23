@@ -1,4 +1,4 @@
-package com.team15gijo.search.infrastructure.client.user;
+package com.team15gijo.search.application.dto.v2;
 
 import com.team15gijo.search.domain.model.UserDocument;
 import lombok.AllArgsConstructor;

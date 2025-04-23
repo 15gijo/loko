@@ -36,4 +36,19 @@
     <appender-ref ref="CONSOLE"/>
     <appender-ref ref="LOGSTASH"/>
   </root>
+
+  <logger name="org.springframework" level="WARN" additivity="false">
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="LOGSTASH"/>
+  </logger>
+
+  <logger name="com.team15gijo" level="DEBUG" additivity="false">
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="LOGSTASH"/>
+  </logger>
+
+  <logger name="reactor" level="WARN" additivity="false">
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="LOGSTASH"/>
+  </logger>
 </configuration>
