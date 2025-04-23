@@ -14,6 +14,7 @@ import com.team15gijo.follow.presentation.dto.response.v2.FollowResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.FollowUserResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.UnblockResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.UnfollowResponseDto;
+import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -45,7 +46,7 @@ public class FollowController {
     @PostMapping
     public ResponseEntity<ApiResponse<FollowResponseDto>> createFollow(
             @RequestHeader("X-User-Id") Long followerId,
-            @RequestBody FollowRequestDto followRequestDto
+            @RequestBody @Valid FollowRequestDto followRequestDto
     ) {
         FollowResponseDto followResponseDto = followApplicationService.createFollow(
                 followerId, followRequestDto);
@@ -70,7 +71,7 @@ public class FollowController {
     @PostMapping("/block")
     public ResponseEntity<ApiResponse<BlockResponseDto>> blockFollow(
             @RequestHeader("X-User-Id") Long followerId,
-            @RequestBody BlockRequestDto blockRequestDto
+            @RequestBody @Valid BlockRequestDto blockRequestDto
     ) {
         BlockResponseDto blockResponseDto = followApplicationService.blockFollow(
                 followerId,
