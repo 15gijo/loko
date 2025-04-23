@@ -5,10 +5,13 @@ import com.team15gijo.common.annotation.RoleGuard;
 import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.feed.application.service.v1.FeedDeprecatedService;
 import com.team15gijo.feed.presentation.dto.v1.PostFeedPageResponseDto;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,9 +35,10 @@ public class FeedDeprecatedController {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime cursor,
             @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(required = false, defaultValue = "송파구") String region
+            @RequestHeader("X-User-Region") String region
     ) {
-        ApiResponse<PostFeedPageResponseDto> response = feedDeprecatedService.getRecentFeedBase(cursor, pageSize, region);
+        String decodedRegion = URLDecoder.decode(region, StandardCharsets.UTF_8);
+        ApiResponse<PostFeedPageResponseDto> response = feedDeprecatedService.getRecentFeedBase(cursor, pageSize, decodedRegion);
         return ResponseEntity.ok().body(response);
     }
 
@@ -47,9 +51,10 @@ public class FeedDeprecatedController {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime cursor,
             @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(required = false, defaultValue = "송파구") String region
+            @RequestHeader("X-User-Region") String region
     ) throws JsonProcessingException {
-        ApiResponse<PostFeedPageResponseDto> response = feedDeprecatedService.getRecentFeedCache(cursor, pageSize, region);
+        String decodedRegion = URLDecoder.decode(region, StandardCharsets.UTF_8);
+        ApiResponse<PostFeedPageResponseDto> response = feedDeprecatedService.getRecentFeedCache(cursor, pageSize, decodedRegion);
         return ResponseEntity.ok().body(response);
     }
 

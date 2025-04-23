@@ -32,7 +32,7 @@ spring:
       password: ${REDIS_PASSWORD}
   kafka:
     bootstrap-servers: localhost:9092
-    producer: # 임시 -> post로 옮길 예정
+    producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:

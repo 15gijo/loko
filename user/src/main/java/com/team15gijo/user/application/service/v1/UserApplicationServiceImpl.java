@@ -11,20 +11,24 @@ import com.team15gijo.user.domain.repository.UserRepository;
 import com.team15gijo.user.domain.service.UserDomainService;
 import com.team15gijo.user.infrastructure.client.AuthServiceClient;
 import com.team15gijo.user.infrastructure.dto.UserFeignInfoResponseDto;
-import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpRequestDto;
-import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpUpdateUserIdRequestDto;
+import com.team15gijo.user.infrastructure.dto.request.v1.AuthIdentifierUpdateRequestDto;
+import com.team15gijo.user.infrastructure.dto.request.v1.AuthPasswordUpdateRequestDto;
+import com.team15gijo.user.infrastructure.dto.request.v1.AuthSignUpRequestDto;
+import com.team15gijo.user.infrastructure.dto.request.v1.AuthSignUpUpdateUserIdRequestDto;
+import com.team15gijo.user.infrastructure.kafka.dto.UserElasticsearchRequestDto;
+import com.team15gijo.user.infrastructure.kafka.service.KafkaProducerService;
+import com.team15gijo.user.infrastructure.kakao.KakaoMapService;
+import com.team15gijo.user.presentation.dto.internal.response.v1.UserInfoFollowResponseDto;
+import com.team15gijo.user.presentation.dto.request.v1.AdminUserStatusUpdateRequestDto;
+import com.team15gijo.user.presentation.dto.request.v1.UserEmailUpdateRequestDto;
+import com.team15gijo.user.presentation.dto.request.v1.UserPasswordUpdateRequestDto;
+import com.team15gijo.user.presentation.dto.request.v1.UserSignUpRequestDto;
+import com.team15gijo.user.presentation.dto.request.v1.UserUpdateRequestDto;
+import com.team15gijo.user.presentation.dto.response.v1.UserReadResponseDto;
+import com.team15gijo.user.presentation.dto.response.v1.UserSignUpResponseDto;
+import com.team15gijo.user.presentation.dto.response.v1.UserUpdateResponseDto;
 import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
-import com.team15gijo.user.presentation.dto.v1.internal.request.AuthIdentifierUpdateRequestDto;
-import com.team15gijo.user.presentation.dto.v1.internal.request.AuthPasswordUpdateRequestDto;
-import com.team15gijo.user.presentation.dto.v1.request.AdminUserStatusUpdateRequestDto;
-import com.team15gijo.user.presentation.dto.v1.request.UserEmailUpdateRequestDto;
-import com.team15gijo.user.presentation.dto.v1.request.UserPasswordUpdateRequestDto;
-import com.team15gijo.user.presentation.dto.v1.request.UserSignUpRequestDto;
-import com.team15gijo.user.presentation.dto.v1.request.UserUpdateRequestDto;
-import com.team15gijo.user.presentation.dto.v1.response.UserReadResponseDto;
-import com.team15gijo.user.presentation.dto.v1.response.UserSignUpResponseDto;
-import com.team15gijo.user.presentation.dto.v1.response.UserUpdateResponseDto;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -44,13 +48,22 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     private final UserDomainService userDomainService;
     private final UserRepository userRepository;
     private final AuthServiceClient authServiceClient;
+    private final KafkaProducerService producerService;
+    private final KakaoMapService kakaoMapService;
 
     @Override
     @Transactional
     public UserSignUpResponseDto createUser(UserSignUpRequestDto userSignUpRequestDto) {
+        //카카오맵 주소 받기
+        String kakaoMapRegion = kakaoMapService.getAddress(userSignUpRequestDto.region());
+
+        int index = getIndex(kakaoMapRegion);
+        kakaoMapRegion = kakaoMapRegion.substring(0, index + 1);
 
         //유저 생성
-        UserEntity createdUser = userDomainService.createUser(userSignUpRequestDto);
+        UserEntity createdUser = userDomainService.createUser(
+                userSignUpRequestDto.withRegion(kakaoMapRegion)
+        );
 
         //인증 서버로 회원가입 알림
         AuthSignUpRequestDto authSignUpRequestDto =
@@ -74,6 +87,15 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                 authId, savedUser.getId());
         authServiceClient.updateId(authSignUpUpdateUserIdRequestDto);
 
+        // kafka로 검색 서버에 유저 정보 전송
+        log.info("user 정보 검색서버로 kafka 전송 시작");
+        try {
+            producerService.sendUserCreate(UserElasticsearchRequestDto.from(savedUser));
+            log.info("user 정보 검색서버로 kafka 전송 완료");
+        } catch (Exception e) {
+            log.error("user 정보 검색서버로 kafka 전송 실패, userId: {}", savedUser.getId(), e);
+        }
+
         return new UserSignUpResponseDto(
                 savedUser.getEmail(),
                 savedUser.getNickname(),
@@ -81,6 +103,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                 savedUser.getRegion(),
                 savedUser.getProfile());
     }
+
 
     @Override
     public AdminUserReadResponseDto getUserForAdmin(Long userId) {
@@ -253,6 +276,21 @@ public class UserApplicationServiceImpl implements UserApplicationService {
 
     //internal
     @Override
+    public UserInfoFollowResponseDto getUserInfoForFollow(Long userId) {
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_NOT_FOUND));
+
+        return new UserInfoFollowResponseDto(
+                user.getId(),
+                user.getUsername(),
+                user.getNickname(),
+                user.getProfile()
+        );
+    }
+
+    //internal
+    @Override
     public UserFeignInfoResponseDto getUserInfo(String identifier) {
 
         UserEntity user = userRepository.findByEmail(identifier)
@@ -274,6 +312,23 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         return userId;
     }
 
+    private static int getIndex(String kakaoMapRegion) {
+        int indexGu = kakaoMapRegion.indexOf("구");
+        int indexGoon = kakaoMapRegion.indexOf("군");
+        int index = -1;
+        if (indexGu != -1 && indexGoon != -1) {
+            throw new CustomException(UserApplicationExceptionCode.INVALID_ADDRESS);
+        } else if (indexGu != -1) {
+            index = indexGu;
+        } else if (indexGoon != -1) {
+            index = indexGoon;
+        }
+        if (index == -1) {
+            //fallback 나중에
+            throw new CustomException(UserApplicationExceptionCode.INVALID_ADDRESS);
+        }
+        return index;
+    }
 
     private static void safeUpdate(
             String newValue,
@@ -290,5 +345,6 @@ public class UserApplicationServiceImpl implements UserApplicationService {
             }
         }
     }
+
 
 }

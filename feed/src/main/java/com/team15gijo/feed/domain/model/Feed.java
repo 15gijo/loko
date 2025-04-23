@@ -73,4 +73,7 @@ public class Feed extends BaseEntity {
     public void updateFeedCommentCount(int commentCount) {
         this.commentCount = commentCount;
     }
+    public void updateFeedLikeCount(int likeCount) {
+        this.likeCount = likeCount;
+    }
 }

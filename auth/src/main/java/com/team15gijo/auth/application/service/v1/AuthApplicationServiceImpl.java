@@ -1,5 +1,6 @@
 package com.team15gijo.auth.application.service.v1;
 
+import com.team15gijo.auth.application.dto.v1.AuthSignUpRequestCommand;
 import com.team15gijo.auth.application.dto.v1.AuthValidatePasswordRequestCommand;
 import com.team15gijo.auth.application.service.AuthApplicationService;
 import com.team15gijo.auth.domain.exception.AuthDomainExceptionCode;
@@ -8,17 +9,26 @@ import com.team15gijo.auth.domain.model.Role;
 import com.team15gijo.auth.domain.repository.AuthRepository;
 import com.team15gijo.auth.domain.service.AuthDomainService;
 import com.team15gijo.auth.infrastructure.client.UserServiceClient;
-import com.team15gijo.auth.presentation.dto.v1.AdminAssignManagerRequestDto;
-import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthIdentifierUpdateRequestDto;
-import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthPasswordUpdateRequestDto;
-import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpRequestCommand;
-import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpRequestDto;
-import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpUpdateUserIdRequestDto;
+import com.team15gijo.auth.infrastructure.dto.security.AuthLoginResponseCommand;
+import com.team15gijo.auth.infrastructure.exception.AuthInfraExceptionCode;
 import com.team15gijo.auth.infrastructure.jwt.JwtAdminProvider;
-import com.team15gijo.auth.presentation.dto.v1.AssignAdminRequestDto;
+import com.team15gijo.auth.infrastructure.jwt.JwtProvider;
+import com.team15gijo.auth.infrastructure.redis.repository.BlacklistRedisRepositoryImpl;
+import com.team15gijo.auth.infrastructure.redis.repository.RefreshTokenRedisRepositoryImpl;
+import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthIdentifierUpdateRequestDto;
+import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthPasswordUpdateRequestDto;
+import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthSignUpRequestDto;
+import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthSignUpUpdateUserIdRequestDto;
+import com.team15gijo.auth.presentation.dto.request.v1.AdminAssignManagerRequestDto;
+import com.team15gijo.auth.presentation.dto.request.v1.AssignAdminRequestDto;
+import com.team15gijo.auth.presentation.dto.response.v2.AuthRefreshResponseDto;
 import com.team15gijo.common.exception.CommonExceptionCode;
 import com.team15gijo.common.exception.CustomException;
 import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.util.Date;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +45,9 @@ public class AuthApplicationServiceImpl implements AuthApplicationService {
     private final AuthRepository authRepository;
     private final UserServiceClient userServiceClient;
     private final JwtAdminProvider jwtAdminProvider;
+    private final JwtProvider jwtProvider;
+    private final RefreshTokenRedisRepositoryImpl refreshTokenRedisRepository;
+    private final BlacklistRedisRepositoryImpl blacklistRedisRepository;
 
     @Override
     @Transactional
@@ -136,5 +149,73 @@ public class AuthApplicationServiceImpl implements AuthApplicationService {
 
         //롤 부여 업데이트
         auth.updateRole(Role.MANAGER);
+    }
+
+    @Override
+    @Transactional
+    public AuthRefreshResponseDto refresh(HttpServletRequest request,
+            HttpServletResponse response) {
+
+        //refresh 토큰 꺼내기
+        String refreshToken = null;
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("refresh_token".equals(cookie.getName())) {
+                    refreshToken = cookie.getValue();
+                    break;
+                }
+            }
+        }
+        if (refreshToken == null) {
+            throw new CustomException(AuthInfraExceptionCode.REFRESH_TOKEN_EXPIRED);
+        }
+
+        //refresh 토큰 유효성 검사
+        jwtProvider.validateRefreshToken(refreshToken);
+
+        //refresh 토큰 userId 뽑기
+        Claims claims = jwtProvider.parseToken(refreshToken);
+
+        Long userId = Long.valueOf(claims.getSubject());
+        String role = claims.get("role", String.class);
+        String nickname = claims.get("nickname", String.class);
+        String region = claims.get("region", String.class);
+
+        //Redis 와 비교
+        String redisRefreshToken = refreshTokenRedisRepository.get(userId)
+                .orElseThrow(
+                        () -> new CustomException(AuthInfraExceptionCode.REFRESH_TOKEN_EXPIRED));
+        if (!redisRefreshToken.equals(refreshToken)) {
+            throw new CustomException(AuthInfraExceptionCode.INVALID_REFRESH_TOKEN);
+        }
+
+        //accessToken 재발급
+        AuthLoginResponseCommand authLoginResponseCommand = new AuthLoginResponseCommand(
+                userId,
+                role,
+                nickname,
+                region
+        );
+        String newAccessToken = jwtProvider.generateAccessToken(authLoginResponseCommand);
+
+        return new AuthRefreshResponseDto(newAccessToken);
+    }
+
+    @Override
+    @Transactional
+    public void logout(String accessToken, Long userId) {
+        //accessToken 남은 만료 시간 구하기
+        Claims claims = jwtProvider.parseToken(accessToken);
+        Date expirationDate = claims.getExpiration();
+        long now = System.currentTimeMillis();
+        long ttl = expirationDate.getTime() - now;
+
+        //블랙리스트 accessToken 저장
+        if (ttl > 0) {
+            blacklistRedisRepository.save(accessToken, "logout", ttl);
+        }
+
+        //refresh 토큰 삭제
+        refreshTokenRedisRepository.delete(userId);
     }
 }

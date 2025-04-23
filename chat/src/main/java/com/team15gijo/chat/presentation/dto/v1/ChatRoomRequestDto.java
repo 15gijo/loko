@@ -1,6 +1,6 @@
 package com.team15gijo.chat.presentation.dto.v1;
 
-import com.team15gijo.chat.domain.model.ChatRoomType;
+import com.team15gijo.chat.domain.model.v1.ChatRoomType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

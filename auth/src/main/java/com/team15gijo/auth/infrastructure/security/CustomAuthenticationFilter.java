@@ -1,16 +1,18 @@
 package com.team15gijo.auth.infrastructure.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.team15gijo.auth.application.dto.v1.AuthLoginResponseCommand;
 import com.team15gijo.auth.infrastructure.client.UserServiceClient;
-import com.team15gijo.auth.infrastructure.dto.v1.UserFeignInfoResponseDto;
+import com.team15gijo.auth.infrastructure.dto.feign.response.v1.UserFeignInfoResponseDto;
+import com.team15gijo.auth.infrastructure.dto.security.AuthLoginResponseCommand;
 import com.team15gijo.auth.infrastructure.exception.AuthInfraExceptionCode;
 import com.team15gijo.auth.infrastructure.jwt.JwtProvider;
-import com.team15gijo.auth.presentation.dto.v1.AuthLoginRequestDto;
+import com.team15gijo.auth.infrastructure.redis.repository.RefreshTokenRedisRepositoryImpl;
+import com.team15gijo.auth.presentation.dto.request.v1.AuthLoginRequestDto;
 import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.common.exception.CustomException;
 import com.team15gijo.common.exception.ExceptionCode;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -30,6 +32,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
     private final ObjectMapper objectMapper;
     private final JwtProvider jwtProvider;
     private final UserServiceClient userServiceClient;
+    private final RefreshTokenRedisRepositoryImpl refreshTokenRedisRepositoryImpl;
 
     @Override
     public Authentication attemptAuthentication(
@@ -78,7 +81,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 
             //사용자 상태 탈퇴 확인
             if ("WITHDRAWN".equals(userFeignInfoResponseDto.getUserStatusName())) {
-               throw new CustomException(AuthInfraExceptionCode.USER_ALREADY_WITHDRAWN);
+                throw new CustomException(AuthInfraExceptionCode.USER_ALREADY_WITHDRAWN);
             }
 
             //응답 커맨드
@@ -89,11 +92,26 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
                     userFeignInfoResponseDto.getRegion());
 
             String accessToken = jwtProvider.generateAccessToken(loginUser);
-//            String refreshToken = jwtProvider.generateRefreshToken(loginUser.userId());
+            String refreshToken = jwtProvider.generateRefreshToken(loginUser);
+
+            //refresh 토큰 레디스에 저장
+            refreshTokenRedisRepositoryImpl.save(
+                    loginUser.userId(),
+                    refreshToken,
+                    jwtProvider.getRefreshTokenExpiration()
+            );
 
             //응답 헤더
             response.setHeader("Authorization", "Bearer " + accessToken);
+
             //refresh HttpOnly 쿠키에 세팅
+            Cookie refreshTokenCookie = new Cookie("refresh_token", refreshToken);
+            refreshTokenCookie.setHttpOnly(true);
+            refreshTokenCookie.setSecure(false); //https 배포 시에 true로
+            refreshTokenCookie.setPath("/");
+            refreshTokenCookie.setMaxAge((int) (jwtProvider.getRefreshTokenExpiration() / 1000));
+            refreshTokenCookie.setAttribute("sameSite", "none"); //msa 이므로 다른 도메인 간 쿠키 보내기 허용
+            response.addCookie(refreshTokenCookie);
 
             //공통 응답 처리
             ApiResponse<AuthLoginResponseCommand> apiResponse = ApiResponse.success("로그인 성공",

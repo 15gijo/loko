@@ -6,7 +6,6 @@ spring:
       enabled: false #일단 config server 비활성화
   config:
     import: optional:file:./user/.env[.properties] # 모듈 내부 env
-
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -19,6 +18,15 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
 
 
 server:
@@ -33,3 +41,28 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:19090/eureka/  # Eureka 서버 URL
+    register-with-eureka: true   # 클라이언트가 Eureka에 자기 자신을 등록
+    fetch-registry: true         # 다른 서비스 정보(Eureka 레지스트리)도 가져옴
+
+
+management:
+  zipkin:
+    tracing:
+      endpoint: "http://localhost:9411/api/v2/spans"
+  tracing:
+    sampling:
+      probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: ["*"]
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      access: unrestricted
+
+
+kakao:
+  api:
+    key: ${KAKAO_MAP_KEY}

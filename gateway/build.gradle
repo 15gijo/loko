@@ -8,6 +8,9 @@ dependencies {
 	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-impl', version: '0.11.5'
 	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-jackson', version: '0.11.5'
 
+	//redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.cloud:spring-cloud-starter-gateway'   // 비동기적
 //	implementation 'org.springframework.cloud:spring-cloud-starter-gateway-mvc'  //  동기적  - 특별한 일 없으면 쓸 일 없음

@@ -2,8 +2,8 @@ package com.team15gijo.search.application.service.v1;
 
 import com.team15gijo.search.application.dto.v1.CursorResultDto;
 import com.team15gijo.search.infrastructure.client.FeignClientService;
-import com.team15gijo.search.infrastructure.client.post.PostSearchResponseDto;
-import com.team15gijo.search.infrastructure.client.user.UserSearchResponseDto;
+import com.team15gijo.search.application.dto.v2.PostSearchResponseDto;
+import com.team15gijo.search.application.dto.v2.UserSearchResponseDto;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

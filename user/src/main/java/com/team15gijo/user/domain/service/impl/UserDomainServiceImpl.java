@@ -6,7 +6,7 @@ import com.team15gijo.user.domain.model.UserEntity;
 import com.team15gijo.user.domain.model.UserStatus;
 import com.team15gijo.user.domain.repository.UserRepository;
 import com.team15gijo.user.domain.service.UserDomainService;
-import com.team15gijo.user.presentation.dto.v1.request.UserSignUpRequestDto;
+import com.team15gijo.user.presentation.dto.request.v1.UserSignUpRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

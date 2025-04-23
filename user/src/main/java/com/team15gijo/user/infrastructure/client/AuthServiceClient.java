@@ -1,11 +1,10 @@
 package com.team15gijo.user.infrastructure.client;
 
 import com.team15gijo.user.infrastructure.config.AuthFeignClientConfig;
-import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpRequestDto;
-import com.team15gijo.user.infrastructure.dto.v1.internal.AuthSignUpUpdateUserIdRequestDto;
-import com.team15gijo.user.presentation.dto.v1.internal.request.AuthIdentifierUpdateRequestDto;
-import com.team15gijo.user.presentation.dto.v1.internal.request.AuthPasswordUpdateRequestDto;
-import com.team15gijo.user.presentation.dto.v1.request.UserEmailUpdateRequestDto;
+import com.team15gijo.user.infrastructure.dto.request.v1.AuthSignUpRequestDto;
+import com.team15gijo.user.infrastructure.dto.request.v1.AuthSignUpUpdateUserIdRequestDto;
+import com.team15gijo.user.infrastructure.dto.request.v1.AuthIdentifierUpdateRequestDto;
+import com.team15gijo.user.infrastructure.dto.request.v1.AuthPasswordUpdateRequestDto;
 import java.util.UUID;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;

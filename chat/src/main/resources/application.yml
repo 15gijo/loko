@@ -5,7 +5,8 @@ spring:
     config:
       enabled: false
   config:
-    import: optional:classpath:.env[.properties]
+    import:
+      - optional:classpath:.env[.properties]
   datasource:
     driver-class-name: org.postgresql.Driver
     url: ${DB_URL}
@@ -13,20 +14,20 @@ spring:
     password: ${DB_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: create # Entity 기반으로 테이블을 자동 생성 여부 결정
+      ddl-auto: update # Entity 기반으로 테이블을 자동 생성 여부 결정
     show-sql: true
     properties:
       hibernate:
         format_sql: true
-    kafka:
-      bootstrap-servers: localhost:9092
-      producer:
-        key-serializer: org.apache.kafka.common.serialization.StringSerializer
-        value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      consumer:
-        key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-        value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-        auto-offset-reset: earliest
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
 
   # mongoDB
   data:
@@ -41,26 +42,37 @@ spring:
       password: ${REDIS_PASSWORD}
 
 server:
-  port: ${CHAT_SEVER_PORT}
+  port: ${CHAT_SERVER_PORT}
 
 eureka:
   client:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://localhost:${EUREKA_SEVER_PORT}/eureka/
+      defaultZone: http://localhost:${EUREKA_SERVER_PORT}/eureka/
 
 management:
   zipkin:
     tracing:
-      endpoint: "http://localhost:${ZIPKIN_SEVER_PORT}/api/v2/spans"
+      endpoint: "http://localhost:${ZIPKIN_SERVER_PORT}/api/v2/spans"
   tracing:
     sampling:
       probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: "*" #모든 엔드포인트 노출 설정
+  endpoint:
+    health:
+      show-details: always # /actuator/health 엔드포인트에서 헬스 체크 정보를 항상 상세히 보여주도록 설정
+    prometheus:
+      access: unrestricted
 
 logging:
   level:
     com.team15gijo.chat.presentation.handler: DEBUG
+    org.springframework.web.socket: DEBUG
+    org.springframework.messaging: DEBUG
 
 feign:
   client:
@@ -69,3 +81,4 @@ feign:
         connectTimeout: 5000 # 연결 타임아웃 (ms)
         readTimeout: 5000 # 읽기 타임아웃 (ms)
         retryer: feign.Retryer.Default # 재시도 정책
+

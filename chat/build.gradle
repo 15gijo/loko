@@ -27,7 +27,7 @@ dependencies {
 	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.0'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	// SocketJs & STOMP JS
@@ -40,9 +40,32 @@ dependencies {
 	implementation 'org.springframework.kafka:spring-kafka'
 	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 	runtimeOnly 'org.postgresql:postgresql'
+	// ✅ MongoDB + QueryDSL Core
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+	implementation 'com.querydsl:querydsl-core:5.0.0'
+	// ✅ APT (Annotation Processor)
+	annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:general'
+	annotationProcessor 'org.springframework.data:spring-data-mongodb'
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.kafka:spring-kafka-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+sourceSets {
+	main {
+		java {
+			srcDirs = ["src/main/java", "build/generated"]
+		}
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.annotationProcessorGeneratedSourcesDirectory = file("build/generated")
+}
+
+clean {
+	delete file("build/generated")
 }
 
 dependencyManagement {

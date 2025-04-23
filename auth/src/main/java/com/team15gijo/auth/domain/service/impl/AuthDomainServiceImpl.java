@@ -6,7 +6,7 @@ import com.team15gijo.auth.domain.model.AuthEntity;
 import com.team15gijo.auth.domain.model.Role;
 import com.team15gijo.auth.domain.repository.AuthRepository;
 import com.team15gijo.auth.domain.service.AuthDomainService;
-import com.team15gijo.auth.infrastructure.dto.v1.internal.AuthSignUpRequestCommand;
+import com.team15gijo.auth.application.dto.v1.AuthSignUpRequestCommand;
 import com.team15gijo.common.exception.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;

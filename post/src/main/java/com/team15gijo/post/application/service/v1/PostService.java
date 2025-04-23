@@ -6,6 +6,8 @@ import com.team15gijo.post.domain.model.v1.Post;
 import com.team15gijo.post.domain.model.v1.Hashtag;
 import com.team15gijo.post.domain.repository.v1.PostRepository;
 import com.team15gijo.post.domain.repository.v1.HashtagRepository;
+import com.team15gijo.post.infrastructure.kafka.dto.v2.PostElasticsearchRequestDto;
+import com.team15gijo.post.infrastructure.kafka.service.v2.ElasticsearchKafkaProducerService;
 import com.team15gijo.post.presentation.dto.v1.PostRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,13 +23,19 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final HashtagRepository hashtagRepository;
+    private final ElasticsearchKafkaProducerService elasticsearchKafkaProducerService;
+
 
     /**
      * 게시글 생성
      */
     public Post createPost(long userId, String username, String region, PostRequestDto request) {
         Post post = Post.createPost(userId, username, region, request.getPostContent());
-        return postRepository.save(post);
+        post = postRepository.save(post);
+        // 엘라스틱 서치 저장 Kafka 이벤트 발행
+        PostElasticsearchRequestDto dto = PostElasticsearchRequestDto.fromV1(post);
+        elasticsearchKafkaProducerService.sendPostCreate(dto);
+        return post;
     }
 
     /**

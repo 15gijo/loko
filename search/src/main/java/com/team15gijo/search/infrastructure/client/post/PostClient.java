@@ -1,6 +1,7 @@
 package com.team15gijo.search.infrastructure.client.post;
 
 import com.team15gijo.common.dto.ApiResponse;
+import com.team15gijo.search.application.dto.v2.PostSearchResponseDto;
 import com.team15gijo.search.infrastructure.config.FeignConfig;
 import java.time.LocalDateTime;
 import java.util.List;

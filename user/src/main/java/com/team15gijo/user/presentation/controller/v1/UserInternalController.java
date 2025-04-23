@@ -4,7 +4,8 @@ import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.user.application.service.UserApplicationService;
 import com.team15gijo.user.application.service.v1.InternalUserService;
 import com.team15gijo.user.infrastructure.dto.UserFeignInfoResponseDto;
-import com.team15gijo.user.infrastructure.dto.v1.internal.UserSearchResponseDto;
+import com.team15gijo.user.presentation.dto.internal.response.v1.UserInfoFollowResponseDto;
+import com.team15gijo.user.presentation.dto.internal.response.v1.UserSearchResponseDto;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,9 +59,24 @@ public class UserInternalController {
             @RequestParam(required = false) Long lastUserId,
             @RequestParam(defaultValue = "10") int size) {
         log.info("키워드 : {}, 닉네임 : {}, 지역 : {}", keyword, nickname, region);
-        List<UserSearchResponseDto> users = internalUserService.searchUsers(keyword, userId, nickname, region, lastUserId, size);
+        List<UserSearchResponseDto> users = internalUserService.searchUsers(keyword, userId,
+                nickname, region, lastUserId, size);
         return ApiResponse.success("유저 검색 성공", users);
     }
 
+
+    //follow -> user
+    @GetMapping("/{userId}/following")
+    public UserInfoFollowResponseDto getUserInfoFollowing(@PathVariable("userId") Long userId) {
+        log.info("follow - user 연결={}", userId);
+        return userApplicationService.getUserInfoForFollow(userId);
+    }
+
+    //follow -> user
+    @GetMapping("/{userId}/follower")
+    public UserInfoFollowResponseDto getUserInfoFollower(@PathVariable("userId") Long userId) {
+        log.info("follow - user 연결={}", userId);
+        return userApplicationService.getUserInfoForFollow(userId);
+    }
 
 }

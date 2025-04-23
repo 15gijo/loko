@@ -1,7 +1,7 @@
 package com.team15gijo.comment.presentation.controller.v1;
 
 import com.team15gijo.comment.application.service.v1.CommentService;
-import com.team15gijo.comment.domain.model.Comment;
+import com.team15gijo.comment.domain.model.v1.Comment;
 import com.team15gijo.comment.presentation.dto.v1.CommentRequestDto;
 import com.team15gijo.common.dto.ApiResponse;
 import java.net.URLDecoder;

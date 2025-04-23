@@ -9,6 +9,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -25,29 +26,18 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 @Configuration
 public class NotificationApplicationKafkaConfig {
 
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
+
     /**
      *  Kafka Producer Config
      *
      */
-//    @Bean
-//    public KafkaTemplate<String, String> kafkaTemplate() {
-//        return new KafkaTemplate<>(producerFactory());
-//    }
-//
-//    @Bean
-//    public ProducerFactory<String, String> producerFactory() {
-//        Map<String, Object> configProps = new HashMap<>();
-//        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-//        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-//        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-//        return new DefaultKafkaProducerFactory<>(configProps);
-//    }
-
     // 댓글 이벤트용 KafkaTemplate(테스트 용으로 나눈 코드, 각자 서버에서는 위의 코드를 참고)
     @Bean
     public ProducerFactory<String, CommentNotificationEventDto> commentProducerFactory() {
         Map<String, Object> configProps = new HashMap<>();
-        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         return new DefaultKafkaProducerFactory<>(configProps);
@@ -62,7 +52,7 @@ public class NotificationApplicationKafkaConfig {
     @Bean
     public ProducerFactory<String, FollowNotificationEventDto> followProducerFactory() {
         Map<String, Object> configProps = new HashMap<>();
-        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         return new DefaultKafkaProducerFactory<>(configProps);
@@ -77,7 +67,7 @@ public class NotificationApplicationKafkaConfig {
     @Bean
     public ProducerFactory<String, ChatNotificationEventDto> chatProducerFactory() {
         Map<String, Object> configProps = new HashMap<>();
-        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         return new DefaultKafkaProducerFactory<>(configProps);
@@ -93,25 +83,6 @@ public class NotificationApplicationKafkaConfig {
      *  Kafka Consumer Config
      *
      */
-//    @Bean
-//    public ConsumerFactory<String, String> consumerFactory() {
-//        Map<String, Object> configProps = new HashMap<>();                                     // 컨슈머 팩토리 설정을 위한 맵을 생성.
-//        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");              // Kafka 브로커의 주소를 설정.
-//        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "notification-service");
-//        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);     // 메시지 키의 디시리얼라이저 클래스를 설정.
-//        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);      // 메시지 값의 디시리얼라이저 클래스를 설정.
-//        configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "*");                   // 역직렬화할 때 data 신뢰성 모두 허용
-//        return new DefaultKafkaConsumerFactory<>(configProps);                                     // 설정된 프로퍼티로 DefaultKafkaConsumerFactory를 생성하여 반환.
-//    }
-//
-//
-//    @Bean
-//    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
-//        ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();  // Factory를 생성.
-//        factory.setConsumerFactory(consumerFactory());                  // 컨슈머 팩토리를 리스너 컨테이너 팩토리에 설정.
-//        return factory;
-//    }
-
     @Bean
     public ConsumerFactory<String, CommentNotificationEventDto> commentConsumerFactory() {
         JsonDeserializer<CommentNotificationEventDto> deserializer = new JsonDeserializer<>(CommentNotificationEventDto.class);
@@ -121,7 +92,7 @@ public class NotificationApplicationKafkaConfig {
 
         return new DefaultKafkaConsumerFactory<>(
                 Map.of(
-                        ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092",
+                        ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers,
                         ConsumerConfig.GROUP_ID_CONFIG, "notification-service",
                         ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class,
                         ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class
@@ -148,7 +119,7 @@ public class NotificationApplicationKafkaConfig {
 
         return new DefaultKafkaConsumerFactory<>(
                 Map.of(
-                        ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092",
+                        ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers,
                         ConsumerConfig.GROUP_ID_CONFIG, "notification-service",
                         ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class,
                         ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class
@@ -175,7 +146,7 @@ public class NotificationApplicationKafkaConfig {
 
         return new DefaultKafkaConsumerFactory<>(
                 Map.of(
-                        ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092",
+                        ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers,
                         ConsumerConfig.GROUP_ID_CONFIG, "notification-service",
                         ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class,
                         ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class
