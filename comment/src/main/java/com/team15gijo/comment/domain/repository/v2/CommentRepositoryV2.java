@@ -9,4 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface CommentRepositoryV2 extends JpaRepository<CommentV2, UUID> {
     // 특정 게시글에 속한 댓글 목록 조회 (페이징 지원)
     Page<CommentV2> findByPostId(UUID postId, Pageable pageable);
+
+    /** 추가: 숨김 처리(isHidden=false)된 댓글만 조회 */
+    Page<CommentV2> findByPostIdAndIsHiddenFalse(UUID postId, Pageable pageable);
 }

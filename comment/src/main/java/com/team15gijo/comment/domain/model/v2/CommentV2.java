@@ -53,6 +53,9 @@ public class CommentV2 extends BaseEntity {
     @Column(name = "depth")
     private int depth;
 
+    @Column(name = "is_hidden", nullable = false)
+    private boolean isHidden;
+
     /**
      * 댓글 내용을 업데이트합니다.
      */
@@ -62,6 +65,11 @@ public class CommentV2 extends BaseEntity {
         }
         this.commentContent = newContent;
     }
+
+    public void markHidden() {
+        this.isHidden = true;
+    }
+
 
     /**
      * 정적 팩토리 메서드: 댓글 객체를 생성하고 생성 메타데이터(생성자 ID, 생성일시)를 설정합니다.
@@ -74,6 +82,7 @@ public class CommentV2 extends BaseEntity {
                 .commentContent(commentContent)
                 .parentCommentId(parentCommentId)
                 .depth(depth)
+                .isHidden(false)
                 .build();
         return comment;
     }
