@@ -61,3 +61,8 @@ management:
       show-details: always
     prometheus:
       access: unrestricted
+
+
+kakao:
+  api:
+    key: ${KAKAO_MAP_KEY}
