@@ -1,6 +1,7 @@
 package com.team15gijo.search.infrastructure.client.user;
 
 import com.team15gijo.common.dto.ApiResponse;
+import com.team15gijo.search.application.dto.v2.UserSearchResponseDto;
 import com.team15gijo.search.infrastructure.config.FeignConfig;
 import java.util.List;
 import org.springframework.cloud.openfeign.FeignClient;

@@ -25,11 +25,11 @@ spring:
         - id: search-service
           uri: lb://search-service
           predicates:
-            - Path=/api/v1/search/**,/api/v2/search/**
+            - Path=/api/v1/search/**, /api/v2/search/**
         - id: notification-service
           uri: lb://notification-service
           predicates:
-            - Path=/api/v1/notifications/**,/api/v1/sse/**
+            - Path=/api/v1/notifications/**, /api/v1/sse/**
         - id: feed-service
           uri: lb://feed-service
           predicates:

@@ -34,7 +34,7 @@ public class PostService {
         post = postRepository.save(post);
         // 엘라스틱 서치 저장 Kafka 이벤트 발행
         PostElasticsearchRequestDto dto = PostElasticsearchRequestDto.fromV1(post);
-        elasticsearchKafkaProducerService.sendCommentCreate(dto);
+        elasticsearchKafkaProducerService.sendPostCreate(dto);
         return post;
     }
 

@@ -7,7 +7,6 @@ import com.team15gijo.post.domain.model.v2.PostV2;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -25,37 +24,53 @@ public class PostElasticsearchRequestDto {
     private List<String> hashtags;
     private String region;
 
-//    private int views;
-//    private int commentCount;
-//    private int likeCount;
+    private int views;
+    private int commentCount;
+    private int likeCount;
     private LocalDateTime createdAt;
 
     public static PostElasticsearchRequestDto fromV1(Post post) {
+        if (post == null) {
+            throw new IllegalArgumentException("Post cannot be null");
+        }
         return PostElasticsearchRequestDto.builder()
                 .postId(post.getPostId())
                 .username(post.getUsername())
                 .postContent(post.getPostContent())
                 .hashtags(
-                        post.getHashtags().stream()
+                        post.getHashtags() != null ?
+                                post.getHashtags().stream()
                                 .map(Hashtag::getHashtagName)
-                                .collect(Collectors.toList())
+                                .toList()
+                                : List.of()
                 )
                 .region(post.getRegion())
+                .views(post.getViews())
+                .commentCount(post.getCommentCount())
+                .likeCount(post.getLikeCount())
                 .createdAt(post.getCreatedAt())
                 .build();
     }
 
     public static PostElasticsearchRequestDto fromV2(PostV2 post) {
+        if (post == null) {
+            throw new IllegalArgumentException("PostV2 cannot be null");
+        }
         return PostElasticsearchRequestDto.builder()
                 .postId(post.getPostId())
                 .username(post.getUsername())
                 .postContent(post.getPostContent())
                 .hashtags(
-                        post.getHashtags().stream()
-                                .map(HashtagV2::getHashtagName)
-                                .collect(Collectors.toList())
+                        post.getHashtags() != null ?
+                                post.getHashtags().stream()
+                                        .map(HashtagV2::getHashtagName)
+                                        .toList()
+                                : List.of()
                 )
                 .region(post.getRegion())
+                .views(post.getViews())
+                .commentCount(post.getCommentCount())
+                .likeCount(post.getLikeCount())
                 .createdAt(post.getCreatedAt())
                 .build();
     }

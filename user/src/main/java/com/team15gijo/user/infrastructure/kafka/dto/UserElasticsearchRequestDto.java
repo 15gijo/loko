@@ -19,6 +19,9 @@ public class UserElasticsearchRequestDto {
     private String region;
 
     public static UserElasticsearchRequestDto from(UserEntity user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null");
+        }
         return UserElasticsearchRequestDto.builder()
                 .userId(user.getId())
                 .username(user.getUsername())

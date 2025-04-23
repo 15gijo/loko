@@ -89,8 +89,12 @@ public class UserApplicationServiceImpl implements UserApplicationService {
 
         // kafka로 검색 서버에 유저 정보 전송
         log.info("user 정보 검색서버로 kafka 전송 시작");
-        producerService.sendUserCreate(UserElasticsearchRequestDto.from(savedUser));
-        log.info("user 정보 검색서버로 kafka 전송 완료");
+        try {
+            producerService.sendUserCreate(UserElasticsearchRequestDto.from(savedUser));
+            log.info("user 정보 검색서버로 kafka 전송 완료");
+        } catch (Exception e) {
+            log.error("user 정보 검색서버로 kafka 전송 실패, userId: {}", savedUser.getId(), e);
+        }
 
         return new UserSignUpResponseDto(
                 savedUser.getEmail(),

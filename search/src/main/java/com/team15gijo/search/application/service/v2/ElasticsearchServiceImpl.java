@@ -5,14 +5,13 @@ import com.team15gijo.search.domain.model.PostDocument;
 import com.team15gijo.search.domain.model.UserDocument;
 import com.team15gijo.search.domain.repository.PostElasticsearchRepository;
 import com.team15gijo.search.domain.repository.UserElasticsearchRepository;
-import com.team15gijo.search.infrastructure.client.post.PostSearchResponseDto;
-import com.team15gijo.search.infrastructure.client.user.UserSearchResponseDto;
+import com.team15gijo.search.application.dto.v2.PostSearchResponseDto;
+import com.team15gijo.search.application.dto.v2.UserSearchResponseDto;
 import com.team15gijo.search.infrastructure.kafka.dto.PostElasticsearchRequestDto;
 import com.team15gijo.search.infrastructure.kafka.dto.UserElasticsearchRequestDto;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -47,12 +46,9 @@ public class ElasticsearchServiceImpl implements ElasticsearchService {
             lastCreatedAt = LocalDateTime.now();
         }
 
-        String createdAtStr = Optional.of(lastCreatedAt)
-                .orElse(LocalDateTime.now())
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS"));
+        String createdAtStr = lastCreatedAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS"));
 
         Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-
 
         List<PostDocument> results = postElasticsearchRepository
                 .searchPosts(keyword, region, createdAtStr, pageable);
