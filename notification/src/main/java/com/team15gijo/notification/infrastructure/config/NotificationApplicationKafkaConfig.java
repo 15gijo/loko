@@ -26,7 +26,7 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 @Configuration
 public class NotificationApplicationKafkaConfig {
 
-    @Value("${SPRING_BOOTSTRAP_SERVER}")
+    @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
     /**
