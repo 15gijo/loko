@@ -180,6 +180,7 @@ public class PostServiceV2 {
     @Transactional
     public void addCommentCount(UUID postId) {
         // 1) 피드 서비스용 이벤트 (기존 로직 그대로)
+        log.info("add Comment Count 함수 실행 체크");
         PostV2 post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
         kafkaUtil.sendKafkaEvent(EventType.COMMENT_CREATED, post, FEED_EVENTS_TOPIC);
