@@ -19,7 +19,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface UserApplicationService {
 
-    UserSignUpResponseDto createUser(@Valid UserSignUpRequestDto userSignUpRequestDto);
+    UserSignUpResponseDto createUser(UserSignUpRequestDto userSignUpRequestDto);
 
     UserFeignInfoResponseDto getUserInfo(String identifier);
 

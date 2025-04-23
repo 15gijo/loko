@@ -53,6 +53,11 @@ spring:
             allowedMethods: "*"
             allowedHeaders: "*"
             allowCredentials: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ${REDIS_PASSWORD}
 
 #      mvc:
 #        form-filter:
@@ -62,7 +67,6 @@ spring:
 
 server:
   port: 19091
-
 
 eureka:
   client:

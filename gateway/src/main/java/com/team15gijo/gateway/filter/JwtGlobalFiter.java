@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
@@ -23,12 +24,14 @@ import reactor.core.publisher.Mono;
 public class JwtGlobalFiter implements GlobalFilter {
 
     private final JwtProvider jwtProvider;
+    private final RedisTemplate<String, String> redisTemplate;
 
     //유효성 제외 주소
     private static final List<String> excludedPaths = List.of(
             "/api/v1/auth/login",
             "/api/v1/users/signup",
-            "/api/v1/auth/admin-assign"
+            "/api/v1/auth/admin-assign",
+            "/api/v2/auth/refresh"
     );
 
     private boolean isExcluded(String path) {
@@ -55,6 +58,16 @@ public class JwtGlobalFiter implements GlobalFilter {
         try {
             Claims claims = jwtProvider.parseToken(token);
             log.info("JWT Token: {}", claims);
+
+            //블랙리스트 체크
+            String blacklistKey = "BLACKLIST:" + token;
+            Boolean isBlacklisted = redisTemplate.hasKey(blacklistKey);
+            if (Boolean.TRUE.equals(isBlacklisted)) {
+                log.warn("블랙리스트 토큰: {}", token);
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
+            }
+
             String userId = claims.getSubject();
             String role = JwtUtil.getClaim(claims, "role");
             String nickname = JwtUtil.getEncodedClaim(claims, "nickname");

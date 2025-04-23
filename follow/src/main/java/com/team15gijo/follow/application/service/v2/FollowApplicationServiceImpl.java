@@ -62,7 +62,7 @@ public class FollowApplicationServiceImpl implements FollowApplicationService {
 
         FollowEntity follow = followDomainService.blockFollow(
                 followerId,
-                blockRequestDto.blockUserID());
+                blockRequestDto.blockUserId());
 
         FollowEntity savedFollow = followRepository.save(follow);
 
