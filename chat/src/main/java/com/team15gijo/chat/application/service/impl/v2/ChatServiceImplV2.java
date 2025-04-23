@@ -1,10 +1,5 @@
 package com.team15gijo.chat.application.service.impl.v2;
 
-import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.CHAT_ROOM_INDIVIDUAL_NUMBER_LIMIT;
-import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.CHAT_ROOM_NOT_FOUND;
-import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.CHAT_ROOM_USER_ID_NOT_FOUND;
-import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.MESSAGE_ID_NOT_FOUND;
-import static com.team15gijo.chat.domain.exception.ChatDomainExceptionCode.USER_NICK_NAME_NOT_EXIST;
 import static com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2.createChatMessageDocument;
 import static com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2.createEnterMessageDocument;
 import static com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2.createErrorMessageDocument;
@@ -12,6 +7,7 @@ import static com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2.createEr
 import com.team15gijo.chat.application.dto.v2.ChatMessageResponseDtoV2;
 import com.team15gijo.chat.application.dto.v2.ChatRoomResponseDtoV2;
 import com.team15gijo.chat.application.service.ChatServiceV2;
+import com.team15gijo.chat.domain.exception.ChatDomainExceptionCode;
 import com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2;
 import com.team15gijo.chat.domain.model.v2.ChatRoomParticipantV2;
 import com.team15gijo.chat.domain.model.v2.ChatRoomTypeV2;
@@ -25,7 +21,6 @@ import com.team15gijo.chat.presentation.dto.v2.ChatMessageRequestDtoV2;
 import com.team15gijo.chat.presentation.dto.v2.ChatRoomRequestDtoV2;
 import com.team15gijo.common.exception.CustomException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -89,7 +83,7 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
         Long getUserIdByNickname = feignClientService.fetchUserIdByNickname(receiverNickname);
 
         if(getUserIdByNickname == null) {
-            throw new CustomException(USER_NICK_NAME_NOT_EXIST);
+            throw new CustomException(ChatDomainExceptionCode.USER_NICK_NAME_NOT_EXIST);
         }
 
         // 채팅방 생성하는 당사자의 참여자 생성 및 저장
@@ -120,7 +114,7 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
         // 채팅방 타입이 INDIVIDUAL 인 경우, 참여자 수 제한
         if(savedChatRoom.getChatRoomType() == ChatRoomTypeV2.INDIVIDUAL
             && savedChatRoom.getChatRoomParticipant().size() > 2) {
-            throw new CustomException(CHAT_ROOM_INDIVIDUAL_NUMBER_LIMIT);
+            throw new CustomException(ChatDomainExceptionCode.CHAT_ROOM_INDIVIDUAL_NUMBER_LIMIT);
         }
         return savedChatRoom.toResponse();
     }
@@ -132,13 +126,13 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
     @Transactional(readOnly = true)
     public ChatRoomResponseDtoV2 getChatRoom(UUID chatRoomId, Long userId) {
         ChatRoomV2 chatRoom = chatRoomRepository.findById(chatRoomId).
-            orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
+            orElseThrow(() -> new CustomException(ChatDomainExceptionCode.CHAT_ROOM_NOT_FOUND));
 
         if(chatRoom.getChatRoomParticipant().stream()
             .anyMatch(participant -> participant.getUserId().equals(userId))) {
             return chatRoom.toResponse();
         } else {
-            throw new CustomException(CHAT_ROOM_USER_ID_NOT_FOUND);
+            throw new CustomException(ChatDomainExceptionCode.CHAT_ROOM_USER_ID_NOT_FOUND);
         }
     }
 
@@ -148,28 +142,23 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
     @Override
     @Transactional(readOnly = true)
     public Page<ChatRoomV2> getChatRooms(Pageable pageable, Long userId) {
-        log.info("userId = {}", userId);
-        List<ChatRoomV2> chatRoomList = chatRoomRepository.findAll();
+        log.info("[ChatServiceImplV2] getChatRooms 메서드 시작");
+        log.info("[ChatServiceImplV2] userId = {}", userId);
 
-        List<ChatRoomV2> filteredChatRooms = chatRoomList.stream()
-            .filter(chatRoom -> chatRoom.getChatRoomParticipant().stream()
-                .anyMatch(participant -> participant.getUserId().equals(userId)))
-            .toList();
+        Page<ChatRoomV2> chatRoomPage = chatRoomRepository.findChatRoomByParticipantUserId(
+            userId, pageable);
+        log.info("[ChatServiceImplV2] chatRoomPage.getTotalElements() = {}", chatRoomPage.getTotalElements());
 
-        if(filteredChatRooms.isEmpty()) {
-            throw new CustomException(CHAT_ROOM_NOT_FOUND);
+        if(chatRoomPage.isEmpty()) {
+            log.error("[ChatServiceImplV2] userId = {}에 해당하는 채팅방이 존재하지 않습니다.", userId);
+            throw new CustomException(ChatDomainExceptionCode.CHAT_ROOM_NOT_FOUND);
         }
-
-        // 페이지네이션 적용
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), filteredChatRooms.size());
-        List<ChatRoomV2> pageContent = filteredChatRooms.subList(start, end);
-
-        return new PageImpl<>(pageContent, pageable, pageable.getPageSize());
+        log.info("[ChatServiceImplV2] getChatRooms 메서드 종료");
+        return chatRoomPage;
     }
 
     /**
-     * 채팅방 퇴장(비활성화) -> 삭제(Batch 또는 비동기 처리)
+     * 채팅방 퇴장(비활성화) -> 삭제(Batch 삭제 처리)
      * -> 1:1 채팅방에서 각 1명의 사용자 퇴장(채팅방 참여자 비활성화로 변경)
      * -> 채팅방의 모든 참여자 퇴장 시, 채팅방 & 채팅방참여자 & 채팅메시지 모두 소프트 삭제
      */
@@ -179,31 +168,35 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
         log.info("[ChatServiceImplV2 - exitChatRoom] chatRoomId = {}", chatRoomId);
         log.info("[ChatServiceImplV2 - exitChatRoom] userId = {}", userId);
 
-        ChatRoomV2 chatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
-            .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
+        // 채팅방 조회 시 참여자 정보(userId) fetch join 조회
+        ChatRoomV2 chatRoom = chatRoomRepository.findChatRoomWithParticipantsByChatRoomId(chatRoomId)
+            .orElseThrow(() -> new CustomException(ChatDomainExceptionCode.CHAT_ROOM_NOT_FOUND));
 
         Set<ChatRoomParticipantV2> chatRoomParticipants = chatRoom.getChatRoomParticipant();
         ChatRoomParticipantV2 targetParticipant = null;
         log.info("[ChatServiceImplV2 - 존재하는 참여자 수] chatRoomParticipants.size() = {}", chatRoomParticipants.size());
 
-        // 퇴장 요청 참여자 찾기
+        // 퇴장 요청 참여자 찾기 및 비활성화
         for(ChatRoomParticipantV2 participant : chatRoomParticipants) {
             if(participant.getUserId().equals(userId)) {
                 log.info("[ChatServiceImplV2] participant.getUserId() = {}", participant.getUserId());
                 log.info("[ChatServiceImplV2] getActivation() 전 = {}", participant.getActivation());
                 participant.nonActivate();
                 log.info("[ChatServiceImplV2] getActivation() 후 = {}", participant.getActivation());
-
                 targetParticipant = participant;
                 break;
             }
         }
 
-        // 비활성화된 참여자 있다면 저장
-        if(targetParticipant != null) {
-            log.info("[ChatServiceImplV2] 퇴장 원하는 사용자 비활성화 업데이트");
-            chatRoomParticipantRepository.save(targetParticipant);
+        // 비활성화된 참여자 없다면 예외 처리
+        if(targetParticipant == null) {
+            log.info("[ChatServiceImplV2] userId({})는 채팅방({})에 참여하고 있지 않습니다.", userId, chatRoomId);
+            throw new CustomException(ChatDomainExceptionCode.CHAT_ROOM_USER_ID_NOT_FOUND);
         }
+
+        // 변경된(비활성화된) 참여자 정보 저장
+        log.info("[ChatServiceImplV2] 퇴장 원하는 사용자 비활성화 업데이트");
+        chatRoomParticipantRepository.save(targetParticipant);
 
         // 모든 참여자가 비활성 상태인지 확인 -> 모두 비활성화면 return TRUE
         boolean allParticipantsNonactive = chatRoomParticipants.stream()
@@ -218,7 +211,7 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
                 .filter(participant -> !participant.getActivation())
                 .toList();
 
-            // bulk 로 쿼리문 1개만 사용하여 참여자 모두 삭제 처리
+            // bulk 로 쿼리문 1개만 사용하여 참여자 모두 소프트 삭제 처리
             if(!nonActiveParticipants.isEmpty()) {
                 log.info("[ChatServiceImplV2] 비활성화된 참여자 {}명", nonActiveParticipants.size());
                 log.info("[ChatServiceImplV2] 비활성화된 참여자 소프트 삭제 전");
@@ -226,11 +219,10 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
                 chatRoomParticipantRepository.softDeleteAllInBatch(
                     nonActiveParticipants, userId, LocalDateTime.now()
                 );
-                log.info("[ChatServiceImplV2] 비활성화된 참여자 일괄 소프트 삭제 완료");
+                log.info("[ChatServiceImplV2] 비활성화된 채팅방참여자 일괄 소프트 삭제 완료");
             }
 
             // chatRoomParticipant 소프트 삭제 이후, chatRoom 소프트 삭제 처리
-            // TODO: 해당 PATCH 로직에서 채팅방 참여자 비활성화만 진행하고, 비동기 또는 배치로 채팅방 삭제 구현 필요!
             log.info("[ChatServiceImplV2] chatRoom={} 채팅방 소프트 삭제 전", chatRoom);
             chatRoomRepository.delete(chatRoom);
             log.info("[ChatServiceImplV2] updatedChatRoom={} 채팅방 소프트 삭제 완료", chatRoom);
@@ -291,7 +283,7 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
         Long senderId
     ) {
         ChatRoomV2 chatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
-            .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(ChatDomainExceptionCode.CHAT_ROOM_NOT_FOUND));
 
         Boolean participantExists = chatRoom.getChatRoomParticipant().stream()
             .anyMatch(participant -> participant.getUserId().equals(senderId));
@@ -334,7 +326,8 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
      */
     @Override
     @Transactional(readOnly = true)
-    public Page<ChatMessageDocumentV2> getMessagesByChatRoomId(UUID chatRoomId, Long senderId, Pageable pageable) {
+    public Page<ChatMessageDocumentV2> getMessagesByChatRoomId(
+        UUID chatRoomId, Long senderId, Pageable pageable) {
         // 채팅방 id 및 userId 유효성 검증
         checkRoomIdAndUserId(chatRoomId, senderId);
 
@@ -360,7 +353,8 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
      */
     @Override
     @Transactional(readOnly = true)
-    public ChatMessageResponseDtoV2 getMessageById(UUID chatRoomId, String id, Long userId) {
+    public ChatMessageResponseDtoV2 getMessageById(
+        UUID chatRoomId, String id, Long userId) {
         // 채팅방 id 및 userId 유효성 검증
         checkRoomIdAndUserId(chatRoomId, userId);
 
@@ -369,7 +363,7 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
 
         if(responseDocument == null) {
             log.error("chatRoomId: {} 해당 채팅방의 id:{} 메시지가 존재하지 않습니다.", chatRoomId, id);
-            throw new CustomException(MESSAGE_ID_NOT_FOUND);
+            throw new CustomException(ChatDomainExceptionCode.MESSAGE_ID_NOT_FOUND);
         }
 
         return responseDocument.toResponse();
@@ -458,7 +452,8 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ChatMessageDocumentV2> searchMessages(UUID chatRoomId, LocalDateTime sentAt, String messageContent, Long userId, Pageable pageable) {
+    public Page<ChatMessageDocumentV2> searchMessages(
+        UUID chatRoomId, LocalDateTime sentAt, String messageContent, Long userId, Pageable pageable) {
         log.info("[ChatServiceImplV2] searchMessages 메소드 시작");
         // 채팅방 id 및 userId 유효성 검증
         checkRoomIdAndUserId(chatRoomId, userId);
@@ -467,22 +462,24 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
     }
 
     // 채팅방 id 및 userId 유효성 검증
-    private void checkRoomIdAndUserId(UUID chatRoomId, Long userId) {
+    private void checkRoomIdAndUserId(
+        UUID chatRoomId, Long userId) {
         // 채팅방 유무 검증
         ChatRoomV2 chatRoom = chatRoomRepository.findByChatRoomId(chatRoomId)
-            .orElseThrow(() -> new CustomException(CHAT_ROOM_NOT_FOUND));
+            .orElseThrow(() -> new CustomException(ChatDomainExceptionCode.CHAT_ROOM_NOT_FOUND));
 
         // 채팅방 참여자만 해당 메시지 조회 가능
         boolean isParticipant = chatRoom.getChatRoomParticipant().stream()
             .anyMatch(participant -> participant.getUserId().equals(userId));
 
         if(!isParticipant) {
-            throw new CustomException(CHAT_ROOM_USER_ID_NOT_FOUND);
+            throw new CustomException(ChatDomainExceptionCode.CHAT_ROOM_USER_ID_NOT_FOUND);
         }
     }
 
     // 채팅방의 메시지 소프트 삭제
-    private void deleteChatMessageForChatRoomId(UUID chatRoomId, Long userId) {
+    private void deleteChatMessageForChatRoomId(
+        UUID chatRoomId, Long userId) {
         log.info("[ChatServiceImplV2] deleteChatMessageForChatRoomId - 메시지 소프트 삭제 전");
         // 채팅방의 모든 메시지 조회
         Query query = Query.query(

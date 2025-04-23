@@ -1,6 +1,5 @@
 package com.team15gijo.chat.domain.model.v2;
 
-import com.team15gijo.chat.presentation.dto.v2.ChatRoomParticipantResponseDtoV2;
 import com.team15gijo.common.model.base.BaseEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -32,14 +31,6 @@ public class ChatRoomParticipantV2 extends BaseEntity {
     private Long userId;
 
     private Boolean activation; // 활성화 상태(True: 참여, False: 퇴장)
-
-    public ChatRoomParticipantResponseDtoV2 toResponse() {
-        return ChatRoomParticipantResponseDtoV2.builder()
-                .id(id)
-                .userId(userId)
-                .activation(activation)
-                .build();
-    }
 
     public void nonActivate() {
         activation = false;
