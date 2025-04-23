@@ -52,6 +52,7 @@ public class ChatMessageDocumentV2 {
         return ChatMessageResponseDtoV2.builder()
             .id(_id)
             .senderId(senderId)
+            .senderNickname(senderNickname)
             .receiverId(receiverId)
             .receiverNickname(receiverNickname)
             .connectionType(connectionType)

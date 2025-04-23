@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.apache.kafka.common.protocol.types.Field.Str;
 
 @Getter
 @Builder
@@ -14,6 +15,7 @@ import lombok.NoArgsConstructor;
 public class ChatMessageResponseDtoV2 {
     private String id;
     private Long senderId;
+    private String senderNickname;
     private Long receiverId;
     private String receiverNickname;
     private ConnectionTypeV2 connectionType;
