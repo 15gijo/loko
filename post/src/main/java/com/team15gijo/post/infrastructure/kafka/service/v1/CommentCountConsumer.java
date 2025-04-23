@@ -3,7 +3,12 @@ package com.team15gijo.post.infrastructure.kafka.service.v1;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.team15gijo.post.domain.exception.PostDomainException;
+import com.team15gijo.post.domain.exception.PostDomainExceptionCode;
+import com.team15gijo.post.domain.model.v2.PostV2;
 import com.team15gijo.post.domain.repository.v2.PostRepositoryV2;
+import com.team15gijo.post.infrastructure.kafka.dto.v1.EventType;
+import com.team15gijo.post.infrastructure.kafka.util.KafkaUtil;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,6 +25,8 @@ public class CommentCountConsumer {
     private final ObjectMapper objectMapper;
     private final PostRepositoryV2 postRepo;
     private final RedisTemplate<String,Object> redisTemplate;
+    private final KafkaUtil kafkaUtil;
+    private static final String FEED_EVENTS_TOPIC = "feed_events";
 
     @KafkaListener(topics   = "COMMENT_COUNT_EVENTS", groupId  = "post-comment-count-flusher")
     @Transactional
@@ -33,6 +40,11 @@ public class CommentCountConsumer {
 
         // 경량 쿼리로 DB 업데이트
         postRepo.incrementCommentCount(postId, delta);
+
+        //피드 업데이트
+        PostV2 post = postRepo.findById(postId)
+                .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
+        kafkaUtil.sendKafkaEvent(EventType.COMMENT_CREATED, post, FEED_EVENTS_TOPIC);
 
         //  Redis buffer 클리어
         String key = postId.toString();
