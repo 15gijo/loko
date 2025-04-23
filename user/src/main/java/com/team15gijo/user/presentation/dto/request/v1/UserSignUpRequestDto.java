@@ -30,6 +30,10 @@ public record UserSignUpRequestDto(
         String username,
 
         @NotBlank(message = "지역은 필수입니다.")
+        @Pattern(
+                regexp = ".*(구|군)$",
+                message = "주소는 반드시 ~구나 ~군으로 끝나야 합니다."
+        )
         String region,
 
         String profile

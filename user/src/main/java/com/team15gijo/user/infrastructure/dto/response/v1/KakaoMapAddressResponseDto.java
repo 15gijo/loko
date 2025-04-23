@@ -1,10 +1,12 @@
 package com.team15gijo.user.infrastructure.dto.response.v1;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import lombok.Getter;
 
 @Getter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class KakaoMapAddressResponseDto {
 
     private Meta meta;
@@ -24,5 +26,18 @@ public class KakaoMapAddressResponseDto {
         private String addressName;
         private String x;
         private String y;
+
+        @JsonProperty("address")
+        private Address address;
+
+    }
+
+    @Getter
+    public static class Address {
+
+        @JsonProperty("address_name")
+        private String addressName;
+        private String region_1depth_name;
+        private String region_2depth_name;
     }
 }
