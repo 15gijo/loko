@@ -40,20 +40,22 @@ public class PostDocument {
     @Field(type = FieldType.Text, analyzer = "nori")
     private String region;
 
-    // 생성될 때 저장되어도 값이 변하지 않기 때문에 일단 보류. 추후 쓰기DB와 연동하게 되면 추가
-//    @Field(type = FieldType.Integer, index = false)
-//    private int views;
-//
-//    @Field(type = FieldType.Integer, index = false)
-//    private int commentCount;
-//
-//    @Field(type = FieldType.Integer, index = false)
-//    private int likeCount;
-//
+    @Field(type = FieldType.Integer, index = false)
+    private int views;
+
+    @Field(type = FieldType.Integer, index = false)
+    private int commentCount;
+
+    @Field(type = FieldType.Integer, index = false)
+    private int likeCount;
+
     @Field(type=FieldType.Date, format = {}, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS||epoch_millis")
     private LocalDateTime createdAt;
 
     public static PostDocument from(PostElasticsearchRequestDto dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("PostElasticsearchRequestDto cannot be null");
+        }
         return PostDocument.builder()
                 .postId(dto.getPostId())
                 .username(dto.getUsername())

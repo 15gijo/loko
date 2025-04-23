@@ -3,6 +3,7 @@ package com.team15gijo.auth.infrastructure.jwt;
 import com.team15gijo.auth.infrastructure.dto.security.AuthLoginResponseCommand;
 import com.team15gijo.auth.infrastructure.exception.AuthInfraExceptionCode;
 import com.team15gijo.common.exception.CustomException;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -45,13 +46,24 @@ public class JwtProvider {
                 .compact();
     }
 
-    public String generateRefreshToken(Long userId) {
+    public String generateRefreshToken(AuthLoginResponseCommand authLoginResponseCommand) {
         return Jwts.builder()
-                .setSubject(String.valueOf(userId))
+                .setSubject(String.valueOf(authLoginResponseCommand.userId()))
+                .claim("role", authLoginResponseCommand.roleName())
+                .claim("nickname", authLoginResponseCommand.nickname())
+                .claim("region", authLoginResponseCommand.region())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public long getAccessTokenExpiration() {
+        return accessTokenExpiration;
+    }
+
+    public long getRefreshTokenExpiration() {
+        return refreshTokenExpiration;
     }
 
     //access토큰 검증 메소드
@@ -79,4 +91,11 @@ public class JwtProvider {
     }
 
 
+    public Claims parseToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
 }

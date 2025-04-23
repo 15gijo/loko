@@ -18,12 +18,14 @@ import com.team15gijo.post.presentation.dto.v2.PostRequestDtoV2;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j(topic = "Post Service v2")
 @Service
 @RequiredArgsConstructor
 public class PostServiceV2 {
@@ -74,7 +76,12 @@ public class PostServiceV2 {
 
         // 엘라스틱 서치 저장 Kafka 이벤트 발행
         PostElasticsearchRequestDto dto = PostElasticsearchRequestDto.fromV2(post);
-        elasticsearchKafkaProducerService.sendCommentCreate(dto);
+        try {
+                elasticsearchKafkaProducerService.sendPostCreate(dto);
+                log.info("게시글 정보 검색서버로 kafka 전송 완료, postId: {}", post.getPostId());
+            } catch (Exception e) {
+                log.error("게시글 정보 검색서버로 kafka 전송 실패, postId: {}", post.getPostId(), e);
+            }
 
         return post;
     }
@@ -173,6 +180,7 @@ public class PostServiceV2 {
     @Transactional
     public void addCommentCount(UUID postId) {
         // 1) 피드 서비스용 이벤트 (기존 로직 그대로)
+        log.info("add Comment Count 함수 실행 체크");
         PostV2 post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
         kafkaUtil.sendKafkaEvent(EventType.COMMENT_CREATED, post, FEED_EVENTS_TOPIC);

@@ -1,12 +1,11 @@
 package com.team15gijo.search.application.service.v2;
 
 import com.team15gijo.search.application.dto.v1.CursorResultDto;
-import com.team15gijo.search.infrastructure.client.post.PostSearchResponseDto;
-import com.team15gijo.search.infrastructure.client.user.UserSearchResponseDto;
+import com.team15gijo.search.application.dto.v2.PostSearchResponseDto;
+import com.team15gijo.search.application.dto.v2.UserSearchResponseDto;
 import com.team15gijo.search.infrastructure.kafka.dto.PostElasticsearchRequestDto;
 import com.team15gijo.search.infrastructure.kafka.dto.UserElasticsearchRequestDto;
 import java.time.LocalDateTime;
-import java.util.List;
 
 public interface ElasticsearchService {
 

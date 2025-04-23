@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team15gijo.auth.domain.repository.AuthRepository;
 import com.team15gijo.auth.infrastructure.client.UserServiceClient;
 import com.team15gijo.auth.infrastructure.jwt.JwtProvider;
+import com.team15gijo.auth.infrastructure.redis.repository.RefreshTokenRedisRepositoryImpl;
 import com.team15gijo.auth.infrastructure.security.CustomAuthenticationFilter;
 import com.team15gijo.auth.infrastructure.security.CustomAuthenticationProvider;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class SecurityConfig {
     private final ObjectMapper objectMapper;
     private final UserServiceClient userServiceClient;
     private final AuthRepository authRepository;
+    private final RefreshTokenRedisRepositoryImpl refreshTokenRedisRepositoryImpl;
 
     /**
      * Spring Security의 HTTP 보안 필터 체인을 구성 내부 서비스 간 통신 경로는 인증 없이 접근을 허용, 나머지 경로는 인증이 필요
@@ -51,7 +53,8 @@ public class SecurityConfig {
                 authenticationManager,
                 objectMapper,
                 jwtProvider,
-                userServiceClient);
+                userServiceClient,
+                refreshTokenRedisRepositoryImpl);
         filter.setFilterProcessesUrl("/api/v1/auth/login");
 
         http
@@ -59,8 +62,10 @@ public class SecurityConfig {
                 .sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/internal/**", "/api/v1/auth/login", "/api/v1/auth/admin-assign").permitAll()
+                        .requestMatchers("/internal/**", "/api/v1/auth/login", "/api/v2/auth/logout",
+                                "/api/v1/auth/admin-assign", "/api/v2/auth/refresh").permitAll()
                         .requestMatchers("/api/v1/auth/admin/**").hasRole("ADMIN")
+//                        .requestMatchers("/api/v2/auth/logout").hasAuthority("USER")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(customAuthenticationProvider())
