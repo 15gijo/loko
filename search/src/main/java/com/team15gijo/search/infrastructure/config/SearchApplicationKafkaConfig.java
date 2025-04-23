@@ -18,7 +18,7 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 @Configuration
 public class SearchApplicationKafkaConfig {
 
-    @Value("${SPRING_BOOTSTRAP_SERVER}")
+    @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
     @Bean
     public ConsumerFactory<String, PostElasticsearchRequestDto> postConsumerFactory() {
