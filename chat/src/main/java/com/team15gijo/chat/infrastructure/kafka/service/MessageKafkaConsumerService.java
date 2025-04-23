@@ -47,11 +47,14 @@ public class MessageKafkaConsumerService {
                 log.info("[webSocket '/topic/v2/chat/{}' 연결] kafka 컨슈머가 '채팅 메시지' 처리",
                     chatMessageEventDto.getChatRoomId());
                 messagingTemplate.convertAndSend("/topic/v2/chat/" + chatMessageEventDto.getChatRoomId(), savedMessage);
-                log.info("[MessageKafkaConsumerService] 채팅 메시지 처리");
-                // 4. 메시지 전송 알림 처리
-                // 수정이 필요한 사항 : 현재 보내는 사람의 닉네임을 받을 수 없어 임시로 받는 사람의 닉네임을 보냄. 추후 수정 필요
+                log.info("[MessageKafkaConsumerService] 채팅 메시지 처리 완료");
+
+                log.info("[MessageKafkaConsumerService] \uD83D\uDCCC 보내는 사람 senderId:{}, senderNickname:{}", savedMessage.getSenderId(), savedMessage.getSenderNickname());
+                log.info("[MessageKafkaConsumerService] \uD83D\uDCCC 받는 사람 receiverId:{}, receiverNickname:{}",savedMessage.getReceiverId(), savedMessage.getReceiverNickname());
+
+                // 4. 메시지 전송 알림 처리 - 보내는 사람의 닉네임 전달
                 notificationKafkaProducerService.sendChatCreate(ChatNotificationEventDto
-                    .from(chatMessageEventDto.getReceiverId(), chatMessageEventDto.getReceiverNickname(), chatMessageEventDto.getMessageContent()));
+                    .from(chatMessageEventDto.getReceiverId(), chatMessageEventDto.getSenderNickname(), chatMessageEventDto.getMessageContent()));
                 log.info("[MessageKafkaConsumerService] 채팅 메시지 전송 알림 이후 종료");
             }
 
