@@ -15,6 +15,7 @@ import com.team15gijo.user.infrastructure.dto.request.v1.AuthIdentifierUpdateReq
 import com.team15gijo.user.infrastructure.dto.request.v1.AuthPasswordUpdateRequestDto;
 import com.team15gijo.user.infrastructure.dto.request.v1.AuthSignUpRequestDto;
 import com.team15gijo.user.infrastructure.dto.request.v1.AuthSignUpUpdateUserIdRequestDto;
+import com.team15gijo.user.infrastructure.kakao.KakaoMapService;
 import com.team15gijo.user.presentation.dto.internal.response.v1.UserInfoFollowResponseDto;
 import com.team15gijo.user.presentation.dto.request.v1.AdminUserStatusUpdateRequestDto;
 import com.team15gijo.user.presentation.dto.request.v1.UserEmailUpdateRequestDto;
@@ -48,13 +49,18 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     private final UserRepository userRepository;
     private final AuthServiceClient authServiceClient;
     private final KafkaProducerService producerService;
+    private final KakaoMapService kakaoMapService;
 
     @Override
     @Transactional
     public UserSignUpResponseDto createUser(UserSignUpRequestDto userSignUpRequestDto) {
+        //카카오맵 주소 받기
+        String kakaoMapRegion = kakaoMapService.getAddress(userSignUpRequestDto.region());
 
         //유저 생성
-        UserEntity createdUser = userDomainService.createUser(userSignUpRequestDto);
+        UserEntity createdUser = userDomainService.createUser(
+                userSignUpRequestDto.withRegion(kakaoMapRegion)
+        );
 
         //인증 서버로 회원가입 알림
         AuthSignUpRequestDto authSignUpRequestDto =

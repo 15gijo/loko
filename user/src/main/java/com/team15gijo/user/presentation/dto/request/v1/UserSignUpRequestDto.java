@@ -36,5 +36,9 @@ public record UserSignUpRequestDto(
 
 ) {
 
+    public UserSignUpRequestDto withRegion(String kakaoMapRegion) {
+        return new UserSignUpRequestDto(email, password, nickname, username, kakaoMapRegion,
+                profile);
+    }
 }
 
