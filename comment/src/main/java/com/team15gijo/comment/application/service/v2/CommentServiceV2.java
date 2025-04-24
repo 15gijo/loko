@@ -27,7 +27,7 @@ import org.springframework.stereotype.Service;
 public class CommentServiceV2 {
 
     private final CommentRepositoryV2 commentRepository;
-    private final PostClientV2 postClient;  // Feign Client 주입
+    private final PostClientV2 postClient;
     private final KafkaProducerService producerService;
     private final RedisTemplate<String,Object> redisTemplate;
     private final CommentFilter commentFilter;
@@ -77,21 +77,7 @@ public class CommentServiceV2 {
         CommentV2 savedComment = commentRepository.save(comment);
 
         if (!off) {
-            // 4) Redis 캐시 즉시 증분
-            String key = postId.toString();
-            redisTemplate.opsForHash()
-                    .increment(REDIS_COMMENT_COUNT_HASH_KEY, key, 1);
-            redisTemplate.opsForSet()
-                    .add(REDIS_COMMENT_DIRTY_KEY_SET, key);
-
-            // 5) Kafka 이벤트 발행 (카운트 업데이트)
-            producerService.sendCommentCount(
-                    CommentCountEventDto.builder()
-                            .postId(postId)
-                            .delta(1)
-                            .build()
-            );
-
+            postClient.addCommentCount(postId);
 
             // 알림 서버로 카프카 메세지 전송
             producerService.sendCommentCreate(CommentNotificationEventDto.from(
@@ -137,20 +123,9 @@ public class CommentServiceV2 {
             throw new CommentDomainException(CommentDomainExceptionCode.NOT_OWNER);
         }
 
-        // (1) 댓글 삭제
         commentRepository.delete(comment);
-        UUID postId = comment.getPostId();
-        // (2) Redis 즉시 감산
-        String key = postId.toString();
-        redisTemplate.opsForHash().increment(REDIS_COMMENT_COUNT_HASH_KEY, key, -1);
-        redisTemplate.opsForSet().add(REDIS_COMMENT_DIRTY_KEY_SET, key);
-        // (3) Kafka로 delta=-1 이벤트 발행
-        producerService.sendCommentCount(
-                CommentCountEventDto.builder()
-                        .postId(postId)
-                        .delta(-1)
-                        .build()
-        );
+
+        postClient.decreaseCommentCount(comment.getPostId());
     }
 
 }
