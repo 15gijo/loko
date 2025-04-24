@@ -24,6 +24,7 @@ public class ChatMessageDocumentV2 {
     @CreatedBy
     @Column(name = "sender_by", nullable = false, updatable = false)
     private Long senderId;
+    private String senderNickname;
     private Long receiverId;
     private String receiverNickname;
     private ConnectionTypeV2 connectionType;
@@ -51,6 +52,7 @@ public class ChatMessageDocumentV2 {
         return ChatMessageResponseDtoV2.builder()
             .id(_id)
             .senderId(senderId)
+            .senderNickname(senderNickname)
             .receiverId(receiverId)
             .receiverNickname(receiverNickname)
             .connectionType(connectionType)
@@ -83,6 +85,7 @@ public class ChatMessageDocumentV2 {
         return ChatMessageDocumentV2.builder()
             .chatRoomId(request.getChatRoomId())
             .senderId(request.getSenderId())
+            .senderNickname(request.getSenderNickname())
             .receiverId(request.getReceiverId())
             .receiverNickname(request.getReceiverNickname())
             .connectionType(ConnectionTypeV2.CHAT)
@@ -94,10 +97,12 @@ public class ChatMessageDocumentV2 {
 
     // 채팅 에러 메시지 전송
     public static ChatMessageDocumentV2 createErrorMessageDocument(
-        UUID chatRoomId, Long senderId, String messageContent) {
+        UUID chatRoomId, Long senderId, Long receiverId, String receiverNickname, String messageContent) {
         return ChatMessageDocumentV2.builder()
             .chatRoomId(chatRoomId)
             .senderId(senderId)
+            .receiverId(receiverId)
+            .receiverNickname(receiverNickname)
             .connectionType(ConnectionTypeV2.ENTER)
             .chatMessageType(ChatMessageTypeV2.TEXT)
             .messageContent(messageContent)

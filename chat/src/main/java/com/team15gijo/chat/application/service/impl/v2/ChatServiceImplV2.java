@@ -242,16 +242,16 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
      * 수신자 닉네임 검증 및 웹소켓 연결 시, 발송자 닉네임 전달
      */
     @Override
-    public Map<String, Object> validateNickname(String receiverNickname) {
-        Long receiverId = feignClientService.fetchUserIdByNickname(receiverNickname);
-        log.info("receiverId = {}", receiverId);
+    public Map<String, Object> validateNickname(String nickname) {
+        Long userId = feignClientService.fetchUserIdByNickname(nickname);
+        log.info("userId = {}", userId);
 
         Map<String, Object> response = new HashMap<>();
         // 수신자 닉네임 검증 완료
-        if(receiverId != null) {
-            log.info("[validateNickname] receiverId = {}, receiverNickname = {}", receiverId, receiverNickname);
-            response.put("receiverId", receiverId);
-            response.put("receiverNickname", receiverNickname);
+        if(userId != null) {
+            log.info("[validateNickname] userId = {}, nickname = {}", userId, nickname);
+            response.put("userId", userId);
+            response.put("nickname", nickname);
         }
         return response;
     }
@@ -382,6 +382,10 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
         log.info("[ChatServiceImplV2] connectChatRoom 메소드 시작");
 
         String sessionId = headerAccessor.getSessionId();
+        Long receiverId = Long.parseLong(headerAccessor.getSessionAttributes().get("receiverId").toString());
+        String receiverNickname = headerAccessor.getSessionAttributes().get("receiverNickname").toString();
+        log.info("[ChatServiceImplV2] sessionId={}, receiverId={}, receiverNickname={}", sessionId, receiverId, receiverNickname);
+
         String cacheKey = "CHATROOM:" + chatRoomId + ":"+ senderId;
 
         // Redis에 chatRoomId:senderId가 이미 존재하는지 확인
@@ -392,7 +396,10 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
 
             // 카프카 에러 메시지 처리
             String errorMessage = "중복 로그인으로 인해 연결이 거부되었습니다. 해당 채팅방에 다시 접속해주세요.";
-            ChatMessageDocumentV2 errorDocument = createErrorMessageDocument(chatRoomId, senderId, errorMessage);
+            ChatMessageDocumentV2 errorDocument = createErrorMessageDocument(
+                chatRoomId, senderId, receiverId, receiverNickname, errorMessage);
+            log.info("[ChatServiceImplV2] errorDocument={}", errorDocument);
+
             kafkaUtil.sendKafkaEvent(CHAT_ERROR_EVENT_TOPIC, errorDocument);
             log.info("[ChatServiceImplV2] redis 키 중복으로 웹소켓 중복 연결 차단 - Kafka 발행 완료");
         } else {
@@ -420,10 +427,11 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
             if(messageCount == 0) {
                 // chatRoomId에서 senderId가 보낸 메시지가 없는 경우, 입장 메시지 전송하기
                 String messageContent = senderId + "님이 입장하였습니다.";
-                Long receiverId = Long.parseLong(headerAccessor.getSessionAttributes().get("receiverId").toString());
-                String receiverNickname = headerAccessor.getSessionAttributes().get("receiverNickname").toString();
+                log.info("[ChatServiceImplV2] connectChatRoom 메서드 - headerAccessor={}", headerAccessor);
 
-                ChatMessageDocumentV2 firstMessage = createEnterMessageDocument(chatRoomId, senderId, receiverId, receiverNickname, messageContent);
+                ChatMessageDocumentV2 firstMessage = createEnterMessageDocument(
+                    chatRoomId, senderId, receiverId, receiverNickname, messageContent);
+                log.info("[ChatServiceImplV2] firstMessage={}", firstMessage);
 
                 // 카프카 입장 메시지 처리
                 kafkaUtil.sendKafkaEvent(CHAT_MESSAGE_EVENT_TOPIC, firstMessage);
@@ -442,8 +450,22 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
         SimpMessageHeaderAccessor headerAccessor) {
         log.info("[ChatServiceImplV2] sendMessage 메소드 시작");
 
+        Long senderId = Long.parseLong(headerAccessor.getSessionAttributes().get("senderId").toString());
+        Long receiverId = Long.parseLong(headerAccessor.getSessionAttributes().get("receiverId").toString());
+        String receiverNickname = headerAccessor.getSessionAttributes().get("receiverNickname").toString();
+        log.info("[ChatServiceImplV2] senderId={}, receiverId={}, receiverNickname={}", senderId, receiverId, receiverNickname);
+
+        ChatMessageRequestDtoV2 updateMessageRequestDto = ChatMessageRequestDtoV2.builder()
+            .chatRoomId(requestDto.getChatRoomId())
+            .senderId(senderId)
+            .senderNickname(requestDto.getSenderNickname())
+            .receiverId(receiverId)
+            .receiverNickname(receiverNickname)
+            .messageContent(requestDto.getMessageContent())
+            .build();
+
         // 메시지 변환
-        ChatMessageDocumentV2 chatMessage = createChatMessageDocument(requestDto);
+        ChatMessageDocumentV2 chatMessage = createChatMessageDocument(updateMessageRequestDto);
 
         // 카프카 채팅 메시지 처리
         kafkaUtil.sendKafkaEvent(CHAT_MESSAGE_EVENT_TOPIC, chatMessage);

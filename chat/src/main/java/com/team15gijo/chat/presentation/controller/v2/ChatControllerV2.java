@@ -130,10 +130,10 @@ public class ChatControllerV2 {
     /**
      * 수신자 닉네임 검증 및 웹소켓 연결 시, 발송자 닉네임 전달
      */
-    @GetMapping("/validate/nickname/{receiverNickname}")
+    @GetMapping("/validate/nickname/{nickname}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> validateNickname(
-        @PathVariable("receiverNickname") String receiverNickname) {
-        Map<String, Object> response = chatService.validateNickname(receiverNickname);
+        @PathVariable("nickname") String nickname) {
+        Map<String, Object> response = chatService.validateNickname(nickname);
         return ResponseEntity.ok(ApiResponse.success("닉네임 유효성 검증 완료되었습니다.", response));
     }
 
