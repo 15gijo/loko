@@ -11,7 +11,7 @@ public interface ElasticsearchService {
 
     void createElasticPost(PostElasticsearchRequestDto requestDto);
 
-    CursorResultDto<PostSearchResponseDto> searchPost(String keyword, String region, LocalDateTime lastCreatedAt, int size);
+    CursorResultDto<PostSearchResponseDto> searchPost(String keyword, String nickname, String region, LocalDateTime lastCreatedAt, int size);
 
     void createElasticUser(UserElasticsearchRequestDto dto);
 

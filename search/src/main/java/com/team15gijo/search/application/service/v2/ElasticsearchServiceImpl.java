@@ -38,6 +38,7 @@ public class ElasticsearchServiceImpl implements ElasticsearchService {
     @Override
     public CursorResultDto<PostSearchResponseDto> searchPost(
             String keyword,
+            String nickname,
             String region,
             LocalDateTime lastCreatedAt,
             int size
@@ -51,7 +52,7 @@ public class ElasticsearchServiceImpl implements ElasticsearchService {
         Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         List<PostDocument> results = postElasticsearchRepository
-                .searchPosts(keyword, region, createdAtStr, pageable);
+                .searchPosts(keyword, nickname, region, createdAtStr, pageable);
 
         List<PostSearchResponseDto> items = results.stream()
                 .map(PostSearchResponseDto::from)
@@ -84,7 +85,7 @@ public class ElasticsearchServiceImpl implements ElasticsearchService {
         Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "userId"));
 
         List<UserDocument> users = userElasticsearchRepository.searchUsers(
-                keyword, region, userId, lastUserId, nickname, pageable
+                keyword, region, userId, lastUserId, pageable
         );
 
         List<UserSearchResponseDto> items = users.stream()

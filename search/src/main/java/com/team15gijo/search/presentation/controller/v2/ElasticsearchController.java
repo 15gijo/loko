@@ -31,11 +31,13 @@ public class ElasticsearchController {
             @RequestParam(name = "keyword") String keyword,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastCreatedAt,
             @RequestParam(defaultValue = "10") int size,
+            @RequestHeader("X-User-Nickname") String encodedNickname,
             @RequestHeader("X-User-Region") String encodedRegion) {
         log.info("게시글 검색 시작");
         String region = URLDecoder.decode(encodedRegion, StandardCharsets.UTF_8);
-        log.info("region : {}, size : {}, keyword : {}, lastCreatedAt : {}", region, size, keyword, lastCreatedAt);
-        return ResponseEntity.ok(ApiResponse.success("게시글 검색 성공", elasticsearchService.searchPost(keyword, region, lastCreatedAt, size)));
+        String nickname = URLDecoder.decode(encodedNickname, StandardCharsets.UTF_8);
+        log.info("nickname : {},  region : {}, size : {}, keyword : {}, lastCreatedAt : {}", nickname, region, size, keyword, lastCreatedAt);
+        return ResponseEntity.ok(ApiResponse.success("게시글 검색 성공", elasticsearchService.searchPost(keyword, nickname, region, lastCreatedAt, size)));
     }
 
     @GetMapping("/user")

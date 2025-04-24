@@ -5,7 +5,12 @@
     },
     "username": {
       "type": "text",
-      "analyzer": "korean"
+      "analyzer": "korean",
+      "fields": {
+        "keyword": {
+          "type": "keyword"
+        }
+      }
     },
     "postContent": {
       "type": "text",
