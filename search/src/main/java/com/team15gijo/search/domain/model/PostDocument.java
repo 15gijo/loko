@@ -1,6 +1,7 @@
 package com.team15gijo.search.domain.model;
 
-import com.team15gijo.search.infrastructure.kafka.dto.PostElasticsearchRequestDto;
+import com.team15gijo.search.infrastructure.kafka.dto.v1.PostElasticsearchRequestDto;
+import com.team15gijo.search.infrastructure.kafka.dto.v2.PostUpdatedEventDto;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -64,5 +65,31 @@ public class PostDocument {
                 .region(dto.getRegion())
                 .createdAt(dto.getCreatedAt())
                 .build();
+    }
+
+    public void updateFeed(PostUpdatedEventDto dto) {
+        this.username = dto.getUsername();
+        this.region = dto.getRegion();
+        this.postContent = dto.getPostContent();
+        this.hashtags = dto.getHashtags();
+        this.views = dto.getViews();
+        this.commentCount = dto.getCommentCount();
+        this.likeCount = dto.getLikeCount();
+        this.createdAt = dto.getCreatedAt();
+    }
+
+    public void updateViews(int views) {
+        this.views = views;
+    }
+
+//    public void updateFeedPopularityScore(double score) {
+//        this.popularityScore = score;
+//    }
+
+    public void updateCommentCount(int commentCount) {
+        this.commentCount = commentCount;
+    }
+    public void updateLikeCount(int likeCount) {
+        this.likeCount = likeCount;
     }
 }

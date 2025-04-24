@@ -1,8 +1,8 @@
-package com.team15gijo.search.infrastructure.kafka.service;
+package com.team15gijo.search.infrastructure.kafka.service.v1;
 
 import com.team15gijo.search.application.service.v2.ElasticsearchService;
-import com.team15gijo.search.infrastructure.kafka.dto.PostElasticsearchRequestDto;
-import com.team15gijo.search.infrastructure.kafka.dto.UserElasticsearchRequestDto;
+import com.team15gijo.search.infrastructure.kafka.dto.v1.PostElasticsearchRequestDto;
+import com.team15gijo.search.infrastructure.kafka.dto.v1.UserElasticsearchRequestDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;

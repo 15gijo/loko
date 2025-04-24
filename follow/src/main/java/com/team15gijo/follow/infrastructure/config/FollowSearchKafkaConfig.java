@@ -1,22 +1,28 @@
-package com.team15gijo.user.infrastructure.config;
+package com.team15gijo.follow.infrastructure.config;
 
-import com.team15gijo.user.infrastructure.kafka.dto.UserElasticsearchRequestDto;
+import com.team15gijo.follow.infrastructure.kafka.dto.FollowUpdateKafkaRequestDto;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
+@EnableKafka
 @Configuration
-public class UserApplicationKafkaConfig {
+public class FollowSearchKafkaConfig {
+
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
 
     @Bean
-    public ProducerFactory<String, UserElasticsearchRequestDto> searchProducerFactory() {
+    public ProducerFactory<String, FollowUpdateKafkaRequestDto> searchProducerFactory() {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -25,7 +31,8 @@ public class UserApplicationKafkaConfig {
     }
 
     @Bean
-    public KafkaTemplate<String, UserElasticsearchRequestDto> searchKafkaTemplate() {
+    public KafkaTemplate<String, FollowUpdateKafkaRequestDto> searchKafkaTemplate() {
         return new KafkaTemplate<>(searchProducerFactory());
     }
+
 }

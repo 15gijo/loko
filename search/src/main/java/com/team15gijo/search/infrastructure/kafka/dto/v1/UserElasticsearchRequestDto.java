@@ -1,4 +1,4 @@
-package com.team15gijo.search.infrastructure.kafka.dto;
+package com.team15gijo.search.infrastructure.kafka.dto.v1;
 
 import com.team15gijo.search.domain.model.UserDocument;
 import lombok.AllArgsConstructor;
