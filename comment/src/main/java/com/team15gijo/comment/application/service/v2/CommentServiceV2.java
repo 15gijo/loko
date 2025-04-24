@@ -54,7 +54,7 @@ public class CommentServiceV2 {
         commentFilter.validateContent(request.getCommentContent());
 
         // AI 자동 숨김 검사
-        boolean off = moderationClient
+        boolean isOffensive  = moderationClient
                 .moderate(new ModerationRequestDto(request.getCommentContent()))
                 .isOffensive();
 
@@ -73,10 +73,10 @@ public class CommentServiceV2 {
         }
 
         CommentV2 comment = CommentV2.createComment(postId, userId, username, request.getCommentContent(), request.getParentCommentId(), depth);
-        if (off) comment.markHidden();
+        if (isOffensive ) comment.markHidden();
         CommentV2 savedComment = commentRepository.save(comment);
 
-        if (!off) {
+        if (!isOffensive) {
             postClient.addCommentCount(postId);
 
             // 알림 서버로 카프카 메세지 전송
@@ -125,7 +125,9 @@ public class CommentServiceV2 {
 
         commentRepository.delete(comment);
 
-        postClient.decreaseCommentCount(comment.getPostId());
+        if (!comment.isHidden()) {
+            postClient.decreaseCommentCount(comment.getPostId());
+        }
     }
 
 }

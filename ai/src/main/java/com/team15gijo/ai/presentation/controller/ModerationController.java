@@ -15,7 +15,7 @@ public class ModerationController {
 
     @PostMapping
     public ResponseEntity<ModerationResponseDto> moderate(@RequestBody ModerationRequestDto request) {
-        boolean off = moderationService.isOffensive(request.getCommentContent());
-        return ResponseEntity.ok(new ModerationResponseDto(off));
+        boolean isOffensive  = moderationService.isOffensive(request.getCommentContent());
+        return ResponseEntity.ok(new ModerationResponseDto(isOffensive ));
     }
 }

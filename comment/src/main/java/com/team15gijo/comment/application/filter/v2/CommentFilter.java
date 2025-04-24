@@ -1,4 +1,3 @@
-// src/main/java/com/team15gijo/comment/application/filter/CommentFilter.java
 
 package com.team15gijo.comment.application.filter.v2;
 
