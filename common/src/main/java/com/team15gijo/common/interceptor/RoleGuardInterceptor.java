@@ -21,6 +21,8 @@ public class RoleGuardInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response,
             Object handler) throws Exception {
 
+        log.info("롤 가드 인터셉터 실행!");
+
         //컨트롤러 mvc 매서드 아닌 경우 통과
         if (!(handler instanceof HandlerMethod handlerMethod)) {
             return true;
