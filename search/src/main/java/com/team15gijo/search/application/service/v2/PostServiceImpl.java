@@ -28,7 +28,7 @@ public class PostServiceImpl implements PostService {
         log.info("✅ POST_CREATED received: {}", dto.toString());
         PostDocument post  = dto.toEntity();
         postElasticsearchRepository.save(post);
-        log.info("Feed 정보 저장 완료 - postId: {}", post.getPostId());
+        log.info("게시글의 정보 저장 완료 - postId: {}", post.getPostId());
     }
 
     @Override
@@ -42,7 +42,7 @@ public class PostServiceImpl implements PostService {
         }
         post.updateFeed(dto);
         postElasticsearchRepository.save(post);
-        log.info("Feed 정보 수정 완료 - postId: {}", post.getPostId());
+        log.info("게시글의 정보 수정 완료 - postId: {}", post.getPostId());
     }
 
     @Override
@@ -51,10 +51,17 @@ public class PostServiceImpl implements PostService {
         // TODO: DB 업데이트 / Redis 제거 / 상태 동기화
         PostDocument post  = postElasticsearchRepository.findById(dto.getPostId()).orElse(null);
         if (post == null) {
-            log.warn("Feed not found for postId: {}", dto.getPostId());
+            log.warn("post not found for postId: {}", dto.getPostId());
             return;
         }
-        postElasticsearchRepository.delete(post);
+        try {
+            postElasticsearchRepository.delete(post);
+            log.info("게시글 삭제 완료 - postId: {}", post.getPostId());
+        } catch (Exception e) {
+            log.error("게시글 삭제 중 오류 발생 - postId: {}, error: {}", post.getPostId(), e.getMessage(), e);
+
+        }
+
     }
 
     @Override
@@ -68,8 +75,7 @@ public class PostServiceImpl implements PostService {
         }
         post.updateViews(dto.getViews());
         postElasticsearchRepository.save(post);
-//        updatePopularityScore(dto.getPostId()); //인기 점수 갱신
-        log.info("Feed 정보(조회수) 수정 완료 - postId: {}", post.getPostId());
+        log.info("게시글의 정보(조회수) 수정 완료 - postId: {}", post.getPostId());
     }
 
     @Override
@@ -83,8 +89,7 @@ public class PostServiceImpl implements PostService {
         }
         post.updateCommentCount(dto.getCommentCount());
         postElasticsearchRepository.save(post);
-//        updatePopularityScore(dto.getPostId()); //인기 점수 갱신
-        log.info("Feed 댓글 수 수정 완료 - postId: {}", post.getPostId());
+        log.info("게시글의 댓글 수 수정 완료 - postId: {}", post.getPostId());
     }
 
     @Override
@@ -98,8 +103,7 @@ public class PostServiceImpl implements PostService {
         }
         post.updateCommentCount(dto.getCommentCount());
         postElasticsearchRepository.save(post);
-//        updatePopularityScore(dto.getPostId()); //인기 점수 갱신
-        log.info("Feed 댓글 수 수정 완료 - postId: {}", post.getPostId());
+        log.info("게시글의 댓글 수 수정 완료 - postId: {}", post.getPostId());
     }
 
     @Override
@@ -108,13 +112,12 @@ public class PostServiceImpl implements PostService {
         // TODO: 좋아요 수 증가 처리
         PostDocument post  = postElasticsearchRepository.findById(dto.getPostId()).orElse(null);
         if (post == null) {
-            log.warn("Feed not found for postId: {}", dto.getPostId());
+            log.warn("post not found for postId: {}", dto.getPostId());
             return;
         }
         post.updateLikeCount(dto.getLikeCount());
         postElasticsearchRepository.save(post);
-//        updatePopularityScore(dto.getPostId()); //인기 점수 갱신
-        log.info("Feed 좋아요 수 수정 완료 - postId: {}", post.getPostId());
+        log.info("게시글의 좋아요 수 수정 완료 - postId: {}", post.getPostId());
     }
 
     @Override
@@ -128,7 +131,6 @@ public class PostServiceImpl implements PostService {
         }
         post.updateLikeCount(dto.getLikeCount());
         postElasticsearchRepository.save(post);
-//        updatePopularityScore(dto.getPostId()); //인기 점수 갱신
-        log.info("Feed 좋아요 수 수정 완료 - postId: {}", post.getPostId());
+        log.info("게시글의 좋아요 수 수정 완료 - postId: {}", post.getPostId());
     }
 }
