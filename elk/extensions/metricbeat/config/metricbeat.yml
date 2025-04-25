@@ -51,11 +51,25 @@ metricbeat.modules:
     hosts: [unix:///var/run/docker.sock]
     period: 10s
     enabled: true
-  - module: prometheus # Spring Boot 패키지 정보와 일치시켜야 함
+  - module: prometheus
     period: 10s
-    hosts: ["http://host.docker.internal:8090/actuator/prometheus"]
-    metrics_path: /actuator/prometheus
+    hosts: [ "http://host.docker.internal:19096/actuator/prometheus" ]
     namespace: springboot
+    metrics_path: /actuator/prometheus
+    metrics:
+      - job_name: 'spring-app'
+        static_configs:
+          - targets: [ "host.docker.internal:19096" ]
+        metric_relabel_configs:
+          - source_labels: [ __name__ ]
+            regex: 'http_server_requests_seconds_(count|sum)'
+            action: keep
+          - source_labels: [ __name__ ]
+            regex: 'system_cpu_usage'
+            action: keep
+          - source_labels: [ __name__ ]
+            regex: '.*'
+            action: keep
 
 processors:
   - add_cloud_metadata: ~

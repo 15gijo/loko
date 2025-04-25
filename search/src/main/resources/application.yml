@@ -99,7 +99,7 @@ resilience4j:
         permittedNumberOfCallsInHalfOpenState: 3
         waitDurationInOpenState: 20s
 
-#
+
 #logging:
 #  config: classpath:logback-spring.xml
 #  level:
