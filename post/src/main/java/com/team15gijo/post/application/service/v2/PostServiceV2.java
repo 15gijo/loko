@@ -75,13 +75,13 @@ public class PostServiceV2 {
         kafkaUtil.sendKafkaEvent(EventType.POST_CREATED, post, FEED_EVENTS_TOPIC);
 
         // 엘라스틱 서치 저장 Kafka 이벤트 발행
-        PostElasticsearchRequestDto dto = PostElasticsearchRequestDto.fromV2(post);
-        try {
-                elasticsearchKafkaProducerService.sendPostCreate(dto);
-                log.info("게시글 정보 검색서버로 kafka 전송 완료, postId: {}", post.getPostId());
-            } catch (Exception e) {
-                log.error("게시글 정보 검색서버로 kafka 전송 실패, postId: {}", post.getPostId(), e);
-            }
+//        PostElasticsearchRequestDto dto = PostElasticsearchRequestDto.fromV2(post);
+//        try {
+//                elasticsearchKafkaProducerService.sendPostCreate(dto);
+//                log.info("게시글 정보 검색서버로 kafka 전송 완료, postId: {}", post.getPostId());
+//            } catch (Exception e) {
+//                log.error("게시글 정보 검색서버로 kafka 전송 실패, postId: {}", post.getPostId(), e);
+//            }
 
         return post;
     }

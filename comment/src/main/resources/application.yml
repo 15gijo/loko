@@ -36,6 +36,15 @@ spring:
       port: 6379
       password: ${REDIS_PASSWORD}
 
+comment:
+  blacklist:
+    - "바보"
+    - "멍청이"
+    - "쓰레기"
+ai:
+  service:
+    url: http://localhost:19095
+
 eureka:
   client:
     service-url:

@@ -2,9 +2,13 @@ package com.team15gijo.comment.application.service.v2;
 
 import com.team15gijo.comment.domain.exception.CommentDomainException;
 import com.team15gijo.comment.domain.exception.CommentDomainExceptionCode;
+import com.team15gijo.comment.application.filter.v2.CommentFilter;
 import com.team15gijo.comment.domain.model.v2.CommentV2;
 import com.team15gijo.comment.domain.repository.v2.CommentRepositoryV2;
 import com.team15gijo.comment.infrastructure.client.v2.PostClientV2;
+import com.team15gijo.comment.infrastructure.client.v2.ai.ContentModerationClient;
+import com.team15gijo.comment.infrastructure.client.v2.ai.ModerationResponseDto;
+import com.team15gijo.comment.infrastructure.client.v2.ai.ModerationRequestDto;
 import com.team15gijo.comment.infrastructure.kafka.dto.CommentCountEventDto;
 import com.team15gijo.comment.infrastructure.kafka.dto.CommentNotificationEventDto;
 import com.team15gijo.comment.infrastructure.kafka.service.KafkaProducerService;
@@ -23,9 +27,11 @@ import org.springframework.stereotype.Service;
 public class CommentServiceV2 {
 
     private final CommentRepositoryV2 commentRepository;
-    private final PostClientV2 postClient;  // Feign Client 주입
+    private final PostClientV2 postClient;
     private final KafkaProducerService producerService;
     private final RedisTemplate<String,Object> redisTemplate;
+    private final CommentFilter commentFilter;
+    private final ContentModerationClient moderationClient;
 
     private static final String REDIS_COMMENT_COUNT_HASH_KEY = "comments:buffer";
     private static final String REDIS_COMMENT_DIRTY_KEY_SET  = "comments:dirty-keys";
@@ -36,11 +42,23 @@ public class CommentServiceV2 {
      */
     @Transactional
     public CommentV2 createComment(long userId, String username, UUID postId, CommentRequestDtoV2 request) {
+
         // Feign Client 호출로 게시글 존재 여부 확인
         ApiResponse<Boolean> existsResponse = postClient.exists(postId);
         if (existsResponse.getData() == null || !existsResponse.getData()) {
             throw new CommentDomainException(CommentDomainExceptionCode.POST_NOT_FOUND);
         }
+
+
+        // 정적 금지어 검사
+        commentFilter.validateContent(request.getCommentContent());
+
+        // AI 자동 숨김 검사
+        boolean isOffensive  = moderationClient
+                .moderate(new ModerationRequestDto(request.getCommentContent()))
+                .isOffensive();
+
+
 
         int depth = 0;
         if (request.getParentCommentId() != null) {
@@ -55,29 +73,19 @@ public class CommentServiceV2 {
         }
 
         CommentV2 comment = CommentV2.createComment(postId, userId, username, request.getCommentContent(), request.getParentCommentId(), depth);
+        if (isOffensive ) comment.markHidden();
         CommentV2 savedComment = commentRepository.save(comment);
-        // 4) Redis 캐시 즉시 증분
-        String key = postId.toString();
-        redisTemplate.opsForHash()
-                .increment(REDIS_COMMENT_COUNT_HASH_KEY, key, 1);
-        redisTemplate.opsForSet()
-                .add(REDIS_COMMENT_DIRTY_KEY_SET, key);
 
-        // 5) Kafka 이벤트 발행 (카운트 업데이트)
-        producerService.sendCommentCount(
-                CommentCountEventDto.builder()
-                        .postId(postId)
-                        .delta(1)
-                        .build()
-        );
+        if (!isOffensive) {
+            postClient.addCommentCount(postId);
 
+            // 알림 서버로 카프카 메세지 전송
+            producerService.sendCommentCreate(CommentNotificationEventDto.from(
+                    request.getReceiverId(),
+                    username,
+                    request.getCommentContent()));
 
-        // 알림 서버로 카프카 메세지 전송
-        producerService.sendCommentCreate(CommentNotificationEventDto.from(
-                request.getReceiverId(),
-                username,
-                request.getCommentContent()));
-
+        }
         return savedComment;
     }
 
@@ -85,7 +93,7 @@ public class CommentServiceV2 {
      * 특정 게시글의 댓글 목록 조회 (페이징)
      */
     public Page<CommentV2> getCommentsByPostId(UUID postId, Pageable pageable) {
-        return commentRepository.findByPostId(postId, pageable);
+        return commentRepository.findByPostIdAndIsHiddenFalse(postId, pageable);
     }
 
     /**
@@ -115,20 +123,11 @@ public class CommentServiceV2 {
             throw new CommentDomainException(CommentDomainExceptionCode.NOT_OWNER);
         }
 
-        // (1) 댓글 삭제
         commentRepository.delete(comment);
-        UUID postId = comment.getPostId();
-        // (2) Redis 즉시 감산
-        String key = postId.toString();
-        redisTemplate.opsForHash().increment(REDIS_COMMENT_COUNT_HASH_KEY, key, -1);
-        redisTemplate.opsForSet().add(REDIS_COMMENT_DIRTY_KEY_SET, key);
-        // (3) Kafka로 delta=-1 이벤트 발행
-        producerService.sendCommentCount(
-                CommentCountEventDto.builder()
-                        .postId(postId)
-                        .delta(-1)
-                        .build()
-        );
+
+        if (!comment.isHidden()) {
+            postClient.decreaseCommentCount(comment.getPostId());
+        }
     }
 
 }

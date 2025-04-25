@@ -14,35 +14,42 @@ public interface PostElasticsearchRepository extends ElasticsearchRepository<Pos
     List<PostDocument> findByPostContentContainingAndUsernameContainingAndRegion(String content, String username, String region);
 
     @Query("""
-    {
-      "bool": {
-        "must": [
-          {
-            "term": {
-              "region.keyword": "?1"
-            }
-          },
-          {
-            "bool": {
-              "should": [
-                { "match": { "username": "?0" } },
-                { "match": { "postContent": "?0" } },
-                { "match": { "hashtags": "?0" } }
-              ]
-            }
-          }
-        ],
-        "filter": [
-          {
-            "range": {
-              "createdAt": {
-                "lt": "?2"
+            {
+              "bool": {
+                "must": [
+                  {
+                    "term": {
+                      "region.keyword": "?2"
+                    }
+                  },
+                  {
+                    "bool": {
+                      "should": [
+                        { "match": { "username": "?0" } },
+                        { "match": { "postContent": "?0" } },
+                        { "match": { "hashtags": "?0" } }
+                      ]
+                    }
+                  }
+                ],
+                "must_not": [
+                  {
+                    "term": {
+                      "username.keyword": "?1"
+                    }
+                  }
+                ],
+                "filter": [
+                  {
+                    "range": {
+                      "createdAt": {
+                        "lt": "?3"
+                      }
+                    }
+                  }
+                ]
               }
             }
-          }
-        ]
-      }
-    }
-    """)
-    List<PostDocument> searchPosts(String keyword, String region, String createdAt, Pageable pageable);
+            """)
+    List<PostDocument> searchPosts(String keyword, String nickname, String region, String createdAt, Pageable pageable);
 }

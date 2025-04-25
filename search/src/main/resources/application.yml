@@ -19,6 +19,10 @@ spring:
     uris: http://localhost:9200
     username: ${ELASTIC_USERNAME}
     password: ${ELASTIC_PASSWORD}
+  data:
+    elasticsearch:
+      repositories:
+        enabled: true
   kafka:
     bootstrap-servers: localhost:9092
     producer:
@@ -28,6 +32,7 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       auto-offset-reset: earliest
+
 
 
 server:
