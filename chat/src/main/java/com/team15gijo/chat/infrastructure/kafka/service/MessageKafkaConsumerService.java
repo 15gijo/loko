@@ -39,12 +39,6 @@ public class MessageKafkaConsumerService {
         backoff = @Backoff(delay = 1000, maxDelay = 3000, random = true), // 1~3초 랜덤 재시도
         dltStrategy = DltStrategy.FAIL_ON_ERROR, // 재시도 실패 후 DLQ 이동
         dltTopicSuffix = "-dlt", // DLQ 토픽 접미사
-//        include = { // 재시도할 예외 클래스 리스트
-//            RuntimeException.class, // 데이터 불일치 및 형변환 오류 등 예외
-//            MongoTimeoutException.class, // MongoDB 연결 또는 타임아웃 발생 예외
-//            MessagingException.class, // WebSocket 관련 예외
-//            KafkaException.class // Kafka Producer에서 브로커 전송하는 과정 예외
-//        },
         exclude = { // 즉시 DLQ 전송 예외 클래스 리스트
             MongoQueryException.class, // 쿼리 실행 중 오류
             MongoSecurityException.class, // 인증 또는 권한 부여 실패 예외
@@ -59,12 +53,12 @@ public class MessageKafkaConsumerService {
         try {
             // 1. 메시지 변환
             ChatMessageDocumentV2 savedMessage = ChatMessageEventDto.from(chatMessageEventDto);
-            // TODO: 예외 발생 시나리오 -> 임시 코드(테스트 이후 삭제 예정)
-            if(savedMessage.getMessageContent().contains("retry")) {
-                throw new RuntimeException("런타임 아웃 오류 발생");
-            } else if(savedMessage.getMessageContent().contains("dlt")) {
-                throw new NullPointerException("데이터 null 값으로 인한 오류 발생");
-            }
+//            // TODO: 예외 발생 시나리오 -> 임시 코드(테스트 이후 삭제 예정)
+//            if(savedMessage.getMessageContent().contains("retry")) {
+//                throw new RuntimeException("런타임 아웃 오류 발생");
+//            } else if(savedMessage.getMessageContent().contains("dlt")) {
+//                throw new NullPointerException("데이터 null 값으로 인한 오류 발생");
+//            }
             // 2. mongoDB 메시지 저장
             chatMessageRepository.save(savedMessage);
             log.info("[mongoDB 저장] - messageContent: {}", savedMessage.getMessageContent());
@@ -100,7 +94,7 @@ public class MessageKafkaConsumerService {
     // DLQ 처리를 위한 카프카 리스너
     @KafkaListener(topics = MESSAGE_DLT_TOPIC, groupId = "chat-service")
     public void handleChatMessageEventDlt(ChatMessageEventDto chatMessageEventDto) {
-        log.error("[MessageKafkaConsumerService] handleChatMessageEventDlt 메서드 실행");
+        log.info("[MessageKafkaConsumerService] handleChatMessageEventDlt 메서드 실행");
 
         // kafka에 저장된 데이터를 슬랙 알림 연동으로 에러 발생 시, 모니터링 및 수동으로 오류 해결
         slackNotificationService.handleDltMessage(chatMessageEventDto, MESSAGE_DLT_TOPIC);

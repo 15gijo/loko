@@ -33,8 +33,8 @@ public class SlackNotificationService {
      * kafka Listener에서 호출하여 slack 채널에 에러 메시지 전송
      */
     public void handleDltMessage(ChatMessageEventDto chatMessageEventDto, String topic) {
-        log.error("[SlackNotificationService] handleDltMessage 메서드 실행");
-        log.error("[SlackNotificationService] topic: {}", topic);
+        log.info("[SlackNotificationService] handleDltMessage 메서드 실행");
+        log.info("[SlackNotificationService] topic: {}", topic);
 
         try {
             log.error("[SlackNotificationService] DLT로 이동된 메시지: {}", chatMessageEventDto.getMessageContent());
@@ -45,12 +45,12 @@ public class SlackNotificationService {
             log.error("[SlackNotificationService] DLT 메시지 처리 중 오류 발생:{}", e.getMessage());
             throw new CustomException(ChatDomainExceptionCode.KAFKA_DLT_PROCESS_ERROR);
         }
-        log.error("[SlackNotificationService] handleDltMessage 메서드 종료");
+        log.info("[SlackNotificationService] handleDltMessage 메서드 종료");
     }
 
     // 슬랙 알림 메시지 전송
     private void sendSlackNotification(ChatMessageEventDto chatMessageEventDto, String topic) {
-        log.error("[SlackNotificationService] sendSlackNotification 메서드 실행");
+        log.info("[SlackNotificationService] sendSlackNotification 메서드 실행");
         try {
             // 슬랙 메시지 전송 template 변환
             List<Map<String, Object>> blocks = blockTemplate(chatMessageEventDto, topic);
@@ -75,12 +75,12 @@ public class SlackNotificationService {
             throw new CustomException(ChatDomainExceptionCode.SEND_NOTIFICATION_TO_SLACK_FOR_JSON);
         } catch (RestClientException e) {
             log.error("[SlackNotificationService] 슬랙 알림 전송 실패 - ErrorMessage:{}", e.getMessage());
-            throw e;
+            throw new CustomException(ChatDomainExceptionCode.SEND_NOTIFICATION_TO_SLACK_ERROR, e);
         } catch (Exception e) {
             log.error("[SlackNotificationService] 그 외 슬랙 알림 전송 실패 - ErrorMessage:{}", e.getMessage());
             throw new CustomException(ChatDomainExceptionCode.SEND_NOTIFICATION_TO_SLACK_ERROR);
         }
-        log.error("[SlackNotificationService] sendSlackNotification 메서드 종료");
+        log.info("[SlackNotificationService] sendSlackNotification 메서드 종료");
     }
 
     // 슬랙 메시지 전송 template 변환
