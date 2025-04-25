@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v2/search")
-@Slf4j(topic = "검색 Controller")
+@Slf4j
 public class ElasticsearchController {
 
     private final ElasticsearchService elasticsearchService;

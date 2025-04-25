@@ -1,54 +1,37 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<configuration>
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration scan="true" scanPeriod="30 seconds">
+  <!-- 콘솔에 로그 출력 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+        <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n</pattern>
+      </encoder>
+    </appender>
 
-  <include resource="net/logstash/logback/logstash-logback-encoder.xml"/>
+    <!-- Logstash로 로그 전송 -->
+    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <param name="Encoding" value="UTF-8"/>
+        <destination>localhost:50000</destination>
 
-  <!-- 콘솔 출력용 Appender -->
-  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-      <charset>UTF-8</charset>
-    </encoder>
-  </appender>
+        <!--        <encoder class="net.logstash.logback.encoder.LogstashEncoder" />-->
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+            <timestamp>
+                <timeZone>UTC</timeZone>
+            </timestamp>
+            <logLevel />
+            <loggerName />
+            <threadName />
+            <mdc />
+            <message />
+            <stackTrace />
+            <context />
+            </providers>
+        </encoder>
+    </appender>
 
-  <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-    <destination>localhost:50000</destination>
-    <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-      <providers>
-        <timestamp>
-          <timeZone>Asia/Seoul</timeZone>
-        </timestamp>
-        <pattern>
-          <pattern>
-            {
-            "level": "%level",
-            "logger": "%logger",
-            "thread": "%thread",
-            "message": "%message"
-            }
-          </pattern>
-        </pattern>
-      </providers>
-    </encoder>
-  </appender>
+    <root level="INFO">
+      <appender-ref ref="CONSOLE" />
+      <appender-ref ref="LOGSTASH" />
+    </root>
 
-  <root level="INFO">
-    <appender-ref ref="CONSOLE"/>
-    <appender-ref ref="LOGSTASH"/>
-  </root>
-
-  <logger name="org.springframework" level="WARN" additivity="false">
-    <appender-ref ref="CONSOLE"/>
-    <appender-ref ref="LOGSTASH"/>
-  </logger>
-
-  <logger name="com.team15gijo" level="DEBUG" additivity="false">
-    <appender-ref ref="CONSOLE"/>
-    <appender-ref ref="LOGSTASH"/>
-  </logger>
-
-  <logger name="reactor" level="WARN" additivity="false">
-    <appender-ref ref="CONSOLE"/>
-    <appender-ref ref="LOGSTASH"/>
-  </logger>
 </configuration>

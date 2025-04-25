@@ -20,7 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j(topic = "검색 Service")
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
