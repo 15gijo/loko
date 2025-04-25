@@ -77,7 +77,7 @@ public class ElasticsearchServiceImpl implements ElasticsearchService {
 
     @Override
     public CursorResultDto<UserSearchResponseDto> searchUser(String keyword, Long userId,
-            String nickname, String region, Long lastUserId, int size) {
+            String region, Long lastUserId, int size) {
         if (lastUserId == null) {
             lastUserId = Long.MAX_VALUE;
         }

@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PostDeletedEventDto {
+public class PostDeletedEventDto implements EsEventDto {
     @Builder.Default
     private EventType type = EventType.POST_DELETED;
     private UUID postId;
