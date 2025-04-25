@@ -7,8 +7,8 @@ import com.team15gijo.search.domain.repository.PostElasticsearchRepository;
 import com.team15gijo.search.domain.repository.UserElasticsearchRepository;
 import com.team15gijo.search.application.dto.v2.PostSearchResponseDto;
 import com.team15gijo.search.application.dto.v2.UserSearchResponseDto;
-import com.team15gijo.search.infrastructure.kafka.dto.PostElasticsearchRequestDto;
-import com.team15gijo.search.infrastructure.kafka.dto.UserElasticsearchRequestDto;
+import com.team15gijo.search.infrastructure.kafka.dto.v1.PostElasticsearchRequestDto;
+import com.team15gijo.search.infrastructure.kafka.dto.v1.UserElasticsearchRequestDto;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -38,6 +38,7 @@ public class ElasticsearchServiceImpl implements ElasticsearchService {
     @Override
     public CursorResultDto<PostSearchResponseDto> searchPost(
             String keyword,
+            String nickname,
             String region,
             LocalDateTime lastCreatedAt,
             int size
@@ -51,7 +52,7 @@ public class ElasticsearchServiceImpl implements ElasticsearchService {
         Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         List<PostDocument> results = postElasticsearchRepository
-                .searchPosts(keyword, region, createdAtStr, pageable);
+                .searchPosts(keyword, nickname, region, createdAtStr, pageable);
 
         List<PostSearchResponseDto> items = results.stream()
                 .map(PostSearchResponseDto::from)
@@ -84,7 +85,7 @@ public class ElasticsearchServiceImpl implements ElasticsearchService {
         Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "userId"));
 
         List<UserDocument> users = userElasticsearchRepository.searchUsers(
-                keyword, region, userId, lastUserId, nickname, pageable
+                keyword, region, userId, lastUserId, pageable
         );
 
         List<UserSearchResponseDto> items = users.stream()

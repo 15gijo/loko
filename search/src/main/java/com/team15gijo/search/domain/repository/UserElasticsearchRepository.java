@@ -31,8 +31,7 @@ public interface UserElasticsearchRepository extends ElasticsearchRepository<Use
           {
             "bool": {
               "must": [
-                { "term": { "userId": "?2" } },
-                { "term": { "nickname": "?4" } }
+                { "term": { "userId": "?2" } }
               ]
             }
           }
@@ -49,6 +48,6 @@ public interface UserElasticsearchRepository extends ElasticsearchRepository<Use
       }
     }
     """)
-    List<UserDocument> searchUsers(String keyword, String region, Long userId, Long lastUserId, String nickname, Pageable pageable);
+    List<UserDocument> searchUsers(String keyword, String region, Long userId, Long lastUserId, Pageable pageable);
 
 }
