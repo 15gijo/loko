@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class ChatMessageEventDto {
+    private String id;
     private UUID chatRoomId; // 채팅방 id
     private Long senderId; // 보내는 사람 id
     private String senderNickname; // 보내는 사람 닉네임
@@ -27,6 +28,7 @@ public class ChatMessageEventDto {
 
     public static ChatMessageEventDto from(ChatMessageDocumentV2 chatMessage) {
         return ChatMessageEventDto.builder()
+            .id(chatMessage.get_id())
             .chatRoomId(chatMessage.getChatRoomId())
             .senderId(chatMessage.getSenderId())
             .senderNickname(chatMessage.getSenderNickname())
@@ -41,6 +43,7 @@ public class ChatMessageEventDto {
 
     public static ChatMessageDocumentV2 from(ChatMessageEventDto chatMessageEventDto) {
         return ChatMessageDocumentV2.builder()
+            ._id(chatMessageEventDto.getId())
             .chatRoomId(chatMessageEventDto.getChatRoomId())
             .senderId(chatMessageEventDto.getSenderId())
             .senderNickname(chatMessageEventDto.getSenderNickname())
