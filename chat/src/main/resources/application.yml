@@ -82,3 +82,6 @@ feign:
         readTimeout: 5000 # 읽기 타임아웃 (ms)
         retryer: feign.Retryer.Default # 재시도 정책
 
+ai:
+  service:
+    url: http://localhost:19095   # AiApplication이 띄운 포트
