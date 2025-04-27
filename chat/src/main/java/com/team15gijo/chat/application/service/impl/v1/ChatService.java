@@ -16,7 +16,7 @@ import com.team15gijo.chat.domain.model.v1.ConnectionType;
 import com.team15gijo.chat.domain.repository.v1.ChatMessageRepository;
 import com.team15gijo.chat.domain.repository.v1.ChatRoomParticipantRepository;
 import com.team15gijo.chat.domain.repository.v1.ChatRoomRepository;
-import com.team15gijo.chat.infrastructure.client.v1.FeignClientService;
+import com.team15gijo.chat.infrastructure.client.FeignClientService;
 import com.team15gijo.chat.infrastructure.kafka.dto.ChatNotificationEventDto;
 import com.team15gijo.chat.infrastructure.kafka.service.NotificationKafkaProducerService;
 import com.team15gijo.chat.presentation.dto.v1.ChatMessageRequestDto;
