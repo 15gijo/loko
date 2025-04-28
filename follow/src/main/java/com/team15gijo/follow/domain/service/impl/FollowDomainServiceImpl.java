@@ -1,12 +1,17 @@
 package com.team15gijo.follow.domain.service.impl;
 
 import com.team15gijo.common.exception.CustomException;
+import com.team15gijo.follow.application.dto.v2.FollowCursorRecommendCommand;
 import com.team15gijo.follow.domain.exception.FollowDomainExceptionCode;
 import com.team15gijo.follow.domain.model.FollowEntity;
 import com.team15gijo.follow.domain.model.FollowStatus;
+import com.team15gijo.follow.domain.model.RecommendPriority;
 import com.team15gijo.follow.domain.repository.FollowRepository;
 import com.team15gijo.follow.domain.service.FollowDomainService;
+import com.team15gijo.follow.infrastructure.dto.response.v2.UserAndRegionInfoFollowResponseDto;
 import com.team15gijo.follow.presentation.dto.request.v2.FollowRequestDto;
+import com.team15gijo.follow.presentation.dto.response.v2.FollowRecommendResponseDto;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -123,6 +128,79 @@ public class FollowDomainServiceImpl implements FollowDomainService {
     public long countFollowings(Long followerId) {
         return followRepository.countByFollowerIdAndFollowStatus(followerId, FollowStatus.FOLLOW);
     }
+
+    @Override
+    public List<FollowRecommendResponseDto> recommend(
+            FollowCursorRecommendCommand followCursorRecommendCommand) {
+        //후보 리스트
+        List<UserAndRegionInfoFollowResponseDto> candidateList = followCursorRecommendCommand.getUserAndRegionInfos();
+
+        //후보 리스트 response로 변환
+        List<FollowRecommendResponseDto> recommendResponseDtoList = candidateList.stream()
+                .map(candidate -> new FollowRecommendResponseDto(
+                        candidate.userId(),
+                        candidate.nickname(),
+                        candidate.username(),
+                        candidate.profile(),
+                        candidate.regionName(),
+                        0
+                ))
+                .toList();
+
+        //우선순위 계산
+        recommendResponseDtoList.sort((a, b) -> Integer.compare(
+                calcScore(followCursorRecommendCommand, b), //내림차순
+                calcScore(followCursorRecommendCommand, a)
+        ));
+
+        return recommendResponseDtoList;
+    }
+
+    private int calcScore(FollowCursorRecommendCommand followCursorRecommendCommand,
+            FollowRecommendResponseDto candidate) {
+        int score = 0;
+
+        String myRegionCode = null;
+        String candidateRegionCode = null;
+
+        for (UserAndRegionInfoFollowResponseDto dto : followCursorRecommendCommand.getUserAndRegionInfos()) {
+            if (dto.userId().equals(followCursorRecommendCommand.getUserId())) {
+                myRegionCode = dto.regionName();
+            }
+            if (dto.userId().equals(candidate.userId())) {
+                candidateRegionCode = dto.regionName();
+            }
+            if (myRegionCode != null && candidateRegionCode != null) {
+                break;
+            }
+        }
+
+        if (myRegionCode == null && candidateRegionCode == null) {
+            return score;
+        }
+
+        //지역 점수
+        if (followCursorRecommendCommand.getRecommendPriority() == RecommendPriority.REGION) {
+            if (safeSubstring(myRegionCode, 8).equals(safeSubstring(candidateRegionCode, 8))) {
+                score += 100;
+            } else if (safeSubstring(myRegionCode, 5).equals(
+                    safeSubstring(candidateRegionCode, 5))) {
+                score += 50;
+            } else if (safeSubstring(myRegionCode, 2).equals(
+                    safeSubstring(candidateRegionCode, 2))) {
+                score += 20;
+            }
+        }
+        return score;
+    }
+
+    private String safeSubstring(String str, int end) {
+        if (str == null || str.length() < end) {
+            return str;
+        }
+        return str.substring(0, end);
+    }
+
 
     private FollowEntity checkFollow(Long followerId, Long followeeId) {
         return followRepository.findByFollowerIdAndFolloweeId(followerId, followeeId)

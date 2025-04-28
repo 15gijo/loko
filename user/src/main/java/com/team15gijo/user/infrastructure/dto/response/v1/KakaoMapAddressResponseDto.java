@@ -24,7 +24,9 @@ public class KakaoMapAddressResponseDto {
 
         @JsonProperty("address_name")
         private String addressName;
+        @JsonProperty("x")
         private String x;
+        @JsonProperty("y")
         private String y;
 
         @JsonProperty("address")
@@ -37,7 +39,13 @@ public class KakaoMapAddressResponseDto {
 
         @JsonProperty("address_name")
         private String addressName;
+        @JsonProperty("region_1depth_name")
         private String region_1depth_name;
+        @JsonProperty("region_2depth_name")
         private String region_2depth_name;
+        @JsonProperty("region_3depth_name")
+        private String region_3depth_name;
+        @JsonProperty("b_code")
+        private String bCode;
     }
 }

@@ -1,6 +1,7 @@
 package com.team15gijo.follow.infrastructure.persistence;
 
 import com.team15gijo.follow.application.dto.v2.AdminFollowSearchCommand;
+import com.team15gijo.follow.application.dto.v2.FollowCursorCandidateResult;
 import com.team15gijo.follow.domain.model.FollowEntity;
 import com.team15gijo.follow.domain.model.FollowStatus;
 import com.team15gijo.follow.domain.repository.FollowRepository;
@@ -80,6 +81,13 @@ public class FollowRepositoryImpl implements FollowRepository {
     public Page<AdminFollowSearchResponseDto> searchAllFollowsForAdmin(
             AdminFollowSearchCommand adminFollowSearchCommand, Pageable validatePageable) {
         return followQueryDslRepository.searchAllFollowsForAdmin(adminFollowSearchCommand,
+                validatePageable);
+    }
+
+    @Override
+    public FollowCursorCandidateResult find2HopCandidateUserIds(Long userId, Long lastUserId,
+            Pageable validatePageable) {
+        return followQueryDslRepository.find2HopCandidateUserIds(userId, lastUserId,
                 validatePageable);
     }
 }

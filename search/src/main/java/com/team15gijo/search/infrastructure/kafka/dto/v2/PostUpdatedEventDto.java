@@ -1,6 +1,8 @@
 package com.team15gijo.search.infrastructure.kafka.dto.v2;
 
+import com.team15gijo.search.domain.model.PostDocument;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -27,4 +29,18 @@ public class PostUpdatedEventDto implements EsEventDto {
     private double popularityScore;
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
+
+    public PostDocument toEntity() {
+        return PostDocument.builder()
+                .postId(postId)
+                .username(username)
+                .region(region)
+                .postContent(postContent)
+                .hashtags(hashtags != null ? new ArrayList<>(hashtags) : new ArrayList<>())
+                .views(views)
+                .commentCount(commentCount)
+                .likeCount(likeCount)
+                .createdAt(createdAt)
+                .build();
+        }
 }

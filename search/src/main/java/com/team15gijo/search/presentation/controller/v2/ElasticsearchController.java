@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v2/search")
-@Slf4j(topic = "검색 Controller")
+@Slf4j
 public class ElasticsearchController {
 
     private final ElasticsearchService elasticsearchService;
@@ -52,7 +52,7 @@ public class ElasticsearchController {
         String region = URLDecoder.decode(encodedRegion, StandardCharsets.UTF_8);
         String nickname = URLDecoder.decode(encodedNickname, StandardCharsets.UTF_8);
         log.info("region : {}, nickname: {}, size : {}, keyword : {}, lastUserId : {}", region, nickname, size, keyword, lastUserId);
-        return ResponseEntity.ok(ApiResponse.success("유저 검색 성공", elasticsearchService.searchUser(keyword, userId, nickname, region, lastUserId, size)));
+        return ResponseEntity.ok(ApiResponse.success("유저 검색 성공", elasticsearchService.searchUser(keyword, userId, region, lastUserId, size)));
     }
 
 }

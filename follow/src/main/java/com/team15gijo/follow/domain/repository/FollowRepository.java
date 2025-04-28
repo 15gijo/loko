@@ -1,6 +1,7 @@
 package com.team15gijo.follow.domain.repository;
 
 import com.team15gijo.follow.application.dto.v2.AdminFollowSearchCommand;
+import com.team15gijo.follow.application.dto.v2.FollowCursorCandidateResult;
 import com.team15gijo.follow.domain.model.FollowEntity;
 import com.team15gijo.follow.domain.model.FollowStatus;
 import com.team15gijo.follow.presentation.dto.response.v2.AdminFollowSearchResponseDto;
@@ -23,13 +24,18 @@ public interface FollowRepository {
 
     void restoreFollow(UUID id);
 
-    Page<FollowEntity> findAllByFollowerIdAndFollowStatus(Long followerId, FollowStatus followStatus, Pageable validatePageable);
+    Page<FollowEntity> findAllByFollowerIdAndFollowStatus(Long followerId,
+            FollowStatus followStatus, Pageable validatePageable);
 
-    Page<FollowEntity> findAllByFolloweeIdAndFollowStatus(Long followeeId, FollowStatus followStatus, Pageable validatePageable);
+    Page<FollowEntity> findAllByFolloweeIdAndFollowStatus(Long followeeId,
+            FollowStatus followStatus, Pageable validatePageable);
 
     long countByFolloweeIdAndFollowStatus(Long followeeId, FollowStatus followStatus);
 
     long countByFollowerIdAndFollowStatus(Long followerId, FollowStatus followStatus);
 
-    Page<AdminFollowSearchResponseDto> searchAllFollowsForAdmin(AdminFollowSearchCommand adminFollowSearchCommand, Pageable validatePageable);
+    Page<AdminFollowSearchResponseDto> searchAllFollowsForAdmin(
+            AdminFollowSearchCommand adminFollowSearchCommand, Pageable validatePageable);
+
+    FollowCursorCandidateResult find2HopCandidateUserIds(Long userId, Long lastUserId, Pageable validatePageable);
 }

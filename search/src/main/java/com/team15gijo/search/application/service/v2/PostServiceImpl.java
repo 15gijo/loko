@@ -37,7 +37,7 @@ public class PostServiceImpl implements PostService {
         // TODO: Redis 저장 / DB 업데이트 / 인덱싱 등 처리
         PostDocument post = postElasticsearchRepository.findById(dto.getPostId()).orElse(null);
         if (post == null) {
-            log.warn("Feed not found for postId: {}", dto.getPostId());
+            log.warn("post not found for postId: {}", dto.getPostId());
             return;
         }
         post.updateFeed(dto);
@@ -59,7 +59,6 @@ public class PostServiceImpl implements PostService {
             log.info("게시글 삭제 완료 - postId: {}", post.getPostId());
         } catch (Exception e) {
             log.error("게시글 삭제 중 오류 발생 - postId: {}, error: {}", post.getPostId(), e.getMessage(), e);
-
         }
 
     }
@@ -70,12 +69,16 @@ public class PostServiceImpl implements PostService {
         // TODO: 조회수 누적 처리 등
         PostDocument post  = postElasticsearchRepository.findById(dto.getPostId()).orElse(null);
         if (post == null) {
-            log.warn("Feed not found for postId: {}", dto.getPostId());
+            log.warn("post not found for postId: {}", dto.getPostId());
             return;
         }
-        post.updateViews(dto.getViews());
-        postElasticsearchRepository.save(post);
-        log.info("게시글의 정보(조회수) 수정 완료 - postId: {}", post.getPostId());
+        try {
+            post.updateViews(dto.getViews());
+            postElasticsearchRepository.save(post);
+            log.info("게시글의 정보(조회수) 수정 완료 - postId: {}", post.getPostId());
+        } catch (Exception e) {
+            log.error("게시글 수정 중 오류 발생 - postId: {}, error: {}", post.getPostId(), e.getMessage(), e);
+        }
     }
 
     @Override
@@ -84,7 +87,7 @@ public class PostServiceImpl implements PostService {
         // TODO: 댓글 수 증가 처리
         PostDocument post  = postElasticsearchRepository.findById(dto.getPostId()).orElse(null);
         if (post == null) {
-            log.warn("Feed not found for postId: {}", dto.getPostId());
+            log.warn("post not found for postId: {}", dto.getPostId());
             return;
         }
         post.updateCommentCount(dto.getCommentCount());
@@ -98,7 +101,7 @@ public class PostServiceImpl implements PostService {
         // TODO: 댓글 수 감소 처리
         PostDocument post  = postElasticsearchRepository.findById(dto.getPostId()).orElse(null);
         if (post == null) {
-            log.warn("Feed not found for postId: {}", dto.getPostId());
+            log.warn("post not found for postId: {}", dto.getPostId());
             return;
         }
         post.updateCommentCount(dto.getCommentCount());
@@ -126,7 +129,7 @@ public class PostServiceImpl implements PostService {
         // TODO: 좋아요 수 감소 처리
         PostDocument post  = postElasticsearchRepository.findById(dto.getPostId()).orElse(null);
         if (post == null) {
-            log.warn("Feed not found for postId: {}", dto.getPostId());
+            log.warn("post not found for postId: {}", dto.getPostId());
             return;
         }
         post.updateLikeCount(dto.getLikeCount());

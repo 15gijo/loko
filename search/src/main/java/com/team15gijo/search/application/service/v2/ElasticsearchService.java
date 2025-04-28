@@ -15,5 +15,5 @@ public interface ElasticsearchService {
 
     void createElasticUser(UserElasticsearchRequestDto dto);
 
-    CursorResultDto<UserSearchResponseDto> searchUser(String keyword, Long userId, String nickname, String region, Long lastUserId, int size);
+    CursorResultDto<UserSearchResponseDto> searchUser(String keyword, Long userId, String region, Long lastUserId, int size);
 }

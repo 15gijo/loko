@@ -1,11 +1,13 @@
 package com.team15gijo.follow.application.service;
 
 import com.team15gijo.follow.domain.model.FollowStatus;
+import com.team15gijo.follow.domain.model.RecommendPriority;
 import com.team15gijo.follow.presentation.dto.request.v2.BlockRequestDto;
 import com.team15gijo.follow.presentation.dto.request.v2.FollowRequestDto;
 import com.team15gijo.follow.presentation.dto.response.v2.AdminFollowSearchResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.BlockResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.FollowCountResponseDto;
+import com.team15gijo.follow.presentation.dto.response.v2.FollowRecommendResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.FollowResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.FollowUserResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.UnblockResponseDto;
@@ -13,6 +15,7 @@ import com.team15gijo.follow.presentation.dto.response.v2.UnfollowResponseDto;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 
 public interface FollowApplicationService {
 
@@ -36,5 +39,9 @@ public interface FollowApplicationService {
 
     FollowCountResponseDto getCountFollowers(Long targetUserId);
 
-    Page<AdminFollowSearchResponseDto> searchAllFollows(UUID followId, Long followerId, Long followeeId, FollowStatus followStatus, Pageable validatePageable);
+    Page<AdminFollowSearchResponseDto> searchAllFollows(UUID followId, Long followerId,
+            Long followeeId, FollowStatus followStatus, Pageable validatePageable);
+
+    Slice<FollowRecommendResponseDto> recommend(Long userId, Long lastUserId,
+            RecommendPriority priority, Pageable validatePageable);
 }

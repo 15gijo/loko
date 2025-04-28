@@ -81,11 +81,6 @@ public class PostDocument {
     public void updateViews(int views) {
         this.views = views;
     }
-
-//    public void updateFeedPopularityScore(double score) {
-//        this.popularityScore = score;
-//    }
-
     public void updateCommentCount(int commentCount) {
         this.commentCount = commentCount;
     }
