@@ -20,7 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j(topic = "검색 Service")
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -77,7 +77,7 @@ public class ElasticsearchServiceImpl implements ElasticsearchService {
 
     @Override
     public CursorResultDto<UserSearchResponseDto> searchUser(String keyword, Long userId,
-            String nickname, String region, Long lastUserId, int size) {
+            String region, Long lastUserId, int size) {
         if (lastUserId == null) {
             lastUserId = Long.MAX_VALUE;
         }

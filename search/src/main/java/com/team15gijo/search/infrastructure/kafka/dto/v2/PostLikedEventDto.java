@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PostLikedEventDto implements EsEventDto{
+public class PostLikedEventDto implements EsEventDto {
     @Builder.Default
     private EventType type = EventType.POST_LIKED;
     private UUID postId;

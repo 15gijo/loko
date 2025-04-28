@@ -15,12 +15,11 @@ spring:
       hibernate:
         format_sql: true
         use_sql_comments: true
-  elasticsearch:
-    uris: http://localhost:9200
-    username: ${ELASTIC_USERNAME}
-    password: ${ELASTIC_PASSWORD}
   data:
     elasticsearch:
+      host: localhost:9200
+      username: ${ELASTIC_USERNAME}
+      password: ${ELASTIC_PASSWORD} # 'ELK 도커 실행' 과정에서 설정한 .env 의 값과 일치해야 함
       repositories:
         enabled: true
   kafka:
@@ -74,12 +73,15 @@ management:
   endpoints:
     web:
       exposure:
-        include: ["*"]
-  endpoint:
-    health:
-      show-details: always
-    prometheus:
-      access: unrestricted
+        include: health,info,prometheus
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
 
 
 
@@ -98,8 +100,8 @@ resilience4j:
         waitDurationInOpenState: 20s
 
 
-logging:
-  config: classpath:logback-spring.xml
-  level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+#logging:
+#  config: classpath:logback-spring.xml
+#  level:
+#    org.hibernate.SQL: DEBUG
+#    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
