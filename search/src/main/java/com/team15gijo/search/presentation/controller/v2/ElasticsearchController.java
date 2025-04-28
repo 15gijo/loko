@@ -26,7 +26,7 @@ public class ElasticsearchController {
 
     private final ElasticsearchService elasticsearchService;
 
-    @GetMapping("/post")
+    @GetMapping("/posts")
     public ResponseEntity<ApiResponse<CursorResultDto<PostSearchResponseDto>>> searchPost(
             @RequestParam(name = "keyword") String keyword,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastCreatedAt,
@@ -40,7 +40,7 @@ public class ElasticsearchController {
         return ResponseEntity.ok(ApiResponse.success("게시글 검색 성공", elasticsearchService.searchPost(keyword, nickname, region, lastCreatedAt, size)));
     }
 
-    @GetMapping("/user")
+    @GetMapping("/users")
     public ResponseEntity<ApiResponse<CursorResultDto<UserSearchResponseDto>>> searchUser(
             @RequestParam(name = "keyword") String keyword,
             @RequestParam(required = false) Long lastUserId,
