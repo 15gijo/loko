@@ -1,6 +1,8 @@
 package com.team15gijo.post.application.service.v2;
 
 import com.team15gijo.post.domain.model.v2.HashtagV2;
+import com.team15gijo.post.domain.repository.v2.PostQueryDslRepositoryV2CustomImpl;
+import com.team15gijo.post.domain.repository.v2.dto.PostSummaryDto;
 import com.team15gijo.post.infrastructure.client.ai.AiClient;
 import com.team15gijo.post.infrastructure.client.ai.HashtagRequestDto;
 import com.team15gijo.post.infrastructure.client.ai.HashtagResponseDto;
@@ -32,6 +34,7 @@ public class PostServiceV2 {
 
     private final PostRepositoryV2 postRepository;
     private final HashtagRepositoryV2 hashtagRepository;
+    private final PostQueryDslRepositoryV2CustomImpl postQueryDslRepository;
     private final KafkaUtil kafkaUtil;
     private final AiClient aiClient;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -93,12 +96,15 @@ public class PostServiceV2 {
         return postRepository.findAll(pageable);
     }
 
+    public Page<PostSummaryDto> getPostSummaries(Pageable pageable) {
+        return postQueryDslRepository.findPostSummaries(pageable);
+    }
     /**
      * 게시글 상세 조회 (views 증가 포함)
      */
     @Transactional
     public PostV2 getPostById(UUID postId) {
-        PostV2 post = postRepository.findById(postId)
+        PostV2 post = postRepository.findByIdWithHashtags(postId)
                 .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
         // 조회수 버퍼 처리
         bufferView(postId);
