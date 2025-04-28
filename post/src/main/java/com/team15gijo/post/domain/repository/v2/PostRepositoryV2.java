@@ -3,6 +3,7 @@ package com.team15gijo.post.domain.repository.v2;
 import com.team15gijo.post.domain.model.v2.PostV2;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +13,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface PostRepositoryV2 extends JpaRepository<PostV2, UUID>, PostQueryDslRepositoryV2Custom {
+
+    // Fetch Join 적용하여 한 번의 쿼리로 모두 조회
+    @Query("SELECT p FROM PostV2 p LEFT JOIN FETCH p.hashtags WHERE p.postId = :postId")
+    Optional<PostV2> findByIdWithHashtags(@Param("postId") UUID postId);
+
     List<PostV2> findByRegionAndCreatedAtBeforeOrderByCreatedAtDesc(String region, LocalDateTime cursor, PageRequest of);
 
     @Modifying

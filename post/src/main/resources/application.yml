@@ -30,10 +30,19 @@ spring:
         format_sql: true
   kafka:
     bootstrap-servers: localhost:9092
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.team15gijo.post.infrastructure.kafka.dto.v1
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       acks: 0
+    admin:
+      auto-create: true
+    listener:
+      missing-topics-fatal: false
   data:
     redis:
       host: localhost
@@ -69,7 +78,11 @@ logging:
   level:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.kafka.listener.DefaultErrorHandler: DEBUG
+    org.springframework.kafka.listener.DeadLetterPublishingRecoverer: DEBUG
 
 ai:
   service:
     url: http://localhost:19095   # AiApplication이 띄운 포트
+
+

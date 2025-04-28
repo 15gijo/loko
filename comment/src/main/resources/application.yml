@@ -20,6 +20,9 @@ spring:
       ddl-auto: create
     show-sql: true
     database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
   kafka:
     bootstrap-servers: localhost:9092
     producer:
