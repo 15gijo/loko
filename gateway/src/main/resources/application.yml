@@ -42,6 +42,10 @@ spring:
           uri: lb://follow-service
           predicates:
             - Path=/api/v2/follows/**
+        - id: ai-service
+          uri: lb://ai-service
+          predicates:
+            - Path=/api/v2/ai/**
       discovery:
         locator:
           enabled: true  # 서비스 디스커버리를 통해 동적으로 라우트를 생성하도록 설정, 나중에 끄자

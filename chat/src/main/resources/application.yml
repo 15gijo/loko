@@ -87,3 +87,7 @@ feign:
 
 slack:
   web-hook-url: ${SLACK_WEBHOOK_URL}
+
+ai:
+  service:
+    url: ${AI_SERVER_PORT}   # AiApplication이 띄운 포트
