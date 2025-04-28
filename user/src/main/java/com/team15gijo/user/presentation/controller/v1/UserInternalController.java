@@ -4,6 +4,7 @@ import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.user.application.service.UserApplicationService;
 import com.team15gijo.user.application.service.v1.InternalUserService;
 import com.team15gijo.user.infrastructure.dto.UserFeignInfoResponseDto;
+import com.team15gijo.user.presentation.dto.internal.response.v1.UserAndRegionInfoFollowResponseDto;
 import com.team15gijo.user.presentation.dto.internal.response.v1.UserInfoFollowResponseDto;
 import com.team15gijo.user.presentation.dto.internal.response.v1.UserSearchResponseDto;
 import java.util.List;
@@ -11,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -77,6 +80,14 @@ public class UserInternalController {
     public UserInfoFollowResponseDto getUserInfoFollower(@PathVariable("userId") Long userId) {
         log.info("follow - user 연결={}", userId);
         return userApplicationService.getUserInfoForFollow(userId);
+    }
+
+    //follow(recommend) -> user
+    @PostMapping("/region-infos")
+    public List<UserAndRegionInfoFollowResponseDto> getUserAndRegionInfoForRecommend(
+            @RequestBody List<Long> candidateUserIds) {
+        log.info("follow(recommend) - user 연결={}", candidateUserIds);
+        return userApplicationService.getUserAndRegionInfoForRecommend(candidateUserIds);
     }
 
 }
