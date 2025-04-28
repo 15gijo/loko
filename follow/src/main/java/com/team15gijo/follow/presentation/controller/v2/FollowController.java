@@ -5,11 +5,15 @@ import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.common.utils.page.PageableUtils;
 import com.team15gijo.follow.application.service.FollowApplicationService;
 import com.team15gijo.follow.domain.model.FollowStatus;
+import com.team15gijo.follow.domain.model.RecommendPriority;
 import com.team15gijo.follow.presentation.dto.request.v2.BlockRequestDto;
+import com.team15gijo.follow.presentation.dto.request.v2.FollowCursorRecommendRequestDto;
 import com.team15gijo.follow.presentation.dto.request.v2.FollowRequestDto;
 import com.team15gijo.follow.presentation.dto.response.v2.AdminFollowSearchResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.BlockResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.FollowCountResponseDto;
+import com.team15gijo.follow.presentation.dto.response.v2.FollowCursorRecommendResponseDto;
+import com.team15gijo.follow.presentation.dto.response.v2.FollowRecommendResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.FollowResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.FollowUserResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.UnblockResponseDto;
@@ -19,6 +23,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -217,6 +222,26 @@ public class FollowController {
         Page<AdminFollowSearchResponseDto> adminFollowSearchResponseDto = followApplicationService.searchAllFollows(
                 followId, followerId, followeeId, followStatus, validatePageable);
         return ResponseEntity.ok(ApiResponse.success("팔로우 전체 검색 성공", adminFollowSearchResponseDto));
+    }
+
+    //팔로우 추천 시스템
+    @RoleGuard(min = "USER")
+    @GetMapping("/me/recommendation")
+    public ResponseEntity<ApiResponse<Slice<FollowRecommendResponseDto>>> recommend(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestParam(name = "lastUserId", required = false) Long lastUserId,
+            @RequestParam(name = "priority", defaultValue = "REGION") RecommendPriority priority,
+            @PageableDefault(
+                    size = 10,
+                    page = 1,
+                    sort = {"createdAt", "updatedAt"},
+                    direction = Direction.ASC
+            ) Pageable pageable
+    ) {
+        Pageable validatePageable = PageableUtils.validate(pageable);
+        Slice<FollowRecommendResponseDto> cursorRecommendResponse = followApplicationService.recommend(
+                userId, lastUserId, priority, validatePageable);
+        return ResponseEntity.ok(ApiResponse.success("팔로우 추천 성공", cursorRecommendResponse));
     }
 
 }
