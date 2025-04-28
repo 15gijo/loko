@@ -1,26 +1,35 @@
 package com.team15gijo.follow.application.service.v2;
 
 import com.team15gijo.follow.application.dto.v2.AdminFollowSearchCommand;
+import com.team15gijo.follow.application.dto.v2.FollowCursorCandidateResult;
+import com.team15gijo.follow.application.dto.v2.FollowCursorRecommendCommand;
 import com.team15gijo.follow.application.service.FollowApplicationService;
 import com.team15gijo.follow.domain.model.FollowEntity;
 import com.team15gijo.follow.domain.model.FollowStatus;
+import com.team15gijo.follow.domain.model.RecommendPriority;
 import com.team15gijo.follow.domain.repository.FollowRepository;
 import com.team15gijo.follow.domain.service.FollowDomainService;
 import com.team15gijo.follow.infrastructure.client.UserFeignClient;
+import com.team15gijo.follow.infrastructure.dto.response.v2.UserAndRegionInfoFollowResponseDto;
 import com.team15gijo.follow.infrastructure.dto.response.v2.UserInfoFollowResponseDto;
 import com.team15gijo.follow.presentation.dto.request.v2.BlockRequestDto;
 import com.team15gijo.follow.presentation.dto.request.v2.FollowRequestDto;
 import com.team15gijo.follow.presentation.dto.response.v2.AdminFollowSearchResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.BlockResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.FollowCountResponseDto;
+import com.team15gijo.follow.presentation.dto.response.v2.FollowRecommendResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.FollowResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.FollowUserResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.UnblockResponseDto;
 import com.team15gijo.follow.presentation.dto.response.v2.UnfollowResponseDto;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -121,6 +130,39 @@ public class FollowApplicationServiceImpl implements FollowApplicationService {
                 .build();
         return followRepository.searchAllFollowsForAdmin(adminFollowSearchCommand,
                 validatePageable);
+    }
+
+    @Override
+    public Slice<FollowRecommendResponseDto> recommend(Long userId, Long lastUserId,
+            RecommendPriority priority, Pageable validatePageable) {
+        //팔로우 2hop 관계 아이디 조회
+        FollowCursorCandidateResult candidateResult = followRepository.find2HopCandidateUserIds(
+                userId, lastUserId,
+                validatePageable);
+        if (candidateResult.userIds().isEmpty()) {
+            return new SliceImpl<>(Collections.emptyList(), validatePageable, false);
+        }
+
+        //유저 정보, 지역 정보 가져오기
+        List<UserAndRegionInfoFollowResponseDto> userAndRegionInfos = userFeignClient.getUserAndRegionInfo(
+                candidateResult.userIds());
+
+        //유저 팔로우/팔로잉 count 가져오기
+//        Map<Long, Integer> candidateCount = followRepository.countByCandidateUserIds(
+//                candidateUserIds);
+
+        List<FollowRecommendResponseDto> followRecommendResponseDtoList = followDomainService.recommend(
+                FollowCursorRecommendCommand.of(
+                        userId,
+                        candidateResult.userIds(),
+                        userAndRegionInfos,
+                        null,
+                        priority
+                )
+        );
+
+        return new SliceImpl<>(followRecommendResponseDtoList, validatePageable,
+                candidateResult.hasNext());
     }
 
 
