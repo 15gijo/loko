@@ -90,4 +90,4 @@ slack:
 
 ai:
   service:
-    url: : http://localhost:19095   # AiApplication이 띄운 포트
+    url: ${AI_SERVER_PORT}   # AiApplication이 띄운 포트
