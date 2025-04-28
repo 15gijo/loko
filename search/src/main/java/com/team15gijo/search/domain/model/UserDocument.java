@@ -1,7 +1,6 @@
 package com.team15gijo.search.domain.model;
 
-import com.team15gijo.search.infrastructure.kafka.dto.PostElasticsearchRequestDto;
-import com.team15gijo.search.infrastructure.kafka.dto.UserElasticsearchRequestDto;
+import com.team15gijo.search.infrastructure.kafka.dto.v1.UserElasticsearchRequestDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

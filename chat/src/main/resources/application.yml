@@ -28,6 +28,9 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       auto-offset-reset: earliest
+      group-id: chat-service
+    template:
+      default-topic: chat_message_event
 
   # mongoDB
   data:
@@ -82,6 +85,9 @@ feign:
         readTimeout: 5000 # 읽기 타임아웃 (ms)
         retryer: feign.Retryer.Default # 재시도 정책
 
+slack:
+  web-hook-url: ${SLACK_WEBHOOK_URL}
+
 ai:
   service:
-    url: http://localhost:19095   # AiApplication이 띄운 포트
+    url: : http://localhost:19095   # AiApplication이 띄운 포트
