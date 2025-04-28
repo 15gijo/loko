@@ -5,9 +5,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -46,6 +49,10 @@ public class UserEntity extends BaseEntity {
     @Column(name = "status", nullable = false)
     private UserStatus status;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "region_id")
+    private UserRegionEntity regionId;
+
     @Column(name = "region", nullable = false)
     private String region;
 
@@ -56,13 +63,15 @@ public class UserEntity extends BaseEntity {
             String email,
             String profile,
             UserStatus status,
-            String region) {
+            String region,
+            UserRegionEntity regionId) {
         this.username = username;
         this.nickname = nickname;
         this.email = email;
         this.profile = profile;
         this.status = status;
         this.region = region;
+        this.regionId = regionId;
     }
 
     public void updateUsername(String newUsername) {
