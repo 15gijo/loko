@@ -74,4 +74,16 @@ public class ChatMessageKafkaConfig {
         // 컨테이너 설정 (동시 컨슈머 수 등) 필요에 따라 추가
         return factory;
     }
+
+    /**
+     * Kafka Producer Config For DLQ로 메시지 전송 사용
+     */
+    @Bean
+    public KafkaTemplate<String, ChatMessageEventDto> defaultRetryTopicKafkaTemplate() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, producerKeySerializer);
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, producerValueSerializer);
+        return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(configProps));
+    }
 }
