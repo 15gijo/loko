@@ -295,7 +295,7 @@ services:
       - msa-network
 
   postgres:
-    image: postgres:16.2
+    image: postgis/postgis:16-3.5
     container_name: postgres
     environment:
       POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME}
