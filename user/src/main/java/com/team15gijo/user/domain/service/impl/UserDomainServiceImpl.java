@@ -3,6 +3,7 @@ package com.team15gijo.user.domain.service.impl;
 import com.team15gijo.common.exception.CustomException;
 import com.team15gijo.user.domain.exception.UserDomainExceptionCode;
 import com.team15gijo.user.domain.model.UserEntity;
+import com.team15gijo.user.domain.model.UserRegionEntity;
 import com.team15gijo.user.domain.model.UserStatus;
 import com.team15gijo.user.domain.repository.UserRepository;
 import com.team15gijo.user.domain.service.UserDomainService;
@@ -17,7 +18,8 @@ public class UserDomainServiceImpl implements UserDomainService {
     private final UserRepository userRepository;
 
     @Override
-    public UserEntity createUser(UserSignUpRequestDto userSignUpRequestDto) {
+    public UserEntity createUser(UserSignUpRequestDto userSignUpRequestDto,
+            UserRegionEntity userRegionEntity) {
         //중복 회원 체크
         if (userRepository.existsByEmail(userSignUpRequestDto.email())) {
             throw new CustomException(UserDomainExceptionCode.DUPLICATED_USER_EMAIL);
@@ -33,6 +35,7 @@ public class UserDomainServiceImpl implements UserDomainService {
                 .profile(userSignUpRequestDto.profile())
                 .region(userSignUpRequestDto.region())
                 .status(UserStatus.ACTIVE)
+                .regionId(userRegionEntity)
                 .build();
     }
 }
