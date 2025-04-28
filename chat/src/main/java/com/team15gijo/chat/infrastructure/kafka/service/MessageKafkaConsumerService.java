@@ -10,6 +10,7 @@ import com.team15gijo.chat.infrastructure.client.v2.ai.dto.MessageFilteringRespo
 import com.team15gijo.chat.infrastructure.kafka.dto.ChatMessageEventDto;
 import com.team15gijo.chat.infrastructure.kafka.dto.ChatNotificationEventDto;
 import com.team15gijo.chat.infrastructure.slack.service.SlackNotificationService;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -102,9 +103,13 @@ public class MessageKafkaConsumerService {
                     log.info("[MessageKafkaConsumerService] 유해성 판단 결과={}", isHarmfulResponse.getIsHarmful());
 
                     // mongoDB에서 채팅방의 메시지 소프트 삭제 처리
-                    deleteChatMessageForChatRoomId(savedMessage.get_id(), isHarmfulResponse.getDeleteBy());
+                    softDeleteChatMessageById(savedMessage.get_id(), isHarmfulResponse.getDeleteBy());
 
                     // TODO: 삭제 후, 채팅방에서 실시간 숨김 처리
+                    // 클라이언트에게 메시지 삭제 이벤트 전송
+                    messagingTemplate.convertAndSend("/topic/v2/chat/restriction/delete/" + savedMessage.getChatRoomId(),
+                            Map.of("cause", "유해하거나 불쾌감을 주는 단어나 불법적인 단어 또는 욕설이 포함되어 삭제 처리되었습니다.", "messageId", savedMessage.get_id(), "messageContent", savedMessage.getMessageContent()));
+                    log.info("[MessageKafkaConsumerService] 유해 메시지 삭제 알림 전송 완료 - chatRoomId:{}", savedMessage.getChatRoomId());
                 }
             }
         } catch (Exception e) {
@@ -123,9 +128,9 @@ public class MessageKafkaConsumerService {
     }
 
     // mongoDB에서 채팅방의 메시지 소프트 삭제
-    private void deleteChatMessageForChatRoomId(
+    private void softDeleteChatMessageById(
         String id, Long systemId) {
-        log.info("[MessageKafkaConsumerService] deleteChatMessageForChatRoomId - 메시지({}) 소프트 삭제 전", id);
+        log.info("[MessageKafkaConsumerService] softDeleteChatMessageById - 메시지({}) 소프트 삭제 전", id);
         // 채팅방의 단일 메시지 조회
         Query query = Query.query(
             Criteria.where("_id").is(id)
@@ -140,7 +145,7 @@ public class MessageKafkaConsumerService {
             // 메시지 소프트 삭제
             filteringMessage.softDelete(systemId);
             chatMessageRepository.save(filteringMessage);
-            log.info("[MessageKafkaConsumerService] deleteChatMessageForChatRoomId - 메시지({}) 소프트 삭제 완료", id);
+            log.info("[MessageKafkaConsumerService] softDeleteChatMessageById - 메시지({}) 소프트 삭제 완료", id);
         }
     }
 

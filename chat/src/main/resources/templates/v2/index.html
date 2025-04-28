@@ -128,6 +128,18 @@
                             stompClient.subscribe(`/topic/v2/chat/${chatRoomId}`, function (message) {
                               showMessage(JSON.parse(message.body));
                             });
+
+                            // 11. 채팅 (유해성 검증)메시지 필터링 & 삭제 전송 구독
+                            stompClient.subscribe(`/topic/v2/chat/restriction/delete/${chatRoomId}`, function (message) {
+                              const parsedMessage = JSON.parse(message.body);
+                              alert("⚠️유해 메시지 감지: " + parsedMessage.cause);
+
+                              // 삭제된 메시지 ID를 이용하여 해당 메시지 내용 숨김 처리
+                              const messageElement = document.querySelector(`p[data-message-id="${parsedMessage.messageId}"]`);
+                              if(messageElement) {
+                                messageElement.style.display = 'none';
+                              }
+                            });
                           }, function (error) {
                             // 6-2. 웹소켓 연결 - 실패
                             console.error("소켓 Connection error: ", error);
@@ -233,6 +245,12 @@
     function showMessage(message) {
       const messages = document.getElementById('messages');
       const p = document.createElement('p');
+
+      // 각 메시지 고유ID 속성
+      if(message._id) {
+        p.dataset.messageId = message._id;
+      }
+
       if(message.connectionType === "ENTER") {
         // 첫 입장 메시지 형식
         p.textContent = message.messageContent;
@@ -257,7 +275,7 @@
 <body>
 <div>
   <label>ChatRoom ID:</label>
-  <input type="text" id="chatRoomId" value="f38106f7-8fe7-4351-8eaf-199525b67e9a" />
+  <input type="text" id="chatRoomId" value="04332d42-b163-4b59-b07c-45d932e617e1" />
 </div>
 <div>
   <label>senderNickname(발송자 닉네임) :</label>
