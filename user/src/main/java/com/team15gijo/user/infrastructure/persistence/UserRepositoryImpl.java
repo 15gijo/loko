@@ -5,8 +5,10 @@ import com.team15gijo.user.domain.model.UserEntity;
 import com.team15gijo.user.domain.repository.UserRepository;
 import com.team15gijo.user.infrastructure.persistence.jpa.UserJpaRepository;
 import com.team15gijo.user.infrastructure.persistence.querydsl.UserQueryDslRepository;
+import com.team15gijo.user.presentation.dto.internal.response.v1.UserAndRegionInfoFollowResponseDto;
 import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -66,11 +68,17 @@ public class UserRepositoryImpl implements UserRepository {
 
     //내부 통신
     @Override
+    public List<UserAndRegionInfoFollowResponseDto> findUserAndRegionInfos(List<Long> userIds) {
+        return userQueryDslRepository.findUserAndRegionInfos(userIds);
+    }
+
+    //내부 통신
+    @Override
     public Optional<String> findEmailById(Long userId) {
         return userJpaRepository.findEmailById(userId);
     }
 
-    //내부통신
+    //내부 통신
     @Override
     public void updateCreatedBy(Long id) {
         userJpaRepository.updateCreatedById(id);

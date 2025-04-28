@@ -2,6 +2,7 @@ package com.team15gijo.user.infrastructure.persistence.querydsl;
 
 import com.team15gijo.user.application.dto.v1.AdminUserSearchCommand;
 import com.team15gijo.user.domain.model.UserEntity;
+import com.team15gijo.user.presentation.dto.internal.response.v1.UserAndRegionInfoFollowResponseDto;
 import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
 import java.util.List;
@@ -18,4 +19,6 @@ public interface UserQueryDslRepository {
 
     Page<UserReadsResponseDto> searchUsersForUser(String nickname, String username, String region,
             Pageable pageable);
+
+    List<UserAndRegionInfoFollowResponseDto> findUserAndRegionInfos(List<Long> userIds);
 }

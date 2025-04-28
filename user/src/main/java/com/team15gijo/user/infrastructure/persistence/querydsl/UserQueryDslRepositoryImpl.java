@@ -10,12 +10,16 @@ import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.team15gijo.user.application.dto.v1.AdminUserSearchCommand;
 import com.team15gijo.user.domain.model.QUserEntity;
+import com.team15gijo.user.domain.model.QUserRegionEntity;
 import com.team15gijo.user.domain.model.UserEntity;
+import com.team15gijo.user.presentation.dto.internal.response.v1.QUserAndRegionInfoFollowResponseDto;
+import com.team15gijo.user.presentation.dto.internal.response.v1.UserAndRegionInfoFollowResponseDto;
 import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.QAdminUserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.QUserReadsResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,6 +35,7 @@ public class UserQueryDslRepositoryImpl implements UserQueryDslRepository {
 
     private final JPAQueryFactory jpaQueryFactory;
     private final QUserEntity user = QUserEntity.userEntity;
+    private final QUserRegionEntity userRegion = QUserRegionEntity.userRegionEntity;
 
     @Override
     public List<UserEntity> searchUsers(String keyword, Long userId, String nickname, String region,
@@ -142,6 +147,29 @@ public class UserQueryDslRepositoryImpl implements UserQueryDslRepository {
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0); //total관련 예외?
+    }
+
+    @Override
+    public List<UserAndRegionInfoFollowResponseDto> findUserAndRegionInfos(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<UserAndRegionInfoFollowResponseDto> result = jpaQueryFactory
+                .select(new QUserAndRegionInfoFollowResponseDto(
+                        user.id,
+                        user.nickname,
+                        user.username,
+                        user.profile,
+                        userRegion.regionCode,
+                        userRegion.regionName
+                ))
+                .from(user)
+                .leftJoin(userRegion).on(user.regionId.eq(userRegion))
+                .where(user.id.in(userIds))
+                .fetch();
+
+        return result != null ? result : Collections.emptyList();
     }
 
 
