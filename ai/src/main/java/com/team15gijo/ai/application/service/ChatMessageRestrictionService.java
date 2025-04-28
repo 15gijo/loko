@@ -29,7 +29,7 @@ public class ChatMessageRestrictionService {
             // Gemini API 응답 처리
             if(aiResponse != null) {
                 String response = aiResponse.trim().toLowerCase();
-                log.info("[ChatMessageRestrictionService] restrictMessage 메서드 종료 - true");
+                log.info("[ChatMessageRestrictionService] restrictMessage 메서드 종료 - isHarmful={}", response.equals("true"));
                 return response.equals("true");
             }
             log.info("[ChatMessageRestrictionService] restrictMessage 메서드 종료 - false");

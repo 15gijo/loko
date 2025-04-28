@@ -2,6 +2,7 @@ package com.team15gijo.ai.presentation.controller;
 
 import com.team15gijo.ai.application.service.ChatMessageRestrictionService;
 import com.team15gijo.ai.presentation.dto.MessageFilteringResponseDto;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +19,7 @@ public class ChatMessageRestrictionController {
     private final ChatMessageRestrictionService service;
 
     @PostMapping("/chats/message/restrict")
-    public ResponseEntity<MessageFilteringResponseDto> restrict(@RequestBody String messageContent) {
+    public ResponseEntity<MessageFilteringResponseDto> restrict(@Valid @RequestBody String messageContent) {
         log.info("[ChatMessageRestrictionController] restrict 메서드 실행");
 
         boolean isHarmful = service.restrictMessage(messageContent);
