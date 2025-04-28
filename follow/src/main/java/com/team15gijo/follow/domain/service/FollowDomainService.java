@@ -1,7 +1,10 @@
 package com.team15gijo.follow.domain.service;
 
+import com.team15gijo.follow.application.dto.v2.FollowCursorRecommendCommand;
 import com.team15gijo.follow.domain.model.FollowEntity;
 import com.team15gijo.follow.presentation.dto.request.v2.FollowRequestDto;
+import com.team15gijo.follow.presentation.dto.response.v2.FollowRecommendResponseDto;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -22,4 +25,7 @@ public interface FollowDomainService {
     long countFollowers(Long userId);
 
     long countFollowings(Long userId);
+
+    List<FollowRecommendResponseDto> recommend(
+            FollowCursorRecommendCommand followCursorRecommendCommand);
 }

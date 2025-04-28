@@ -2,8 +2,10 @@ package com.team15gijo.user.domain.repository;
 
 import com.team15gijo.user.application.dto.v1.AdminUserSearchCommand;
 import com.team15gijo.user.domain.model.UserEntity;
+import com.team15gijo.user.presentation.dto.internal.response.v1.UserAndRegionInfoFollowResponseDto;
 import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,4 +35,6 @@ public interface UserRepository {
     Page<UserReadsResponseDto> searchUsers(String nickname, String username, String region, Pageable validatedPageable);
 
     void deleteById(Long userId);
+
+    List<UserAndRegionInfoFollowResponseDto> findUserAndRegionInfos(List<Long> userIds);
 }

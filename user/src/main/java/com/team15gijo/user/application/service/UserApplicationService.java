@@ -2,6 +2,7 @@ package com.team15gijo.user.application.service;
 
 import com.team15gijo.user.domain.model.UserStatus;
 import com.team15gijo.user.infrastructure.dto.UserFeignInfoResponseDto;
+import com.team15gijo.user.presentation.dto.internal.response.v1.UserAndRegionInfoFollowResponseDto;
 import com.team15gijo.user.presentation.dto.internal.response.v1.UserInfoFollowResponseDto;
 import com.team15gijo.user.presentation.dto.request.v1.AdminUserStatusUpdateRequestDto;
 import com.team15gijo.user.presentation.dto.request.v1.UserEmailUpdateRequestDto;
@@ -14,6 +15,7 @@ import com.team15gijo.user.presentation.dto.response.v1.UserUpdateResponseDto;
 import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -52,4 +54,7 @@ public interface UserApplicationService {
     void deleteUser(Long userId);
 
     UserInfoFollowResponseDto getUserInfoForFollow(Long userId);
+
+    List<UserAndRegionInfoFollowResponseDto> getUserAndRegionInfoForRecommend(
+            List<Long> candidateUserIds);
 }

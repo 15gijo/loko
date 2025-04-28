@@ -30,6 +30,7 @@ public class JwtGlobalFiter implements GlobalFilter {
     private static final List<String> excludedPaths = List.of(
             "/api/v1/auth/login",
             "/api/v1/users/signup",
+            "/api/v2/users/signup",
             "/api/v1/auth/admin-assign",
             "/api/v2/auth/refresh"
     );
