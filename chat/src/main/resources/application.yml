@@ -90,4 +90,4 @@ slack:
 
 ai:
   service:
-    url: ${AI_SERVER_PORT}   # AiApplication이 띄운 포트
+    url: ${AI_SERVICE_URL}   # AiApplication이 띄운 포트
