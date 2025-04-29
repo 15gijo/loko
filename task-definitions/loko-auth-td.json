@@ -1,0 +1,83 @@
+{
+  "family": "loko-auth-td",
+  "containerDefinitions": [
+    {
+      "name": "loko-auth",
+      "image": "REPLACEME_IMAGE",
+      "cpu": 512,
+      "memory": 1024,
+      "essential": true,
+      "portMappings": [
+        {
+          "name": "http",
+          "containerPort": 19092,
+          "hostPort": 19092,
+          "protocol": "tcp",
+          "appProtocol": "http"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "SPRING_DATASOURCE_URL",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko-feed/SPRING_DATASOURCE_URL"
+        },
+        {
+          "name": "SPRING_DATASOURCE_USERNAME",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko-feed/SPRING_DATASOURCE_USERNAME"
+        },
+        {
+          "name": "SPRING_DATASOURCE_PASSWORD",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko-feed/SPRING_DATASOURCE_PASSWORD"
+        },
+        {
+          "name": "EC2_MIDDLEWARE_IP",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko-feed/EC2_MIDDLEWARE_IP"
+        },
+        {
+          "name": "ACTIVE_PROFILE",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko/ACTIVE_PROFILE"
+        },
+        {
+          "name": "EUREKA_HOST",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko/EUREKA_HOST"
+        },
+        {
+          "name": "JWT_SECRET_KEY",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko/JWT_SECRET_KEY"
+        },
+        {
+          "name": "ACCESS_TOKEN_EXPIRATION",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko-auth/ACCESS_TOKEN_EXPIRATION"
+        },
+        {
+          "name": "REFRESH_TOKEN_EXPIRATION",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko-auth/REFRESH_TOKEN_EXPIRATION"
+        },
+        {
+          "name": "ADMIN_TOKEN",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko-auth/ADMIN_TOKEN"
+        },
+        {
+          "name": "JWT_ADMIN_SECRET_KEY",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko-auth/JWT_ADMIN_SECRET_KEY"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/loko-auth",
+          "awslogs-region": "ap-northeast-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ],
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "512",
+  "memory": "1024",
+  "networkMode": "awsvpc",
+  "executionRoleArn": "arn:aws:iam::408891294463:role/loko-task-role",
+  "taskRoleArn": "arn:aws:iam::408891294463:role/loko-task-role"
+}

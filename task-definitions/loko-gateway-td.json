@@ -1,0 +1,99 @@
+{
+  "taskDefinitionArn": "arn:aws:ecs:ap-northeast-2:408891294463:task-definition/loko-gateway-td:5",
+  "containerDefinitions": [
+    {
+      "name": "loko-gateway",
+      "image": "REPLACEME_IMAGE",
+      "cpu": 512,
+      "memory": 1024,
+      "portMappings": [
+        {
+          "name": "http",
+          "containerPort": 19091,
+          "hostPort": 19091,
+          "protocol": "tcp",
+          "appProtocol": "http"
+        }
+      ],
+      "essential": true,
+      "environment": [],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "secrets": [
+        {
+          "name": "ACTIVE_PROFILE",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko/ACTIVE_PROFILE"
+        },
+        {
+          "name": "EC2_MIDDLEWARE_IP",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko-feed/EC2_MIDDLEWARE_IP"
+        },
+        {
+          "name": "EUREKA_HOST",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko/EUREKA_HOST"
+        },
+        {
+          "name": "JWT_SECRET_KEY",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko/JWT_SECRET_KEY"
+        },
+        {
+          "name": "REDIS_PASSWORD",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko-feed/REDIS_PASSWORD"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/loko-gateway",
+          "awslogs-region": "ap-northeast-2",
+          "awslogs-stream-prefix": "ecs"
+        },
+        "secretOptions": []
+      },
+      "systemControls": []
+    }
+  ],
+  "family": "loko-gateway-td",
+  "taskRoleArn": "arn:aws:iam::408891294463:role/loko-task-role",
+  "executionRoleArn": "arn:aws:iam::408891294463:role/loko-task-role",
+  "networkMode": "awsvpc",
+  "revision": 5,
+  "volumes": [],
+  "status": "ACTIVE",
+  "requiresAttributes": [
+    {
+      "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+    },
+    {
+      "name": "ecs.capability.execution-role-awslogs"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.task-iam-role"
+    },
+    {
+      "name": "ecs.capability.secrets.ssm.environment-variables"
+    },
+    {
+      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+    },
+    {
+      "name": "ecs.capability.task-eni"
+    }
+  ],
+  "placementConstraints": [],
+  "compatibilities": [
+    "EC2",
+    "FARGATE"
+  ],
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "512",
+  "memory": "1024",
+  "registeredAt": "2025-04-29T08:31:35.753Z",
+  "registeredBy": "arn:aws:iam::408891294463:user/jaeeun",
+  "tags": []
+}

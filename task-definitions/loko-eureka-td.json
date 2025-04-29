@@ -1,0 +1,41 @@
+{
+  "family": "loko-eureka-td",
+  "containerDefinitions": [
+    {
+      "name": "loko-eureka",
+      "image": "REPLACEME_IMAGE",
+      "cpu": 512,
+      "memory": 1024,
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 19090,
+          "hostPort": 19090,
+          "protocol": "tcp"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "ACTIVE_PROFILE",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko/ACTIVE_PROFILE"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/loko-eureka-td",
+          "awslogs-region": "ap-northeast-2",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ],
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "512",
+  "memory": "1024",
+  "networkMode": "awsvpc",
+  "executionRoleArn": "arn:aws:iam::408891294463:role/loko-task-role",
+  "taskRoleArn": "arn:aws:iam::408891294463:role/loko-task-role"
+}
