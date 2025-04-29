@@ -11,6 +11,7 @@ import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.geom.Point;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -68,9 +69,10 @@ public class UserRepositoryImpl implements UserRepository {
 
     //내부 통신
     @Override
-    public List<UserAndRegionInfoFollowResponseDto> findUserAndRegionInfos(List<Long> userIds) {
-        return userQueryDslRepository.findUserAndRegionInfos(userIds);
+    public List<UserAndRegionInfoFollowResponseDto> findUserAndRegionInfos(Point location, List<Long> userIds) {
+        return userQueryDslRepository.findUserAndRegionInfos(location, userIds);
     }
+
 
     //내부 통신
     @Override
@@ -95,6 +97,36 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public Optional<Long> findIdByNickname(String nickname) {
         return userJpaRepository.findIdByNickname(nickname);
+    }
+
+    //내부 통신 - 카프카
+    @Override
+    public void incrementFollowingCount(Long followerId) {
+        userJpaRepository.incrementFollowingCount(followerId);
+    }
+
+    //내부 통신 - 카프카
+    @Override
+    public void incrementFollowerCount(Long followeeId) {
+        userJpaRepository.incrementFollowerCount(followeeId);
+    }
+
+    //내부 통신 - 카프카
+    @Override
+    public void decrementFollowingCount(Long followerId) {
+        userJpaRepository.decrementFollowingCount(followerId);
+    }
+
+    //내부 통신 - 카프카
+    @Override
+    public void decrementFollowerCount(Long followeeId) {
+        userJpaRepository.decrementFollowerCount(followeeId);
+    }
+
+    //내부 통신 - 레디스 리프레쉬
+    @Override
+    public List<UserEntity> findAll() {
+        return userJpaRepository.findAll();
     }
 
 }

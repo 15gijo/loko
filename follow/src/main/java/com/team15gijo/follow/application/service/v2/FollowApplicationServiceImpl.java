@@ -10,8 +10,11 @@ import com.team15gijo.follow.domain.model.RecommendPriority;
 import com.team15gijo.follow.domain.repository.FollowRepository;
 import com.team15gijo.follow.domain.service.FollowDomainService;
 import com.team15gijo.follow.infrastructure.client.UserFeignClient;
+import com.team15gijo.follow.infrastructure.dto.request.UserAndRegionInfoRequestDto;
 import com.team15gijo.follow.infrastructure.dto.response.v2.UserAndRegionInfoFollowResponseDto;
 import com.team15gijo.follow.infrastructure.dto.response.v2.UserInfoFollowResponseDto;
+import com.team15gijo.follow.infrastructure.kafka.event.publisher.FollowEventPublisher;
+import com.team15gijo.follow.infrastructure.redis.repository.FollowRedisRepository;
 import com.team15gijo.follow.presentation.dto.request.v2.BlockRequestDto;
 import com.team15gijo.follow.presentation.dto.request.v2.FollowRequestDto;
 import com.team15gijo.follow.presentation.dto.response.v2.AdminFollowSearchResponseDto;
@@ -26,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -33,6 +37,7 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -41,6 +46,8 @@ public class FollowApplicationServiceImpl implements FollowApplicationService {
     private final FollowDomainService followDomainService;
     private final FollowRepository followRepository;
     private final UserFeignClient userFeignClient;
+    private final FollowEventPublisher followEventPublisher;
+    private final FollowRedisRepository<String> followRedisRepository;
 
     @Override
     @Transactional
@@ -51,6 +58,9 @@ public class FollowApplicationServiceImpl implements FollowApplicationService {
 
         FollowEntity savedFollow = followRepository.save(follow);
 
+        followEventPublisher.publishFollowCreated(savedFollow.getFollowerId(),
+                savedFollow.getFolloweeId());
+
         return FollowResponseDto.from(savedFollow);
     }
 
@@ -60,7 +70,12 @@ public class FollowApplicationServiceImpl implements FollowApplicationService {
 
         FollowEntity follow = followDomainService.deleteFollow(followerId, followeeId);
 
+        //상태 업데이트 dirtyChecking 강제
+        followRepository.saveAndFlush(follow);
+
         followRepository.delete(follow);
+
+        followEventPublisher.publishFollowDeleted(follow.getFollowerId(), follow.getFolloweeId());
 
         return UnfollowResponseDto.from(follow);
     }
@@ -145,7 +160,9 @@ public class FollowApplicationServiceImpl implements FollowApplicationService {
 
         //유저 정보, 지역 정보 가져오기
         List<UserAndRegionInfoFollowResponseDto> userAndRegionInfos = userFeignClient.getUserAndRegionInfo(
-                candidateResult.userIds());
+                new UserAndRegionInfoRequestDto(userId, candidateResult.userIds())
+        );
+//                candidateResult.userIds(), userId);
 
         //유저 팔로우/팔로잉 count 가져오기
 //        Map<Long, Integer> candidateCount = followRepository.countByCandidateUserIds(
@@ -216,14 +233,33 @@ public class FollowApplicationServiceImpl implements FollowApplicationService {
         });
     }
 
-    private FollowCountResponseDto getCountFollowsInternal(Long userId) {
-        long followerCount = followDomainService.countFollowers(userId);
-        long followingCount = followDomainService.countFollowings(userId);
+//    private FollowCountResponseDto getCountFollowsInternal(Long userId) {
+//        long followerCount = followDomainService.countFollowers(userId);
+//        long followingCount = followDomainService.countFollowings(userId);
+//
+//        return FollowCountResponseDto.of(
+//                followerCount,
+//                followingCount
+//        );
+//    }
 
-        return FollowCountResponseDto.of(
-                followerCount,
-                followingCount
-        );
+    private FollowCountResponseDto getCountFollowsInternal(Long userId) {
+        Integer followerCount = followRedisRepository.getFollowerCount(String.valueOf(userId))
+                .orElseGet(() -> {
+                    log.info("[/me/count] followerCount Redis miss 발생 - fallback 0 저장 (userId = {})", userId);
+                    followRedisRepository.saveFollowerCount(String.valueOf(userId), 0);
+                    return 0;
+                });
+
+        Integer followingCount = followRedisRepository.getFollowingCount(String.valueOf(userId))
+                .orElseGet(() -> {
+                    log.info("[/me/count] followingCount Redis miss 발생 - fallback 0 저장 (userId = {})", userId);
+                    followRedisRepository.saveFollowingCount(String.valueOf(userId), 0);
+                    return 0;
+                });
+
+        return FollowCountResponseDto.of(followerCount, followingCount);
     }
+
 
 }

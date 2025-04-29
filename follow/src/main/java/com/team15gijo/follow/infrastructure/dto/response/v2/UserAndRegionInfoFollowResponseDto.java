@@ -6,7 +6,8 @@ public record UserAndRegionInfoFollowResponseDto(
         String username,
         String profile,
         String regionCode,
-        String regionName
+        String regionName,
+        Double distanceKm
 ) {
 
 }

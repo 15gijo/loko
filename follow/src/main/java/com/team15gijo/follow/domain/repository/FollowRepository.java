@@ -37,5 +37,11 @@ public interface FollowRepository {
     Page<AdminFollowSearchResponseDto> searchAllFollowsForAdmin(
             AdminFollowSearchCommand adminFollowSearchCommand, Pageable validatePageable);
 
-    FollowCursorCandidateResult find2HopCandidateUserIds(Long userId, Long lastUserId, Pageable validatePageable);
+    FollowCursorCandidateResult find2HopCandidateUserIds(Long userId, Long lastUserId,
+            Pageable validatePageable);
+
+    void saveAndFlush(FollowEntity follow);
+
+    boolean existsByFollowerIdAndFolloweeIdAndFollowStatus(Long followerId, Long followeeId,
+            FollowStatus followStatus);
 }

@@ -5,6 +5,7 @@ import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.EnumPath;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberPath;
 import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.locationtech.jts.geom.Point;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -150,7 +152,8 @@ public class UserQueryDslRepositoryImpl implements UserQueryDslRepository {
     }
 
     @Override
-    public List<UserAndRegionInfoFollowResponseDto> findUserAndRegionInfos(List<Long> userIds) {
+    public List<UserAndRegionInfoFollowResponseDto> findUserAndRegionInfos(Point location,
+            List<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -162,7 +165,10 @@ public class UserQueryDslRepositoryImpl implements UserQueryDslRepository {
                         user.username,
                         user.profile,
                         userRegion.regionCode,
-                        userRegion.regionName
+                        userRegion.regionName,
+                        Expressions.numberTemplate(Double.class,
+                                "ST_DistanceSphere(ST_MakePoint({0},{1}), {2}) / 1000",
+                                location.getX(), location.getY(), userRegion.location)
                 ))
                 .from(user)
                 .leftJoin(userRegion).on(user.regionId.eq(userRegion))

@@ -56,6 +56,13 @@ public class UserEntity extends BaseEntity {
     @Column(name = "region", nullable = false)
     private String region;
 
+    @Column(name = "follower_count", nullable = false)
+    private int followerCount = 0;
+
+    @Column(name = "following_count", nullable = false)
+    private int followingCount = 0;
+
+
     @Builder
     public UserEntity(
             String username,

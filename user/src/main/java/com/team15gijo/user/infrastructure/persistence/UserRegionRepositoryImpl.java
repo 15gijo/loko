@@ -3,6 +3,8 @@ package com.team15gijo.user.infrastructure.persistence;
 import com.team15gijo.user.domain.model.UserRegionEntity;
 import com.team15gijo.user.domain.repository.UserRegionRepositroy;
 import com.team15gijo.user.infrastructure.persistence.jpa.UserRegionJpaRepository;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -17,4 +19,10 @@ public class UserRegionRepositoryImpl implements UserRegionRepositroy {
         userRegionJpaRepository.save(userRegionEntity);
         return userRegionEntity;
     }
+
+    @Override
+    public Optional<UserRegionEntity> findById(UUID regionId) {
+        return userRegionJpaRepository.findById(regionId);
+    }
+
 }

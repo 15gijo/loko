@@ -20,6 +20,9 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
+    //redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
     //postGis
     implementation 'org.hibernate.orm:hibernate-spatial:6.3.1.Final'
 

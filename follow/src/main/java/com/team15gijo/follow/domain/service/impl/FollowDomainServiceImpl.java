@@ -31,6 +31,15 @@ public class FollowDomainServiceImpl implements FollowDomainService {
             throw new CustomException(FollowDomainExceptionCode.CANNOT_FOLLOW_SELF);
         }
 
+        //블락 체크
+        boolean isBlockedTarget = followRepository.existsByFollowerIdAndFolloweeIdAndFollowStatus(
+                followerId, followRequestDto.followeeId(), FollowStatus.BLOCKED);
+        boolean targetBlockedMe = followRepository.existsByFollowerIdAndFolloweeIdAndFollowStatus(
+                followRequestDto.followeeId(), followerId, FollowStatus.BLOCKED);
+        if (isBlockedTarget || targetBlockedMe) {
+            throw new CustomException(FollowDomainExceptionCode.CANNOT_FOLLOW_BLOCKED_USER);
+        }
+
         //softDelete(언팔로우 복구)
         Optional<FollowEntity> deletedFollowOpt = followRepository.findDeletedByFollowerIdAndFolloweeId(
                 followerId, followRequestDto.followeeId());
@@ -162,6 +171,7 @@ public class FollowDomainServiceImpl implements FollowDomainService {
 
         String myRegionCode = null;
         String candidateRegionCode = null;
+        Double candidateDistanceKm = null;
 
         for (UserAndRegionInfoFollowResponseDto dto : followCursorRecommendCommand.getUserAndRegionInfos()) {
             if (dto.userId().equals(followCursorRecommendCommand.getUserId())) {
@@ -169,6 +179,7 @@ public class FollowDomainServiceImpl implements FollowDomainService {
             }
             if (dto.userId().equals(candidate.userId())) {
                 candidateRegionCode = dto.regionName();
+                candidateDistanceKm = dto.distanceKm();
             }
             if (myRegionCode != null && candidateRegionCode != null) {
                 break;
@@ -189,6 +200,17 @@ public class FollowDomainServiceImpl implements FollowDomainService {
             } else if (safeSubstring(myRegionCode, 2).equals(
                     safeSubstring(candidateRegionCode, 2))) {
                 score += 20;
+            }
+        }
+
+        //거리 기반 점수
+        if (candidateDistanceKm != null) {
+            if (candidateDistanceKm <= 1.0) {
+                score += 80;
+            } else if (candidateDistanceKm <= 5.0) {
+                score += 50;
+            } else if (candidateDistanceKm <= 10.0) {
+                score += 30;
             }
         }
         return score;

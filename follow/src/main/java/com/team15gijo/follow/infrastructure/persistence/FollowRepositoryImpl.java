@@ -90,4 +90,16 @@ public class FollowRepositoryImpl implements FollowRepository {
         return followQueryDslRepository.find2HopCandidateUserIds(userId, lastUserId,
                 validatePageable);
     }
+
+    @Override
+    public void saveAndFlush(FollowEntity follow) {
+        followJpaRepository.saveAndFlush(follow);
+    }
+
+    @Override
+    public boolean existsByFollowerIdAndFolloweeIdAndFollowStatus(Long followerId, Long followeeId,
+            FollowStatus followStatus) {
+        return followJpaRepository.existsByFollowerIdAndFolloweeIdAndFollowStatus(followerId,
+                followeeId, followStatus);
+    }
 }
