@@ -5,8 +5,8 @@ on:
     branches:
       - main
       - deploy/deploy-test
-#    paths:
-#      - 'auth/**'
+    paths:
+      - 'auth/**'
 env:
   ECR_REGISTRY: 408891294463.dkr.ecr.ap-northeast-2.amazonaws.com
   IMAGE_NAME: loko-auth

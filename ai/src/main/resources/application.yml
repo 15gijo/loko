@@ -2,6 +2,8 @@ server:
   port: 19095
 
 spring:
+  profiles:
+    active: ${ACTIVE_PROFILE:local}
   cloud:
     config:
       enabled: false
