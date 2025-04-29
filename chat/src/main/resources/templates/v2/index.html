@@ -4,197 +4,287 @@
   <title>Chat</title>
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+  <div>
+    <label>ChatRoom ID:</label>
+    <input type="text" id="chatRoomId" value="04332d42-b163-4b59-b07c-45d932e617e1" placeholder="채팅방 ID를 입력하세요" />
+  </div>
+  <div>
+    <label>senderNickname(발송자 닉네임) :</label>
+    <input type="text" id="senderNickname" value="testnick" placeholder="당신의 닉네임을 입력하세요" />
+  </div>
+  <div>
+    <label>Receiver Nickname(수신자 닉네임) :</label>
+    <input type="text" id="receiverNickname" value="testnick22" placeholder="받는 사람 닉네임을 입력하세요" />
+  </div>
+  <div>
+    <label>Message:</label>
+    <input type="text" id="message" placeholder="메시지를 입력하세요" />
+  </div>
+  <button id="connectButton">Connect</button>
+  <button id="disconnectButton">Disconnect</button>
+  <button id="sendButton">Send</button>
+  <div id="messages"></div>
+
   <script>
+    // API 엔드포인트 상숭
+    const API_BASE_URL = '/api/v2/chats';
+    const WS_ENDPOINT = '/v2/ws-stomp';
+
     let stompClient = null;
     let isConnected = false;
-    let chatRoomId = null;
+    let chatRoomIdInput = document.getElementById('chatRoomId');
+    let senderNicknameInput = document.getElementById('senderNickname');
+    let receiverNicknameInput = document.getElementById('receiverNickname');
+    let messageInput = document.getElementById('message');
+    let messagesDiv = document.getElementById('messages');
     let senderId = null;
     let receiverId = null;
 
+    const connectButton = document.getElementById('connectButton');
+    const disconnectButton = document.getElementById('disconnectButton');
+    const sendButton = document.getElementById('sendButton');
+
+    // 이벤트 리스너 등록
+    connectButton.addEventListener('click', connect);
+    disconnectButton.addEventListener('click', disconnect);
+    sendButton.addEventListener('click', sendMessage);
+
     // chatRoomId, senderNickname, receiverNickname 입력 후, Connect 클릭 시 함수
     function connect() {
-      chatRoomId = document.getElementById('chatRoomId').value;
-      senderNickname = document.getElementById('senderNickname').value;
-      receiverNickname = document.getElementById('receiverNickname').value;
+      const chatRoomId = chatRoomIdInput.value;
+      const senderNickname = senderNicknameInput.value;
+      const receiverNickname = receiverNicknameInput.value;
 
-      // 1. 채팅방 ID 유효성 검증 API 호출
-      fetch(`/api/v2/chats/validate/${chatRoomId}`)
-      .then(response => response.json())
-      .then(data => {
-        if(!data.data.valid) {
-          // 1-1. 채팅방 ID 유효성 검증 API 호출 - 채팅방 id가 유효하지 않을 때 오류 표시
+      // 클라이언트 유효성 검증
+      if (!chatRoomId || !senderNickname || !receiverNickname) {
+        handleValidationErrorCommon("모든 필드를 입력해주세요.");
+        return;
+      }
+
+      // Promise.all 사용하여 모든 유효성 검증 API 호출을 병렬 처리
+      Promise.all([
+        // 1. 채팅방 ID 유효성 검증 API 호출
+        fetch(`${API_BASE_URL}/validate/${chatRoomId}`).then(res => res.json()),
+        // 2. 채팅방 메시지 발송자 닉네임 추출 및 유효성 검증 API 호출
+        fetch(`${API_BASE_URL}/validate/nickname/${senderNickname}`).then(res => res.json()),
+        // 4. 채팅방 메시지 수신자 닉네임 추출 및 userId 유효성 검증 API 호출
+        fetch(`${API_BASE_URL}/validate/nickname/${receiverNickname}`).then(res => res.json())
+      ])
+      .then(([chatRoomIdResult, senderNicknameResult, receiverNicknameResult]) => {
+        // 1-1. 채팅방 ID 유효성 검증 API 호출 - 채팅방 id가 유효하지 않을 때 오류 표시
+        if (!chatRoomIdResult.data.valid) {
           handleValidationErrorCommon("존재하지 않은 채팅방 ID 입니다. 다시 확인해주세요.");
-        } else {
-          // 1-2. 채팅방 ID 유효성 검증 API 호출 - 성공
-          console.log("채팅방 ID 유효성 검증 성공");
-
-          // 2. 채팅방 메시지 발송자 닉네임 추출 및 유효성 검증 API 호출
-          fetch(`/api/v2/chats/validate/nickname/${senderNickname}`)
-          .then(response => response.json())
-          .then(data => {
-            if (data.data.userId != null) {
-              // 2-1. 채팅방 메시지 발송자 닉네임 추출 및 유효성 검증 API 호출 - 성공
-              console.log("senderNickname 유효성 검증 성공");
-              senderId = data.data.userId;
-              console.log("[발송자 ID] senderId=" + senderId);
-              console.log("[발송자 닉네임] senderNickname=" + senderNickname);
-
-              // 3. 채팅방에 해당하는 발송자 닉네임으로 userId 유효성 검증 API 호출
-              fetch(`/api/v2/chats/validate/${chatRoomId}/${senderId}`)
-              .then(response => response.json())
-              .then(data => {
-                if(!data.data.valid) {
-                  // 3-1. 채팅방에 해당하는 발송자 닉네임으로 userId 유효성 검증 API 호출 - chatRoomId의 userId로 유효하지 않을 때 오류 표시
-                  handleValidationErrorCommon("해당 채팅방의 사용자가 아닙니다. 다시 확인해주세요.");
-                } else {
-                  // 3-2. 채팅방에 해당하는 발송자 닉네임으로 userId 유효성 검증 API 호출 - 성공
-                  console.log("채팅방 ID에 해당하는 senderId 유효성 검증 성공");
-
-                  // 4. 채팅방 메시지 수신자 닉네임 추출 및 userId 유효성 검증 API 호출
-                  fetch(`/api/v2/chats/validate/nickname/${receiverNickname}`)
-                  .then(response => response.json())
-                  .then(data => {
-                    if (data.data.userId != null) {
-                      // 4-1. 채팅방 메시지 수신자 닉네임 추출 및 userId 유효성 검증 API 호출 - 성공
-                      console.log("receiverNickname 유효성 검증 성공");
-                      receiverId = data.data.userId;
-                      console.log("[수신자 ID] receiverId=" + receiverId);
-                      console.log("[수신자 닉네임] receiverNickname=" + receiverNickname);
-
-                      // 5. 채팅방에 해당하는 수신자 닉네임으로 userId 유효성 검증 API 호출
-                      fetch(`/api/v2/chats/validate/${chatRoomId}/${receiverId}`)
-                      .then(response => response.json())
-                      .then(data => {
-                        if(!data.data.valid) {
-                          // 5-1. 채팅방에 해당하는 수신자 닉네임으로 userId 유효성 검증 API 호출 - chatRoomId의 userId로 유효하지 않을 때 오류 표시
-                          handleValidationErrorCommon("해당 채팅방의 사용자가 아닙니다. 다시 확인해주세요.");
-                        } else {
-                          // 5-2. 채팅방에 해당하는 수신자 닉네임으로 userId 유효성 검증 API 호출 - 성공
-                          console.log("채팅방 ID에 해당하는 receiverId 유효성 검증 성공");
-
-                          // 6. 웹소켓 연결 시, 쿼리 파리미터로 발송자/수신자의 id,nickname 전달
-                          const socket = new SockJS(
-                              `/v2/ws-stomp?senderId=${senderId}&senderNickname=${senderNickname}
-                              &receiverId=${receiverId}&receiverNickname=${receiverNickname}`);
-                          stompClient = Stomp.over(socket);
-                          stompClient.connect({}, function (frame) {
-                            // 6-1. 웹소켓 연결 - 성공
-                            isConnected = true;
-                            console.log('소켓 Connected: ' + frame);
-
-                            // 7. connect 메시징매핑 엔드포인트로 메시지 전송하여 Redis 저장
-                            stompClient.send(
-                                `/app/v2/chat/connect/${chatRoomId}/${senderId}`,
-                                { 'senderNickname': senderNickname, 'receiverNickname': receiverNickname }
-                            );
-
-                            // 7-1. connect 메시징매핑 서비스에서 오류 메시지 전송하는 엔드포인트 구독
-                            stompClient.subscribe(`/topic/v2/chat/errors/${senderId}`, function (message) {
-                              alert(message.body);
-                              isConnected = false;
-                              console.log("소켓 Disconnected");
-                              stompClient.disconnect();
-                            });
-
-                            // 8. 채팅방 재접속 시, MongoDB 메시지 조회 API 호출
-                            fetch(`/api/v2/chats/message/page/${chatRoomId}/${senderId}`)
-                            .then(response => response.json())
-                            .then(messages => {
-                              if(messages) {
-                                // 8-1. 채팅방 재접속 시, MongoDB 메시지 조회 API 호출 - 성공
-                                messages.content.forEach(message => {
-                                  showMessage(message);
-                                });
-                              } else {
-                                // 8-2. 채팅방 재접속 시, MongoDB 메시지 조회 API 호출 - 이전 메시지 내역이 없음
-                                handleValidationError("서버 응답 값이 없습니다.", "서버 응답이 비어있어 이전 메시지 불러오기 실패했습니다.");
-                              }
-                            })
-                            .catch(error => {
-                              // 8-3. 채팅방 재접속 시, MongoDB 메시지 조회 API 호출 - 실패
-                              handleValidationError("MongoDB 메시지 조회 실패: " + error, "MongoDB 메시지 조회 실패로 이전 메시지 불러오기 실패했습니다.");
-                            });
-
-                            // 9. 처음 채팅방 입장 메시지 구독
-                            stompClient.subscribe(`/topic/v2/chat/enter/${chatRoomId}`, function (message) {
-                              showMessage(JSON.parse(message.body));
-                            });
-
-                            // 10. 실시간 채팅 메시지 전송 구독
-                            stompClient.subscribe(`/topic/v2/chat/${chatRoomId}`, function (message) {
-                              showMessage(JSON.parse(message.body));
-                            });
-
-                            // 11. 채팅 (유해성 검증)메시지 필터링 & 삭제 전송 구독
-                            stompClient.subscribe(`/topic/v2/chat/restriction/delete/${chatRoomId}`, function (message) {
-                              const parsedMessage = JSON.parse(message.body);
-                              alert("⚠️유해 메시지 감지: " + parsedMessage.cause);
-
-                              // 삭제된 메시지 ID를 이용하여 해당 메시지 내용 숨김 처리
-                              const messageElement = document.querySelector(`p[data-message-id="${parsedMessage.messageId}"]`);
-                              if(messageElement) {
-                                messageElement.style.display = 'none';
-                              }
-                            });
-                          }, function (error) {
-                            // 6-2. 웹소켓 연결 - 실패
-                            handleValidationError("소켓 Connection error: ", error, "채팅방 연결 종료 및 실패하였습니다. 서버 오류를 확인해주세요.");
-                          });
-                        }
-                      })
-                      .catch(error => {
-                        // 5-3. 채팅방에 해당하는 수신자 닉네임으로 userId 유효성 검증 API 호출 - 실패
-                        handleValidationError("receiverId 유효성 검증 API 호출 실패: " + error, "채팅방의 사용자 ID 유효성 검증 실패. 서버 오류를 확인해주세요.");
-                      });
-                    } else {
-                      // 4-2. 채팅방 메시지 수신자 닉네임 추출 및 userId 유효성 검증 API 호출 - receiverNickname이 채팅방 참여자로 유효하지 않을 때 오류 표시
-                      handleValidationError("receiverNickname(" + receiverNickname + ")이 유효하지 않아 receiverId가 null 입니다.", "받는 사용자 닉네임(' + receiverNickname + ')이 유효하지 않습니다. 다시 확인해주세요.");
-                    }
-                  })
-                  .catch(error => {
-                    // 4-3. 채팅방 메시지 수신자 닉네임 추출 및 userId 유효성 검증 API 호출 - 실패
-                    handleValidationError("수신자 닉네임 유효성 API 호출 실패: " + error, "수신자 닉네임 유효성 검증 실패. 서버 오류를 확인해주세요.");
-                  });
-                }
-              })
-              .catch(error => {
-                // 3-3. 채팅방에 해당하는 발송자 닉네임으로 userId 유효성 검증 API 호출 - 실패
-                handleValidationError("senderId 유효성 검증 API 호출 실패: " + error, "채팅방의 사용자 ID 유효성 검증 실패. 서버 오류를 확인해주세요.");
-              });
-            }  else {
-              // 2-2. 채팅방 메시지 발송자 닉네임 추출 및 유효성 검증 API 호출 - senderNickname 이 채팅방 참여자로 유효하지 않을 때 오류 표시
-              handleValidationError("senderNickname(" + senderNickname + ")이 유효하지 않아 senderId가 null 입니다.", "발송자 닉네임(' + senderNickname + ')이 유효하지 않습니다. 다시 확인해주세요.");
-            }
-          })
-          .catch(error => {
-            // 2-3. 채팅방 메시지 발송자 닉네임 추출 및 유효성 검증 API 호출 - 실패
-            handleValidationError("수신자 닉네임 유효성 API 호출 실패: " + error, "수신자 닉네임 유효성 검증 실패. 서버 오류를 확인해주세요.'");
-          });
+          return Promise.reject(); // 다음 fetch .then 블록으로 넘기지 않고 중단
         }
+        // 1-2. 채팅방 ID 유효성 검증 API 호출 - 성공
+        console.log("채팅방 ID 유효성 검증 성공");
+
+        // 2-2. 채팅방 메시지 발송자 닉네임 추출 및 유효성 검증 API 호출 - senderNickname 유효하지 않음
+        if (senderNicknameResult.data.userId == null) {
+          handleValidationErrorCommon(
+              `senderNickname(${senderNickname})이 유효하지 않아 senderId가 존재하지 않습니다.`,
+              `발송자 닉네임(${senderNickname})이 유효하지 않습니다. 다시 확인해주세요.`);
+          return Promise.reject();
+        }
+        // 2-2. 채팅방 메시지 발송자 닉네임 추출 및 유효성 검증 API 호출 - 성공
+        console.log("senderNickname 유효성 검증 성공");
+        senderId = senderNicknameResult.data.userId;
+        console.log("[발송자 ID] senderId=" + senderId);
+        console.log("[발송자 닉네임] senderNickname=" + senderNickname);
+
+        // 4-1. 채팅방 메시지 수신자 닉네임 추출 및 userId 유효성 검증 API 호출 - receiverNickname 유효하지 않음
+        if (receiverNicknameResult.data.userId == null) {
+          handleValidationErrorCommon(
+              `receiverNickname(${receiverNickname})이 유효하지 않아 receiverId가 존재하지 않습니다.`,
+              `받는 사용자 닉네임(${receiverNickname})이 유효하지 않습니다. 다시 확인해주세요.`);
+          return Promise.reject();
+        }
+        // 4-2. 채팅방 메시지 수신자 닉네임 추출 및 userId 유효성 검증 API 호출 - 성공
+        console.log("receiverNickname 유효성 검증 성공");
+        receiverId = receiverNicknameResult.data.userId;
+        console.log("[수신자 ID] receiverId=" + receiverId);
+        console.log("[수신자 닉네임] receiverNickname=" + receiverNickname);
+
+        return Promise.all([
+          // 3. 채팅방에 해당하는 발송자 닉네임으로 userId 유효성 검증 API 호출
+          fetch(`${API_BASE_URL}/validate/${chatRoomId}/${senderId}`).then(res => res.json()),
+          // 5. 채팅방에 해당하는 수신자 닉네임으로 userId 유효성 검증 API 호출
+          fetch(`${API_BASE_URL}/validate/${chatRoomId}/${receiverId}`).then(res => res.json())
+        ]);
+      })
+      .then(([senderInRoomResult, receiverIdRoomResult]) => {
+        // 3-1. 채팅방에 해당하는 발송자 닉네임으로 userId 유효성 검증 API 호출 - chatRoomId의 userId로 유효하지 않음
+        if (!senderInRoomResult.data.valid) {
+          handleValidationErrorCommon("해당 채팅방의 발송자가 아닙니다. 다시 확인해주세요.");
+          return Promise.reject();
+        }
+        // 3-2. 채팅방에 해당하는 발송자 닉네임으로 userId 유효성 검증 API 호출 - 성공
+        console.log("채팅방 ID에 해당하는 senderId 유효성 검증 성공");
+
+        // 5-1. 채팅방에 해당하는 수신자 닉네임으로 userId 유효성 검증 API 호출 - chatRoomId의 userId로 유효하지 않음
+        if (!receiverIdRoomResult.data.valid) {
+          handleValidationErrorCommon("해당 채팅방의 수신자가 아닙니다. 다시 확인해주세요.");
+          return Promise.reject();
+        }
+        // 5-2. 채팅방에 해당하는 수신자 닉네임으로 userId 유효성 검증 API 호출 - 성공
+        console.log("채팅방 ID에 해당하는 receiverId 유효성 검증 성공");
+
+        // 모든 유효성 검증이 완료된 후 웹소켓 연결을 Promise로 래핑하여 반환
+        return new Promise((resolve, reject) => {
+          // 6. 웹소켓 연결 시, 쿼리 파리미터로 발송자/수신자의 id,nickname 전달
+          const socket = new SockJS(`${WS_ENDPOINT}?senderId=${senderId}&senderNickname=${senderNickname}&receiverId=${receiverId}&receiverNickname=${receiverNickname}`);
+          stompClient = Stomp.over(socket);
+          stompClient.connect({}, frame => {
+            // 6-1. 웹소켓 연결 - 성공
+            isConnected = true;
+            console.log('소켓 Connected: ' + frame);
+
+            // 7. connect 메시징매핑 엔드포인트로 메시지 전송하여 Redis 저장
+            stompClient.send(
+                `/app/v2/chat/connect/${chatRoomId}/${senderId}`,
+                {'senderNickname': senderNickname, 'receiverNickname': receiverNickname}
+            );
+
+            // 7-1. connect 메시징매핑 서비스에서 오류 메시지 전송하는 엔드포인트 구독
+            stompClient.subscribe(`/topic/v2/chat/errors/${senderId}`, function (message) {
+              alert(message.body);
+              isConnected = false;
+              console.log("소켓 Disconnected");
+              stompClient.disconnect();
+              reject(); // 소켓 연결 실패로 Promise를 reject
+            });
+
+            // 9. 처음 채팅방 입장 메시지 구독
+            stompClient.subscribe(`/topic/v2/chat/enter/${chatRoomId}`, function (message) {
+              showMessage(JSON.parse(message.body));
+            });
+
+            // 10. 실시간 채팅 메시지 전송 구독
+            stompClient.subscribe(`/topic/v2/chat/${chatRoomId}`, function (message) {
+              showMessage(JSON.parse(message.body));
+            });
+
+            // 11. 채팅 (유해성 검증)메시지 필터링 & 삭제 전송 구독
+            stompClient.subscribe(`/topic/v2/chat/restriction/delete/${chatRoomId}`,
+                function (message) {
+                  const parsedMessage = JSON.parse(message.body);
+                  alert("⚠️유해 메시지 감지: " + parsedMessage.cause);
+
+                  // 삭제된 메시지 ID를 이용하여 해당 메시지 내용 숨김 처리
+                  const messageElement = document.querySelector(
+                      `p[data-message-id="${parsedMessage.messageId}"]`);
+                  if (messageElement) {
+                    messageElement.style.display = 'none';
+                  }
+                });
+
+            // 8. 채팅방 재접속 시, MongoDB 메시지 조회 API 호출
+            fetch(`${API_BASE_URL}/message/page/${chatRoomId}/${senderId}`)
+            .then(response => response.json())
+            .then(messages => {
+              // 8-1. 채팅방 재접속 시, MongoDB 메시지 조회 API 호출 - 성공
+              if (messages && messages.content) {
+                messages.content.forEach(msg => showMessage(msg));
+                resolve(); // 모든 초기화 완료 후 resolove
+                // 8-2. 채팅방 재접속 시, MongoDB 메시지 조회 API 호출 - 이전 메시지 내역이 없음
+              } else {
+                handleValidationError("서버 응답 값이 없습니다.", "서버 응답이 비어있어 이전 메시지 불러오기 실패했습니다.");
+                reject();
+              }
+            })
+            .catch(error => {
+              // 8-3. 채팅방 재접속 시, MongoDB 메시지 조회 API 호출 - 실패
+              handleValidationError("MongoDB 메시지 조회 실패: " + error, "MongoDB 메시지 조회 실패로 이전 메시지 불러오기 실패했습니다.");
+              reject();
+            });
+          }, error => {
+            console.error("웹소켓 연결 실패: ", error);
+            reject(error); // 웹소켓 연결 자체 실패
+          });
+        });
+      })
+      .then(() => {
+        console.log("웹소켓 연결 및 초기 데이터 로딩 완료");
       })
       .catch(error => {
-        // 1-3. 채팅방 ID 유효성 검증 API 호출 - 실패
-        handleValidationError("채팅방 ID 유효성 API 호출 실패: " + error, "채팅방 ID 유효성 검증 실패. 서버 오류를 확인해주세요.");
+        console.error("유효성 검증 또는 채팅방 연결 과정 중 오류 발생:", error);
+        throw error;
       });
+    }
+
+    // 실시간 채팅 메시지 표시하는 함수
+    function showMessage(message) {
+      const p = document.createElement('p');
+      // 각 메시지 고유ID 속성
+      if (message._id) {
+        p.dataset.messageId = message._id;
+      }
+      let content = '';
+      if (message.connectionType === "ENTER") {
+        // 첫 입장 메시지 형식
+        content = message.messageContent;
+      } else if (message.connectionType === "CHAT") {
+        // 채팅 메시지 형식
+        content = `${message.senderNickname}: ${message.messageContent} - ${message.sentAt}`;
+      } else {
+        // TODO: 퇴장 시 메시지 처리 예정(message.connectionType === "EXIT")
+        content = message.messageContent;
+      }
+      p.textContent = content;
+      messagesDiv.appendChild(p);
+      messagesDiv.scrollTo = messagesDiv.scrollHeight; // 자동 스크롤
+    }
+
+    // 메시지 표시 초기화
+    function clearMessages() {
+      messagesDiv.innerHTML = '';
+      console.log('채팅방 메시지 초기화');
+    }
+
+    // message 입력 후, Send 클릭 시 메시지 전송을 위한 함수
+    function sendMessage() {
+      // 웹소켓 연결 시에만 메시지 전송 가능
+      if (isConnected) {
+        const message = messageInput.value;
+        if (message.trim() !== '') {
+          // 10. 실시간 채팅 메시지 전송
+          stompClient.send(
+              `/app/v2/chat/${chatRoomIdInput.value}`, // messageMapping 경로
+              {}, // header에 저장한 data
+              JSON.stringify({ // messageMapping 경로에서 사용할 dto 필드
+                'chatRoomId': chatRoomIdInput.value,
+                'senderNickname': senderNicknameInput.value,
+                'receiverId': receiverId,
+                'receiverNickname': receiverNicknameInput.value,
+                'messageContent': message
+              })
+          );
+          messageInput.value = ''; // 입력 필드 초기화
+        }
+      } else {
+        handleValidationErrorCommon("웹소켓 연결이 중단되어 메시지 전송이 불가합니다.");
+      }
     }
 
     // 채팅방 연결을 해지하기 위해 Disconnect 클릭 시 함수
     function disconnect() {
       if (stompClient !== null) {
         // 연결 중단 시, redis 삭제 API 호출
-        fetch(`/api/v2/chats/redis/delete/${chatRoomId}/${senderId}`)
+        fetch(`${API_BASE_URL}/redis/delete/${chatRoomIdInput.value}/${senderId}`)
         .then(response => response.json())
         .then(data => {
           if(data.data) {
             // Redis 캐시 삭제 성공
             console.log("소켓 Disconnected");
           } else {
-            console.log(chatRoomId + ":" + senderId + "로 저장된 cacheKey가 없습니다.");
+            console.log(`${chatRoomIdInput.value}:${senderId}로 저장된 cacheKey가 없습니다.`);
           }
           isConnected = false;
           alert('채팅방 연결 종료하였습니다. 다시 연결해주세요!');
           stompClient.disconnect();
-          clearMessages(); // 연결 종료 시 메시지 숨김
+          clearMessages();
         })
         .catch(error => {
           handleValidationError("API 호출 실패: " + error, "Redis 캐시 삭제 실패");
@@ -202,113 +292,17 @@
       }
     }
 
-    // message 입력 후, Send 클릭 시 메시지 전송을 위한 함수
-    function sendMessage() {
-      // 웹소켓 연결 시에만 메시지 전송 가능
-      if(isConnected) {
-        const message = document.getElementById('message').value;
-
-        // 10. 실시간 채팅 메시지 전송
-        stompClient.send(
-            `/app/v2/chat/${chatRoomId}`, // messageMapping 경로
-            {}, // header에 저장한 data
-            JSON.stringify({ // messageMapping 경로에서 사용할 dto 필드
-              'chatRoomId': chatRoomId,
-              'senderNickname': senderNickname,
-              'receiverId' : receiverId,
-              'receiverNickname' : receiverNickname,
-              'messageContent': message
-            })
-        );
-        // 메시지 전송 후, 입력 필드 초기화
-        document.getElementById('message').value = '';
-      } else {
-        // 웹소켓 연결 불가로 채팅 메시지 전송 - 실패
-        handleValidationErrorCommon("웹소켓 연결이 중단되어 메시지 전송이 불가");
-      }
-    }
-
-    // 실시간 채팅 메시지 표시하는 함수
-    function showMessage(message) {
-      const messages = document.getElementById('messages');
-      const p = document.createElement('p');
-
-      // 각 메시지 고유ID 속성
-      if(message._id) {
-        p.dataset.messageId = message._id;
-      }
-
-      if(message.connectionType === "ENTER") {
-        // 첫 입장 메시지 형식
-        p.textContent = message.messageContent;
-      } else if(message.connectionType === "CHAT") {
-        // 채팅 메시지 형식
-        p.textContent = message.senderNickname + ': ' + message.messageContent
-            + ' - ' + message.sentAt;
-      } else {
-        // TODO: 퇴장 시 메시지 처리 예정(message.connectionType === "EXIT")
-        p.textContent = message.messageContent;
-      }
-      messages.appendChild(p);
-    }
-
-    // 메시지 연결 차단 및 예외 발생 시, 메시지 표시 초기화
-    function clearMessages() {
-      // 연결 중단 시, redis 삭제 API 호출
-      fetch(`/api/v2/chats/redis/delete/${chatRoomId}/${senderId}`)
-      .then(response => response.json())
-      .then(data => {
-        if (data.data) {
-          // Redis 캐시 삭제 성공
-          console.log("소켓 Disconnected");
-        } else {
-          console.log(chatRoomId + ":" + senderId + "로 저장된 cacheKey가 없습니다.");
-        }
-
-        isConnected = false;
-        if (stompClient && stompClient.connected) {
-          stompClient.disconnect();
-        }
-      })
-
-      const messagesDiv = document.getElementById('messages');
-      messagesDiv.innerHTML = ''; // `innerHTML`을 빈 문자열로 설정하여 내용 초기화
-    }
-
     // 유효성 검증 실패 처리를 위한 공통 함수
     function handleValidationErrorCommon(errorMessage) {
       console.error(errorMessage);
       alert(errorMessage);
-      clearMessages(); // 실패 시 메시지 숨김
     }
+
     // 유효성 검증 실패 처리를 위한 console, alert
     function handleValidationError(errorMessageConsole, errorMessageAlert) {
       console.error(errorMessageConsole);
       alert(errorMessageAlert);
-      clearMessages(); // 실패 시 메시지 숨김
     }
   </script>
-</head>
-<body>
-<div>
-  <label>ChatRoom ID:</label>
-  <input type="text" id="chatRoomId" value="04332d42-b163-4b59-b07c-45d932e617e1" />
-</div>
-<div>
-  <label>senderNickname(발송자 닉네임) :</label>
-  <input type="text" id="senderNickname" value="testnick" />
-</div>
-<div>
-  <label>Receiver Nickname(수신자 닉네임) :</label>
-  <input type="text" id="receiverNickname" value="testnick22" />
-</div>
-<div>
-  <label>Message:</label>
-  <input type="text" id="message" />
-</div>
-<button onclick="connect()">Connect</button>
-<button onclick="disconnect()">Disconnect</button>
-<button onclick="sendMessage()">Send</button>
-<div id="messages"></div>
 </body>
 </html>
