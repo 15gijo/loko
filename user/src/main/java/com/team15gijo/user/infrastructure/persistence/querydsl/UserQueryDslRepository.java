@@ -6,6 +6,7 @@ import com.team15gijo.user.presentation.dto.internal.response.v1.UserAndRegionIn
 import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
 import java.util.List;
+import org.locationtech.jts.geom.Point;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -20,5 +21,6 @@ public interface UserQueryDslRepository {
     Page<UserReadsResponseDto> searchUsersForUser(String nickname, String username, String region,
             Pageable pageable);
 
-    List<UserAndRegionInfoFollowResponseDto> findUserAndRegionInfos(List<Long> userIds);
+    List<UserAndRegionInfoFollowResponseDto> findUserAndRegionInfos(Point location,
+            List<Long> userIds);
 }

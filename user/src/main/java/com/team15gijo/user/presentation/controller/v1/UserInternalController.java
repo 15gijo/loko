@@ -4,6 +4,7 @@ import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.user.application.service.UserApplicationService;
 import com.team15gijo.user.application.service.v1.InternalUserService;
 import com.team15gijo.user.infrastructure.dto.UserFeignInfoResponseDto;
+import com.team15gijo.user.presentation.dto.internal.request.v1.UserAndRegionInfoRequestDto;
 import com.team15gijo.user.presentation.dto.internal.response.v1.UserAndRegionInfoFollowResponseDto;
 import com.team15gijo.user.presentation.dto.internal.response.v1.UserInfoFollowResponseDto;
 import com.team15gijo.user.presentation.dto.internal.response.v1.UserSearchResponseDto;
@@ -85,9 +86,11 @@ public class UserInternalController {
     //follow(recommend) -> user
     @PostMapping("/region-infos")
     public List<UserAndRegionInfoFollowResponseDto> getUserAndRegionInfoForRecommend(
-            @RequestBody List<Long> candidateUserIds) {
-        log.info("follow(recommend) - user 연결={}", candidateUserIds);
-        return userApplicationService.getUserAndRegionInfoForRecommend(candidateUserIds);
+            @RequestBody UserAndRegionInfoRequestDto userAndRegionInfoRequestDto) {
+        log.info("follow(recommend) - user 연결={}", userAndRegionInfoRequestDto);
+        return userApplicationService.getUserAndRegionInfoForRecommend(
+                userAndRegionInfoRequestDto.myUserId(),
+                userAndRegionInfoRequestDto.candidateUserIds());
     }
 
 }
