@@ -29,7 +29,7 @@
   <div id="messages"></div>
 
   <script>
-    // API 엔드포인트 상숭
+    // API 엔드포인트 상수
     const API_BASE_URL = '/api/v2/chats';
     const WS_ENDPOINT = '/v2/ws-stomp';
 
@@ -61,9 +61,12 @@
       const receiverNickname = receiverNicknameInput.value.trim();
 
       // 클라이언트 유효성 검증
-      if (!chatRoomId || !senderNickname || !receiverNickname) {
-        handleValidationErrorCommon("모든 필드를 입력해주세요.");
-        return;
+      if (!chatRoomId) {
+        handleValidationErrorCommon("채팅방 ID를 입력하세요.");
+      } else if(!senderNickname) {
+        handleValidationErrorCommon("발송자 닉네임을 입력하세요.");
+      }  else {
+        handleValidationErrorCommon("수신자 닉네임을 입력하세요.");
       }
 
       // Promise.all 사용하여 모든 유효성 검증 API 호출을 병렬 처리
@@ -86,7 +89,7 @@
 
         // 2-2. 채팅방 메시지 발송자 닉네임 추출 및 유효성 검증 API 호출 - senderNickname 유효하지 않음
         if (senderNicknameResult.data.userId == null) {
-          handleValidationErrorCommon(
+          handleValidationError(
               `senderNickname(${senderNickname})이 유효하지 않아 senderId가 존재하지 않습니다.`,
               `발송자 닉네임(${senderNickname})이 유효하지 않습니다. 다시 확인해주세요.`);
           return Promise.reject(new Error(`발송자 닉네임(${senderNickname})이 유효하지 않습니다.`));
@@ -99,7 +102,7 @@
 
         // 4-1. 채팅방 메시지 수신자 닉네임 추출 및 userId 유효성 검증 API 호출 - receiverNickname 유효하지 않음
         if (receiverNicknameResult.data.userId == null) {
-          handleValidationErrorCommon(
+          handleValidationError(
               `receiverNickname(${receiverNickname})이 유효하지 않아 receiverId가 존재하지 않습니다.`,
               `받는 사용자 닉네임(${receiverNickname})이 유효하지 않습니다. 다시 확인해주세요.`);
           return Promise.reject(new Error(`수신자 닉네임(${receiverNickname})이 유효하지 않습니다.`));
@@ -244,7 +247,7 @@
       }
       p.textContent = content;
       messagesDiv.appendChild(p);
-      messagesDiv.scrollTo = messagesDiv.scrollHeight; // 자동 스크롤
+      messagesDiv.scrollTop = messagesDiv.scrollHeight; // 자동 스크롤
     }
 
     // 메시지 표시 초기화
@@ -304,8 +307,6 @@
 
     // 채팅방 퇴장
     function exit() {
-      // 웹소켓 연결 해지
-      disconnect();
       // 요청 사용자의 채팅방 비활성화
       fetch(`${API_BASE_URL}/rooms/${chatRoomIdInput.value}/${senderId}`, {
         method: 'PATCH',
@@ -324,6 +325,8 @@
               `/app/v2/chat/exit/${chatRoomIdInput.value}/${senderId}`,
               {'senderNickname': senderNicknameInput.value, 'receiverNickname': receiverNicknameInput.value}
           );
+          // 웹소켓 연결 해지
+          disconnect();
         } else {
           console.error("채팅방 비활성화 실패:", data);
           alert('해당 채팅방 비활성화 변경이 불가합니다. 다시 시도해주세요!');
