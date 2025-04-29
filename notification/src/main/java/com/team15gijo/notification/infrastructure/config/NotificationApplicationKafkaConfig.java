@@ -1,8 +1,8 @@
 package com.team15gijo.notification.infrastructure.config;
 
-import com.team15gijo.notification.application.dto.v1.message.ChatNotificationEventDto;
-import com.team15gijo.notification.application.dto.v1.message.CommentNotificationEventDto;
-import com.team15gijo.notification.application.dto.v1.message.FollowNotificationEventDto;
+import com.team15gijo.notification.infrastructure.kafka.dto.ChatNotificationEventDto;
+import com.team15gijo.notification.infrastructure.kafka.dto.CommentNotificationEventDto;
+import com.team15gijo.notification.infrastructure.kafka.dto.FollowNotificationEventDto;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -33,6 +33,21 @@ public class NotificationApplicationKafkaConfig {
      *  Kafka Producer Config
      *
      */
+    @Bean
+    public ProducerFactory<String, String> defaultProducerFactory() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        return new DefaultKafkaProducerFactory<>(configProps);
+    }
+
+    @Bean
+    public KafkaTemplate<String, String> defaultRetryTopicKafkaTemplate() {
+        return new KafkaTemplate<>(defaultProducerFactory());
+    }
+
+
     // 댓글 이벤트용 KafkaTemplate(테스트 용으로 나눈 코드, 각자 서버에서는 위의 코드를 참고)
     @Bean
     public ProducerFactory<String, CommentNotificationEventDto> commentProducerFactory() {

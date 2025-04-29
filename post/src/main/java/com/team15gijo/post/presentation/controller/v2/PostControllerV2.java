@@ -4,6 +4,7 @@ import com.team15gijo.common.annotation.RoleGuard;
 import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.post.application.service.v2.PostServiceV2;
 import com.team15gijo.post.domain.model.v2.PostV2;
+import com.team15gijo.post.domain.repository.v2.dto.PostSummaryDto;
 import com.team15gijo.post.presentation.dto.v2.PostRequestDtoV2;
 import com.team15gijo.post.presentation.dto.v2.PostResponseDtoV2;
 import java.net.URLDecoder;
@@ -58,16 +59,15 @@ public class PostControllerV2 {
      * 게시글 목록 조회 (페이징 및 정렬)
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<PostResponseDtoV2>>> getPosts(
+    public ResponseEntity<ApiResponse<Page<PostSummaryDto>>> getPostSummaries(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "postId") String sortField,
             @RequestParam(defaultValue = "desc") String sortDirection) {
         Sort.Direction direction = sortDirection.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
-        Page<PostV2> posts = postService.getPosts(pageable);
-        Page<PostResponseDtoV2> dtoPage = posts.map(PostResponseDtoV2::from);
-        return ResponseEntity.ok(ApiResponse.success("게시글 목록 조회 성공", dtoPage));
+        Page<PostSummaryDto> summaries = postService.getPostSummaries(pageable);
+        return ResponseEntity.ok(ApiResponse.success("게시글 요약 목록 조회 성공", summaries));
     }
 
     /**
