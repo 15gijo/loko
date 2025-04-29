@@ -1,0 +1,54 @@
+name: CI/CD for Eureka Service
+
+on:
+  push:
+    branches:
+      - main
+      - deploy/deploy-test
+    paths:
+      - 'eureka/**'
+env:
+  ECR_REGISTRY: 408891294463.dkr.ecr.ap-northeast-2.amazonaws.com
+  IMAGE_NAME: loko-eureka
+  CLUSTER_NAME: pr-loko-cluster
+  SERVICE_NAME: loko-eureka
+
+
+jobs:
+  build-eureka:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Push Image to ECR
+        run: |
+          docker build -t $IMAGE_NAME:${{ github.sha }} -f eureka/Dockerfile .
+          docker tag $IMAGE_NAME:${{ github.sha }} $ECR_REGISTRY/$IMAGE_NAME:${{ github.sha }}
+          docker push $ECR_REGISTRY/$IMAGE_NAME:${{ github.sha }}
+
+      - name: Render new Task Definition
+        id: render-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definitions/loko-eureka-td.json
+          container-name: ${{ env.IMAGE_NAME }}
+          image: ${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          cluster: ${{ env.CLUSTER_NAME }}
+          service: ${{ env.SERVICE_NAME }}
+          task-definition: ${{ steps.render-task-def.outputs.task-definition }}
