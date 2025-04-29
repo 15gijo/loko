@@ -15,7 +15,8 @@ public enum FollowDomainExceptionCode implements ExceptionCode {
     FOLLOW_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 팔로우를 찾을 수 없습니다."),
     CANNOT_BLOCK_SELF(HttpStatus.BAD_REQUEST, "자기 자신을 블락 할 수 없습니다."),
     ALREADY_BLOCKED(HttpStatus.BAD_REQUEST, "이미 블락 한 아이디 입니다."),
-    NOT_BLOCKED(HttpStatus.BAD_REQUEST, "블락한 관계가 아닙니다.");
+    NOT_BLOCKED(HttpStatus.BAD_REQUEST, "블락한 관계가 아닙니다."),
+    CANNOT_FOLLOW_BLOCKED_USER(HttpStatus.BAD_REQUEST, "블락 관계인 유저입니다.");
 
     private final HttpStatus httpStatus;
     private final String message;
