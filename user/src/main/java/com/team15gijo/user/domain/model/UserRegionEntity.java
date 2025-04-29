@@ -36,7 +36,7 @@ public class UserRegionEntity extends BaseEntity {
     private String regionName;
 
     //PostGis 좌표계 타입, 4326: WGS84 좌표계(카카오맵 호환)
-    @Column(name = "location", nullable = false, columnDefinition = "GEOGRAPHY(POINT, 4326")
+    @Column(name = "location", nullable = false, columnDefinition = "GEOGRAPHY(POINT, 4326)")
     private Point location;
 
     @Builder
