@@ -14,7 +14,8 @@ public enum UserDomainExceptionCode implements ExceptionCode {
     DUPLICATED_USER_NICKNAME(HttpStatus.BAD_REQUEST, "중복된 닉네임 입니다."),
     USER_EMAIL_NOT_FOUND(HttpStatus.NOT_FOUND, "유저 이메일을 찾을 수 없습니다."),
     USER_ID_NOT_FOUND(HttpStatus.NOT_FOUND, "유저 아이디를 찾을 수 없습니다."),
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 유저를 찾을 수 없습니다.");
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 유저를 찾을 수 없습니다."),
+    REGION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 지역을 찾을 수 없습니다.");
 
 
     private final HttpStatus httpStatus;

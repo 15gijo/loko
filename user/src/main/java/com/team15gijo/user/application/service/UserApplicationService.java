@@ -1,5 +1,6 @@
 package com.team15gijo.user.application.service;
 
+import com.team15gijo.user.domain.model.UserEntity;
 import com.team15gijo.user.domain.model.UserStatus;
 import com.team15gijo.user.infrastructure.dto.UserFeignInfoResponseDto;
 import com.team15gijo.user.presentation.dto.internal.response.v1.UserAndRegionInfoFollowResponseDto;
@@ -56,5 +57,12 @@ public interface UserApplicationService {
     UserInfoFollowResponseDto getUserInfoForFollow(Long userId);
 
     List<UserAndRegionInfoFollowResponseDto> getUserAndRegionInfoForRecommend(
+            Long myUserId,
             List<Long> candidateUserIds);
+
+    void increaseFollowCount(Long followerId, Long followeeId);
+
+    void decreaseFollowCount(Long followerId, Long followeeId);
+
+    List<UserEntity> getAllUsers();
 }

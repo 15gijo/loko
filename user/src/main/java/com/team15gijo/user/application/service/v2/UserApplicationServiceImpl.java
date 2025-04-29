@@ -316,8 +316,19 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     //internal
     @Override
     public List<UserAndRegionInfoFollowResponseDto> getUserAndRegionInfoForRecommend(
+            Long myUserId,
             List<Long> candidateUserIds) {
-        return userRepository.findUserAndRegionInfos(candidateUserIds);
+        UserEntity user = userRepository.findById(myUserId)
+                .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_NOT_FOUND));
+
+        UUID regionId = user.getRegionId().getId();
+
+        UserRegionEntity myRegion = userRegionRepository.findById(regionId)
+                .orElseThrow(() -> new CustomException(UserDomainExceptionCode.REGION_NOT_FOUND));
+
+        Point location = myRegion.getLocation();
+
+        return userRepository.findUserAndRegionInfos(location, candidateUserIds);
     }
 
     //internal
@@ -341,6 +352,32 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         Long userId = userRepository.findIdByNickname(nickname)
                 .orElseThrow(() -> new CustomException(UserDomainExceptionCode.USER_ID_NOT_FOUND));
         return userId;
+    }
+
+    //internal - kafka
+    @Override
+    public void increaseFollowCount(Long followerId, Long followeeId) {
+        log.info(
+                "[UserApplicationService-kafka] followerId={} followingCount +1, followeeId={} followerCount +1",
+                followerId, followeeId);
+        userRepository.incrementFollowingCount(followerId);
+        userRepository.incrementFollowerCount(followeeId);
+    }
+
+    //internal - kafka
+    @Override
+    public void decreaseFollowCount(Long followerId, Long followeeId) {
+        log.info(
+                "[UserApplicationService-kafka] followerId={} followingCount -1, followeeId={} followerCount -1",
+                followerId, followeeId);
+        userRepository.decrementFollowingCount(followerId);
+        userRepository.decrementFollowerCount(followeeId);
+    }
+
+    //internal - redis scheduler 용
+    @Override
+    public List<UserEntity> getAllUsers() {
+        return userRepository.findAll();
     }
 
     private static int getIndex(String kakaoMapRegion) {

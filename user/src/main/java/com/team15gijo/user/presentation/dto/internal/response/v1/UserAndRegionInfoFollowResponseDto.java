@@ -8,7 +8,8 @@ public record UserAndRegionInfoFollowResponseDto(
         String username,
         String profile,
         String regionCode,
-        String regionName
+        String regionName,
+        Double distanceKm
 ) {
 
     @QueryProjection
@@ -18,7 +19,8 @@ public record UserAndRegionInfoFollowResponseDto(
             String username,
             String profile,
             String regionCode,
-            String regionName
+            String regionName,
+            Double distanceKm
     ) {
         this.userId = userId;
         this.nickname = nickname;
@@ -26,6 +28,7 @@ public record UserAndRegionInfoFollowResponseDto(
         this.profile = profile;
         this.regionCode = regionCode;
         this.regionName = regionName;
+        this.distanceKm = distanceKm;
     }
 }
 
