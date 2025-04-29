@@ -1,0 +1,91 @@
+server:
+  port: 19101
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  cloud:
+    config:
+      enabled: false
+  config:
+    import:
+      - optional:file:./post/.env.prod[.properties]
+  application:
+    name: post-service
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
+    properties:
+      hibernate:
+        format_sql: true
+  kafka:
+    bootstrap-servers: ${EC2_MIDDLEWARE_IP}:9092
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.team15gijo.post.infrastructure.kafka.dto.v1
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: 0
+    admin:
+      auto-create: true
+    listener:
+      missing-topics-fatal: false
+  data:
+    redis:
+      host: ${EC2_MIDDLEWARE_IP}
+      port: 6379
+      password: ${REDIS_PASSWORD}
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST}:19090/eureka/
+    register-with-eureka: true   # 클라이언트가 Eureka에 자기 자신을 등록
+    fetch-registry: true         # 다른 서비스 정보(Eureka 레지스트리)도 가져옴
+  instance:
+    prefer-ip-address: false
+    hostname: post-service
+
+
+management:
+  zipkin:
+    tracing:
+      endpoint: "http://${EC2_MIDDLEWARE_IP}:9411/api/v2/spans"
+  tracing:
+    sampling:
+      probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      access: unrestricted
+
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.kafka.listener.DefaultErrorHandler: DEBUG
+    org.springframework.kafka.listener.DeadLetterPublishingRecoverer: DEBUG
+
+ai:
+  service:
+    url: ${AI_SERVICE_URL}   # AiApplication이 띄운 포트
+
+

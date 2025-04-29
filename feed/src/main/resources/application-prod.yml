@@ -1,0 +1,71 @@
+spring:
+  cloud:
+    config:
+      enabled: false
+  config:
+    import:
+      - optional:file:./feed/.env.prod[.properties]
+  application:
+    name: feed-service
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: ${SPRING_JPA_DATABASE_PLATFORM}
+    properties:
+      org.hibernate:
+        type:
+          descriptor:
+            sql:
+              BasicBinder: TRACE
+      hibernate:
+        show_sql: true
+
+  data:
+    redis:
+      host: ${EC2_MIDDLEWARE_IP}
+      port: 6379
+      password: ${REDIS_PASSWORD}
+  kafka:
+    bootstrap-servers: ${EC2_MIDDLEWARE_IP}:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+
+server:
+  port: 19100
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://${EUREKA_HOST}:19090/eureka/
+  instance:
+    prefer-ip-address: false
+    hostname: feed-service
+
+management:
+  zipkin:
+    tracing:
+      endpoint: "http://${EC2_MIDDLEWARE_IP}:9411/api/v2/spans"
+  tracing:
+    sampling:
+      probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      access: unrestricted

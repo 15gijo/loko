@@ -1,0 +1,96 @@
+spring:
+  application:
+    name: chat-service
+  cloud:
+    config:
+      enabled: false
+  config:
+    import:
+      - optional:classpath:.env.prod[.properties]
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update # Entity 기반으로 테이블을 자동 생성 여부 결정
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  kafka:
+    bootstrap-servers: ${EC2_MIDDLEWARE_IP}:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      group-id: chat-service
+    template:
+      default-topic: chat_message_event
+
+  # mongoDB
+  data:
+    mongodb:
+      uri: ${MONGO_URL}
+
+  # redis
+    redis:
+      host: ${EC2_MIDDLEWARE_IP}
+      port: 6379
+      username: default
+      password: ${REDIS_PASSWORD}
+
+server:
+  port: 19097
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://${EUREKA_HOST}:19090/eureka/
+  instance:
+    prefer-ip-address: false
+    hostname: chat-service
+
+management:
+  zipkin:
+    tracing:
+      endpoint: "http://${EC2_MIDDLEWARE_IP}:9411/api/v2/spans"
+  tracing:
+    sampling:
+      probability: 1.0
+  endpoints:
+    web:
+      exposure:
+        include: "*" #모든 엔드포인트 노출 설정
+  endpoint:
+    health:
+      show-details: always # /actuator/health 엔드포인트에서 헬스 체크 정보를 항상 상세히 보여주도록 설정
+    prometheus:
+      access: unrestricted
+
+logging:
+  level:
+    com.team15gijo.chat.presentation.handler: DEBUG
+    org.springframework.web.socket: DEBUG
+    org.springframework.messaging: DEBUG
+
+feign:
+  client:
+    config:
+      user-service: # user-service에 대한 설정
+        connectTimeout: 5000 # 연결 타임아웃 (ms)
+        readTimeout: 5000 # 읽기 타임아웃 (ms)
+        retryer: feign.Retryer.Default # 재시도 정책
+
+slack:
+  web-hook-url: ${SLACK_WEBHOOK_URL}
+
+ai:
+  service:
+    url: ${AI_SERVICE_URL}   # AiApplication이 띄운 포트
