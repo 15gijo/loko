@@ -60,6 +60,10 @@
         {
           "name": "JWT_ADMIN_SECRET_KEY",
           "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko-auth/JWT_ADMIN_SECRET_KEY"
+        },
+        {
+          "name": "REDIS_PASSWORD",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko-feed/REDIS_PASSWORD"
         }
       ],
       "logConfiguration": {
