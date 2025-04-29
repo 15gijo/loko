@@ -23,8 +23,7 @@
       .then(data => {
         if(!data.data.valid) {
           // 1-1. 채팅방 ID 유효성 검증 API 호출 - 채팅방 id가 유효하지 않을 때 오류 표시
-          alert('존재하지 않은 채팅방 ID 입니다. 다시 확인해주세요.');
-          console.log("존재하지 않은 채팅방 ID 입니다. 다시 확인해주세요.");
+          handleValidationErrorCommon("존재하지 않은 채팅방 ID 입니다. 다시 확인해주세요.");
         } else {
           // 1-2. 채팅방 ID 유효성 검증 API 호출 - 성공
           console.log("채팅방 ID 유효성 검증 성공");
@@ -46,8 +45,7 @@
               .then(data => {
                 if(!data.data.valid) {
                   // 3-1. 채팅방에 해당하는 발송자 닉네임으로 userId 유효성 검증 API 호출 - chatRoomId의 userId로 유효하지 않을 때 오류 표시
-                  console.log("해당 채팅방의 사용자가 아닙니다. 다시 확인해주세요.");
-                  alert('해당 채팅방의 사용자가 아닙니다. 다시 확인해주세요.');
+                  handleValidationErrorCommon("해당 채팅방의 사용자가 아닙니다. 다시 확인해주세요.");
                 } else {
                   // 3-2. 채팅방에 해당하는 발송자 닉네임으로 userId 유효성 검증 API 호출 - 성공
                   console.log("채팅방 ID에 해당하는 senderId 유효성 검증 성공");
@@ -69,8 +67,7 @@
                       .then(data => {
                         if(!data.data.valid) {
                           // 5-1. 채팅방에 해당하는 수신자 닉네임으로 userId 유효성 검증 API 호출 - chatRoomId의 userId로 유효하지 않을 때 오류 표시
-                          console.log("해당 채팅방의 사용자가 아닙니다. 다시 확인해주세요.");
-                          alert('해당 채팅방의 사용자가 아닙니다. 다시 확인해주세요.');
+                          handleValidationErrorCommon("해당 채팅방의 사용자가 아닙니다. 다시 확인해주세요.");
                         } else {
                           // 5-2. 채팅방에 해당하는 수신자 닉네임으로 userId 유효성 검증 API 호출 - 성공
                           console.log("채팅방 ID에 해당하는 receiverId 유효성 검증 성공");
@@ -110,8 +107,7 @@
                                 });
                               } else {
                                 // 8-2. 채팅방 재접속 시, MongoDB 메시지 조회 API 호출 - 이전 메시지 내역이 없음
-                                console.error("서버 응답 값이 없습니다.");
-                                alert("서버 응답이 비어있어 이전 메시지 불러오기 실패했습니다.");
+                                handleValidationError("서버 응답 값이 없습니다.", "서버 응답이 비어있어 이전 메시지 불러오기 실패했습니다.");
                               }
                             })
                             .catch(error => {
@@ -142,51 +138,43 @@
                             });
                           }, function (error) {
                             // 6-2. 웹소켓 연결 - 실패
-                            console.error("소켓 Connection error: ", error);
-                            alert('채팅방 연결 종료 및 실패하였습니다. 서버 오류를 확인해주세요.');
+                            handleValidationError("소켓 Connection error: ", error, "채팅방 연결 종료 및 실패하였습니다. 서버 오류를 확인해주세요.");
                           });
                         }
                       })
                       .catch(error => {
                         // 5-3. 채팅방에 해당하는 수신자 닉네임으로 userId 유효성 검증 API 호출 - 실패
-                        console.error("receiverId 유효성 검증 API 호출 실패: " + error);
-                        alert('채팅방의 사용자 ID 유효성 검증 실패. 서버 오류를 확인해주세요.');
+                        handleValidationError("receiverId 유효성 검증 API 호출 실패: " + error, "채팅방의 사용자 ID 유효성 검증 실패. 서버 오류를 확인해주세요.");
                       });
                     } else {
                       // 4-2. 채팅방 메시지 수신자 닉네임 추출 및 userId 유효성 검증 API 호출 - receiverNickname이 채팅방 참여자로 유효하지 않을 때 오류 표시
-                      console.log("receiverNickname(" + receiverNickname + ")이 유효하지 않아 receiverId가 null 입니다. ");
-                      alert('받는 사용자 닉네임(' + receiverNickname + ')이 유효하지 않습니다. 다시 확인해주세요.');
+                      handleValidationError("receiverNickname(" + receiverNickname + ")이 유효하지 않아 receiverId가 null 입니다.", "받는 사용자 닉네임(' + receiverNickname + ')이 유효하지 않습니다. 다시 확인해주세요.");
                     }
                   })
                   .catch(error => {
                     // 4-3. 채팅방 메시지 수신자 닉네임 추출 및 userId 유효성 검증 API 호출 - 실패
-                    console.error("수신자 닉네임 유효성 API 호출 실패: " + error);
-                    alert('수신자 닉네임 유효성 검증 실패. 서버 오류를 확인해주세요.');
+                    handleValidationError("수신자 닉네임 유효성 API 호출 실패: " + error, "수신자 닉네임 유효성 검증 실패. 서버 오류를 확인해주세요.");
                   });
                 }
               })
               .catch(error => {
                 // 3-3. 채팅방에 해당하는 발송자 닉네임으로 userId 유효성 검증 API 호출 - 실패
-                console.error("senderId 유효성 검증 API 호출 실패: " + error);
-                alert('채팅방의 사용자 ID 유효성 검증 실패. 서버 오류를 확인해주세요.');
+                handleValidationError("senderId 유효성 검증 API 호출 실패: " + error, "채팅방의 사용자 ID 유효성 검증 실패. 서버 오류를 확인해주세요.");
               });
             }  else {
               // 2-2. 채팅방 메시지 발송자 닉네임 추출 및 유효성 검증 API 호출 - senderNickname 이 채팅방 참여자로 유효하지 않을 때 오류 표시
-              console.log("senderNickname(" + senderNickname + ")이 유효하지 않아 senderId가 null 입니다. ");
-              alert('발송자 닉네임(' + senderNickname + ')이 유효하지 않습니다. 다시 확인해주세요.');
+              handleValidationError("senderNickname(" + senderNickname + ")이 유효하지 않아 senderId가 null 입니다.", "발송자 닉네임(' + senderNickname + ')이 유효하지 않습니다. 다시 확인해주세요.");
             }
           })
           .catch(error => {
             // 2-3. 채팅방 메시지 발송자 닉네임 추출 및 유효성 검증 API 호출 - 실패
-            console.error("수신자 닉네임 유효성 API 호출 실패: " + error);
-            alert('수신자 닉네임 유효성 검증 실패. 서버 오류를 확인해주세요.');
+            handleValidationError("수신자 닉네임 유효성 API 호출 실패: " + error, "수신자 닉네임 유효성 검증 실패. 서버 오류를 확인해주세요.'");
           });
         }
       })
       .catch(error => {
         // 1-3. 채팅방 ID 유효성 검증 API 호출 - 실패
-        console.error("채팅방 ID 유효성 API 호출 실패: " + error);
-        alert('채팅방 ID 유효성 검증 실패. 서버 오류를 확인해주세요.');
+        handleValidationError("채팅방 ID 유효성 API 호출 실패: " + error, "채팅방 ID 유효성 검증 실패. 서버 오류를 확인해주세요.");
       });
     }
 
@@ -206,10 +194,10 @@
           isConnected = false;
           alert('채팅방 연결 종료하였습니다. 다시 연결해주세요!');
           stompClient.disconnect();
+          clearMessages(); // 연결 종료 시 메시지 숨김
         })
         .catch(error => {
-          console.error("API 호출 실패: " + error);
-          alert('Redis 캐시 삭제 실패');
+          handleValidationError("API 호출 실패: " + error, "Redis 캐시 삭제 실패");
         });
       }
     }
@@ -236,8 +224,7 @@
         document.getElementById('message').value = '';
       } else {
         // 웹소켓 연결 불가로 채팅 메시지 전송 - 실패
-        console.log("웹소켓 연결이 중단되어 메시지 전송이 불가");
-        alert("웹소켓 연결이 중단되어 메시지 전송이 불가합니다. ");
+        handleValidationErrorCommon("웹소켓 연결이 중단되어 메시지 전송이 불가");
       }
     }
 
@@ -265,10 +252,40 @@
       messages.appendChild(p);
     }
 
+    // 메시지 연결 차단 및 예외 발생 시, 메시지 표시 초기화
+    function clearMessages() {
+      // 연결 중단 시, redis 삭제 API 호출
+      fetch(`/api/v2/chats/redis/delete/${chatRoomId}/${senderId}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.data) {
+          // Redis 캐시 삭제 성공
+          console.log("소켓 Disconnected");
+        } else {
+          console.log(chatRoomId + ":" + senderId + "로 저장된 cacheKey가 없습니다.");
+        }
+
+        isConnected = false;
+        if (stompClient && stompClient.connected) {
+          stompClient.disconnect();
+        }
+      })
+
+      const messagesDiv = document.getElementById('messages');
+      messagesDiv.innerHTML = ''; // `innerHTML`을 빈 문자열로 설정하여 내용 초기화
+    }
+
     // 유효성 검증 실패 처리를 위한 공통 함수
+    function handleValidationErrorCommon(errorMessage) {
+      console.error(errorMessage);
+      alert(errorMessage);
+      clearMessages(); // 실패 시 메시지 숨김
+    }
+    // 유효성 검증 실패 처리를 위한 console, alert
     function handleValidationError(errorMessageConsole, errorMessageAlert) {
       console.error(errorMessageConsole);
       alert(errorMessageAlert);
+      clearMessages(); // 실패 시 메시지 숨김
     }
   </script>
 </head>
