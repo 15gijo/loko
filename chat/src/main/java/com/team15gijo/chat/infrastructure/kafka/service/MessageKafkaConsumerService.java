@@ -61,12 +61,7 @@ public class MessageKafkaConsumerService {
         try {
             // 1. 메시지 변환
             ChatMessageDocumentV2 savedMessage = ChatMessageEventDto.from(chatMessageEventDto);
-//            // TODO: 예외 발생 시나리오 -> 임시 코드(테스트 이후 삭제 예정)
-//            if(savedMessage.getMessageContent().contains("retry")) {
-//                throw new RuntimeException("런타임 아웃 오류 발생");
-//            } else if(savedMessage.getMessageContent().contains("dlt")) {
-//                throw new NullPointerException("데이터 null 값으로 인한 오류 발생");
-//            }
+
             // 2. mongoDB 메시지 저장
             chatMessageRepository.save(savedMessage);
             log.info("[mongoDB 저장] - messageContent: {}", savedMessage.getMessageContent());
