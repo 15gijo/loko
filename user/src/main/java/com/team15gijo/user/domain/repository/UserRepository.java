@@ -5,8 +5,10 @@ import com.team15gijo.user.domain.model.UserEntity;
 import com.team15gijo.user.presentation.dto.internal.response.v1.UserAndRegionInfoFollowResponseDto;
 import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.locationtech.jts.geom.Point;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -36,5 +38,15 @@ public interface UserRepository {
 
     void deleteById(Long userId);
 
-    List<UserAndRegionInfoFollowResponseDto> findUserAndRegionInfos(List<Long> userIds);
+    List<UserAndRegionInfoFollowResponseDto> findUserAndRegionInfos(Point location, List<Long> userIds);
+
+    void incrementFollowingCount(Long followerId);
+
+    void incrementFollowerCount(Long followeeId);
+
+    void decrementFollowingCount(Long followerId);
+
+    void decrementFollowerCount(Long followeeId);
+
+    List<UserEntity> findAll();
 }
