@@ -79,8 +79,7 @@ public class NotificationConsumerService {
     )
     public void followConsumer(FollowNotificationEventDto event) {
         try {
-            System.out.println("📩 받은 Kafka 메시지: " + event);
-            log.info("📨 Kafka COMMENT 메시지 수신: {}", event);
+            log.info("📨 Kafka FOLLOW 메시지 수신: {}", event);
             Long receiverId = event.getReceiverId();
             String nickname = event.getNickname();
             String eventId = receiverId + "_" + System.currentTimeMillis() + "_follow";
@@ -124,7 +123,7 @@ public class NotificationConsumerService {
     public void chatConsumer(ChatNotificationEventDto event) {
         try {
             System.out.println("📩 받은 Kafka 메시지: " + event);
-            log.info("📨 Kafka COMMENT 메시지 수신: {}", event);
+            log.info("📨 Kafka CHAT 메시지 수신: {}", event);
             Long receiverId = event.getReceiverId();
             String nickname = event.getNickname();
             String messageContent = event.getMessageContent();
