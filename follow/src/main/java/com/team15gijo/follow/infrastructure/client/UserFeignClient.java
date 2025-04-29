@@ -1,6 +1,7 @@
 package com.team15gijo.follow.infrastructure.client;
 
 import com.team15gijo.follow.infrastructure.config.UserFeignClientConfig;
+import com.team15gijo.follow.infrastructure.dto.request.UserAndRegionInfoRequestDto;
 import com.team15gijo.follow.infrastructure.dto.response.v2.UserAndRegionInfoFollowResponseDto;
 import com.team15gijo.follow.infrastructure.dto.response.v2.UserInfoFollowResponseDto;
 import java.util.List;
@@ -21,5 +22,5 @@ public interface UserFeignClient {
 
     @PostMapping("/region-infos")
     List<UserAndRegionInfoFollowResponseDto> getUserAndRegionInfo(
-            @RequestBody List<Long> candidateUserIds);
+            @RequestBody UserAndRegionInfoRequestDto userAndRegionInfoRequestDto);
 }
