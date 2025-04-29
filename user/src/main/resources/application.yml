@@ -18,6 +18,13 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ${REDIS_PASSWORD}
+
   kafka:
     bootstrap-servers: localhost:9092
     producer:
@@ -25,8 +32,15 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+#      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       auto-offset-reset: earliest
+      group-id: user-service-group
+      properties:
+        spring.json.trusted.packages: "*"
+    template:
+      observation-enabled: true
+    listener:
+      observation-enabled: true
 
 
 server:
@@ -55,7 +69,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: ["*"]
+        include: [ "*" ]
   endpoint:
     health:
       show-details: always
@@ -66,3 +80,8 @@ management:
 kakao:
   api:
     key: ${KAKAO_MAP_KEY}
+
+logging:
+  pattern:
+    console: '%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} [%-0.32X{traceId:-},%-0.16X{spanId:-}] %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:-}){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}'
+    # ✅ 모든 콘솔 로그에 traceId, spanId 추가
