@@ -28,52 +28,6 @@ public class EmitterService {
     private final EmitterRepository emitterRepository;
     private final RedisTemplate<String, String> redisTemplate;
 
-//    public SseEmitter subscribe(Long userId) {
-//        String emitterId = userId + "_" + System.currentTimeMillis();
-//        SseEmitter emitter = new SseEmitter(TIMEOUT);
-//        emitterRepository.save(emitterId, emitter);
-//
-//        emitter.onCompletion(() -> emitterRepository.deleteById(emitterId));
-//        emitter.onTimeout(() -> {
-//            emitter.complete();
-//            emitterRepository.deleteById(emitterId);
-//        });
-//
-//        try {
-//            emitter.send(SseEmitter.event()
-//                    .id(emitterId)
-//                    .name(NotificationStatus.CONNECT.name())
-//                    .data("connected"));
-//        } catch (IOException e) {
-//            emitter.completeWithError(e);
-//        }
-//
-//        return emitter;
-//    }
-
-//    public void send(Long receiverId, NotificationType type, String content, String eventId, UUID notificationId) {
-//        log.info("📡 SSE 전송 대상 receiverId = {}, eventId = {}", receiverId, eventId);
-//        NotificationResponseDto response = NotificationResponseDto.builder()
-//                .notificationId(notificationId)
-//                .notificationType(type)
-//                .notificationContent(content)
-//                .eventId(eventId)
-//                .build();
-//
-//        Map<String, SseEmitter> emitters = emitterRepository.findAllByUserId(receiverId);
-//        emitters.forEach((emitterId, emitter) -> {
-//            try {
-//                emitter.send(SseEmitter.event()
-//                        .id(eventId)
-//                        .name(NotificationStatus.NEW.name())
-//                        .data(response));
-//            } catch (IOException e) {
-//                emitter.complete();
-//                emitterRepository.deleteById(emitterId);
-//            }
-//        });
-//    }
-
     public SseEmitter subscribe(Long userId) {
         // 기존 emitter 정리
         try {

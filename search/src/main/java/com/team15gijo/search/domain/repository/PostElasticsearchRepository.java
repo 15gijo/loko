@@ -11,8 +11,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PostElasticsearchRepository extends ElasticsearchRepository<PostDocument, UUID> {
-    List<PostDocument> findByPostContentContainingAndUsernameContainingAndRegion(String content, String username, String region);
-
     @Query("""
             {
               "bool": {

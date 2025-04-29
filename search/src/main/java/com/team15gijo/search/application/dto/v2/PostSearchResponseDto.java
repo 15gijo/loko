@@ -20,9 +20,9 @@ public class PostSearchResponseDto {
     private String postContent;
     private List<String> hashtags;
     private String region;
-//    private int views;
-//    private int commentCount;
-//    private int likeCount;
+    private int views;
+    private int commentCount;
+    private int likeCount;
     private LocalDateTime createdAt;
 
     public static PostSearchResponseDto from(PostDocument postDocument) {
