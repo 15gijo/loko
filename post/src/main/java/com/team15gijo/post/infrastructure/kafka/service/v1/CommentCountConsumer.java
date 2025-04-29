@@ -13,6 +13,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
@@ -26,29 +28,33 @@ public class CommentCountConsumer {
     private final PostRepositoryV2 postRepo;
     private final RedisTemplate<String,Object> redisTemplate;
     private final KafkaUtil kafkaUtil;
+
+    private static final Logger log = LoggerFactory.getLogger(CommentCountConsumer.class);
     private static final String FEED_EVENTS_TOPIC = "feed_events";
 
     @KafkaListener(topics   = "COMMENT_COUNT_EVENTS", groupId  = "post-comment-count-flusher")
     @Transactional
     public void handle(String message) throws JsonProcessingException {
-        // 메시지를 JsonNode로 읽어들임
-        JsonNode root = objectMapper.readTree(message);
+        JsonNode root   = objectMapper.readTree(message);
+        UUID     postId = UUID.fromString(root.get("postId").asText());
+        int      delta  = root.get("delta").asInt();
 
-        // 필요한 필드(postId, delta) 추출
-        UUID postId = UUID.fromString(root.get("postId").asText());
-        int delta  = root.get("delta").asInt();
+        // 1) 댓글 카운트 경량 업데이트
+        int updatedRows = postRepo.incrementCommentCount(postId, delta);
+        if (updatedRows == 0) {
+            log.warn("존재하지 않는 게시글(postId={})에 대한 댓글 카운트 이벤트를 스킵합니다.", postId);
+            return;
+        }
 
-        // 경량 쿼리로 DB 업데이트
-        postRepo.incrementCommentCount(postId, delta);
+        // 2) 피드용 Post 조회 및 이벤트 발행
+        postRepo.findById(postId).ifPresent(post -> {
+            kafkaUtil.sendKafkaEvent(EventType.COMMENT_CREATED, post, FEED_EVENTS_TOPIC);
 
-        //피드 업데이트
-        PostV2 post = postRepo.findById(postId)
-                .orElseThrow(() -> new PostDomainException(PostDomainExceptionCode.POST_NOT_FOUND));
-        kafkaUtil.sendKafkaEvent(EventType.COMMENT_CREATED, post, FEED_EVENTS_TOPIC);
-
-        //  Redis buffer 클리어
-        String key = postId.toString();
-        redisTemplate.opsForHash().delete("comments:buffer", key);
-        redisTemplate.opsForSet().remove("comments:dirty-keys", key);
+            // 3) Redis 버퍼/dirty-key 제거
+            String key = postId.toString();
+            redisTemplate.opsForHash().delete("comments:buffer", key);
+            redisTemplate.opsForSet().remove("comments:dirty-keys", key);
+        });
     }
+
 }
