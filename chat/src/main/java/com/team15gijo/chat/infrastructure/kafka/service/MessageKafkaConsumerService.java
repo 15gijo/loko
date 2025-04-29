@@ -106,6 +106,12 @@ public class MessageKafkaConsumerService {
                             Map.of("cause", "유해하거나 불쾌감을 주는 단어나 불법적인 단어 또는 욕설이 포함되어 삭제 처리되었습니다.", "messageId", savedMessage.get_id(), "messageContent", savedMessage.getMessageContent()));
                     log.info("[MessageKafkaConsumerService] 유해 메시지 삭제 알림 전송 완료 - chatRoomId:{}", savedMessage.getChatRoomId());
                 }
+            } else {
+                // 3-3. 퇴장 메시지
+                log.info("[webSocket '/topic/v2/chat/exit/{}' 연결] kafka 컨슈머가 '퇴장 메시지' 처리",
+                    savedMessage.getChatRoomId());
+                messagingTemplate.convertAndSend("/topic/v2/chat/exit/" + savedMessage.getChatRoomId(), savedMessage);
+                log.info("[MessageKafkaConsumerService] 퇴장 메시지 처리 종료");
             }
         } catch (Exception e) {
             log.error("카프카 컨슈머 메시지 처리 에러 발생: {}", e.getMessage());

@@ -95,6 +95,19 @@ public class ChatMessageDocumentV2 {
             .build();
     }
 
+    // 채팅 퇴장 메시지 전송
+    public static ChatMessageDocumentV2 createExitMessageDocument(
+        UUID chatRoomId, Long senderId, String messageContent) {
+        return ChatMessageDocumentV2.builder()
+            .chatRoomId(chatRoomId)
+            .senderId(senderId)
+            .connectionType(ConnectionTypeV2.EXIT)
+            .chatMessageType(ChatMessageTypeV2.TEXT)
+            .messageContent(messageContent)
+            .sentAt(LocalDateTime.now())
+            .build();
+    }
+
     // 채팅 에러 메시지 전송
     public static ChatMessageDocumentV2 createErrorMessageDocument(
         UUID chatRoomId, Long senderId, Long receiverId, String receiverNickname, String messageContent) {

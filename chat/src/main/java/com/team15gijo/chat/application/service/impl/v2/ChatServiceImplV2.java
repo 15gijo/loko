@@ -3,6 +3,7 @@ package com.team15gijo.chat.application.service.impl.v2;
 import static com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2.createChatMessageDocument;
 import static com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2.createEnterMessageDocument;
 import static com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2.createErrorMessageDocument;
+import static com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2.createExitMessageDocument;
 
 import com.team15gijo.chat.application.dto.v2.ChatMessageResponseDtoV2;
 import com.team15gijo.chat.application.dto.v2.ChatRoomResponseDtoV2;
@@ -184,6 +185,19 @@ public class ChatServiceImplV2 implements ChatServiceV2 {
                 participant.nonActivate();
                 log.info("[ChatServiceImplV2] getActivation() 후 = {}", participant.getActivation());
                 targetParticipant = participant;
+
+                // 퇴장 메시지 전송하기
+                String messageContent = participant.getUserId() + "님이 채팅방을 퇴장하였습니다.";
+                log.info("[ChatServiceImplV2] 퇴장 메시지={}", messageContent);
+
+                ChatMessageDocumentV2 exitMessage = createExitMessageDocument(
+                    chatRoomId, participant.getUserId(), messageContent);
+                log.info("[ChatServiceImplV2] exitMessage={}", exitMessage);
+
+                // 카프카 입장 메시지 처리
+                kafkaUtil.sendKafkaEvent(CHAT_MESSAGE_EVENT_TOPIC, exitMessage);
+                log.info("[ChatServiceImplV2] exitChatRoom 메소드 종료 - Kafka 발행 완료");
+
                 break;
             }
         }

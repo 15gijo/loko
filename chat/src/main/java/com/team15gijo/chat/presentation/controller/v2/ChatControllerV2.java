@@ -111,11 +111,10 @@ public class ChatControllerV2 {
      * 응답 result = true : 참여자 모두 비활성화로 채팅방/참여자 소프트삭제 처리됨
      * X-User-Id : chatRoomId 에 참여하는 사용자 비활성화로 변경
      */
-    @RoleGuard(min = "USER")
-    @PatchMapping("/rooms/{chatRoomId}")
+    @PatchMapping("/rooms/{chatRoomId}/{userId}")
     public ResponseEntity<ApiResponse<Boolean>> exitChatRoom(
         @PathVariable("chatRoomId") UUID chatRoomId,
-        @RequestHeader("X-User-Id") Long userId) {
+        @PathVariable("userId") Long userId) {
 
         boolean result = chatService.exitChatRoom(chatRoomId, userId);
         String message = "";

@@ -22,9 +22,10 @@
     <label>Message:</label>
     <input type="text" id="message" placeholder="메시지를 입력하세요" />
   </div>
-  <button id="connectButton">Connect</button>
-  <button id="disconnectButton">Disconnect</button>
-  <button id="sendButton">Send</button>
+  <button id="connectButton">Connect(채팅방 접속)</button>
+  <button id="disconnectButton">Disconnect(채팅방 접속 해제)</button>
+  <button id="exitButton">Exit(채팅방 퇴장)</button>
+  <button id="sendButton">Send(채팅 전송)</button>
   <div id="messages"></div>
 
   <script>
@@ -44,18 +45,20 @@
 
     const connectButton = document.getElementById('connectButton');
     const disconnectButton = document.getElementById('disconnectButton');
+    const exitButton = document.getElementById('exitButton');
     const sendButton = document.getElementById('sendButton');
 
     // 이벤트 리스너 등록
     connectButton.addEventListener('click', connect);
     disconnectButton.addEventListener('click', disconnect);
+    exitButton.addEventListener('click', exit);
     sendButton.addEventListener('click', sendMessage);
 
     // chatRoomId, senderNickname, receiverNickname 입력 후, Connect 클릭 시 함수
     function connect() {
-      const chatRoomId = chatRoomIdInput.value;
-      const senderNickname = senderNicknameInput.value;
-      const receiverNickname = receiverNicknameInput.value;
+      const chatRoomId = chatRoomIdInput.value.trim();
+      const senderNickname = senderNicknameInput.value.trim();
+      const receiverNickname = receiverNicknameInput.value.trim();
 
       // 클라이언트 유효성 검증
       if (!chatRoomId || !senderNickname || !receiverNickname) {
@@ -76,7 +79,7 @@
         // 1-1. 채팅방 ID 유효성 검증 API 호출 - 채팅방 id가 유효하지 않을 때 오류 표시
         if (!chatRoomIdResult.data.valid) {
           handleValidationErrorCommon("존재하지 않은 채팅방 ID 입니다. 다시 확인해주세요.");
-          return Promise.reject(); // 다음 fetch .then 블록으로 넘기지 않고 중단
+          return Promise.reject(new Error("존재하지 않은 채팅방 ID 입니다.")); // 다음 fetch .then 블록으로 넘기지 않고 중단
         }
         // 1-2. 채팅방 ID 유효성 검증 API 호출 - 성공
         console.log("채팅방 ID 유효성 검증 성공");
@@ -86,7 +89,7 @@
           handleValidationErrorCommon(
               `senderNickname(${senderNickname})이 유효하지 않아 senderId가 존재하지 않습니다.`,
               `발송자 닉네임(${senderNickname})이 유효하지 않습니다. 다시 확인해주세요.`);
-          return Promise.reject();
+          return Promise.reject(new Error(`발송자 닉네임(${senderNickname})이 유효하지 않습니다.`));
         }
         // 2-2. 채팅방 메시지 발송자 닉네임 추출 및 유효성 검증 API 호출 - 성공
         console.log("senderNickname 유효성 검증 성공");
@@ -99,7 +102,7 @@
           handleValidationErrorCommon(
               `receiverNickname(${receiverNickname})이 유효하지 않아 receiverId가 존재하지 않습니다.`,
               `받는 사용자 닉네임(${receiverNickname})이 유효하지 않습니다. 다시 확인해주세요.`);
-          return Promise.reject();
+          return Promise.reject(new Error(`수신자 닉네임(${receiverNickname})이 유효하지 않습니다.`));
         }
         // 4-2. 채팅방 메시지 수신자 닉네임 추출 및 userId 유효성 검증 API 호출 - 성공
         console.log("receiverNickname 유효성 검증 성공");
@@ -134,7 +137,9 @@
         // 모든 유효성 검증이 완료된 후 웹소켓 연결을 Promise로 래핑하여 반환
         return new Promise((resolve, reject) => {
           // 6. 웹소켓 연결 시, 쿼리 파리미터로 발송자/수신자의 id,nickname 전달
-          const socket = new SockJS(`${WS_ENDPOINT}?senderId=${senderId}&senderNickname=${senderNickname}&receiverId=${receiverId}&receiverNickname=${receiverNickname}`);
+          // 입력값 특수문자 포함될 경우 URL 파라미터 인코딩 설정
+          const socket = new SockJS(
+              `${WS_ENDPOINT}?senderId=${encodeURIComponent(senderId)}&senderNickname=${encodeURIComponent(senderNickname)}&receiverId=${encodeURIComponent(receiverId)}&receiverNickname=${encodeURIComponent(receiverNickname)}`);
           stompClient = Stomp.over(socket);
           stompClient.connect({}, frame => {
             // 6-1. 웹소켓 연결 - 성공
@@ -179,6 +184,11 @@
                     messageElement.style.display = 'none';
                   }
                 });
+
+            // 12. 채팅방 퇴장 메시지 구독
+            stompClient.subscribe(`/topic/v2/chat/exit/${chatRoomId}`, function (message) {
+              showMessage(JSON.parse(message.body));
+            });
 
             // 8. 채팅방 재접속 시, MongoDB 메시지 조회 API 호출
             fetch(`${API_BASE_URL}/message/page/${chatRoomId}/${senderId}`)
@@ -282,7 +292,7 @@
             console.log(`${chatRoomIdInput.value}:${senderId}로 저장된 cacheKey가 없습니다.`);
           }
           isConnected = false;
-          alert('채팅방 연결 종료하였습니다. 다시 연결해주세요!');
+          console.log('채팅방 연결 종료하였습니다. 다시 연결해주세요!');
           stompClient.disconnect();
           clearMessages();
         })
@@ -290,6 +300,38 @@
           handleValidationError("API 호출 실패: " + error, "Redis 캐시 삭제 실패");
         });
       }
+    }
+
+    // 채팅방 퇴장
+    function exit() {
+      // 웹소켓 연결 해지
+      disconnect();
+      // 요청 사용자의 채팅방 비활성화
+      fetch(`${API_BASE_URL}/rooms/${chatRoomIdInput.value}/${senderId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.status) {
+          // 채팅방 비활성화
+          console.log("채팅방 비활성화 성공:", data.message);
+          alert('해당 채팅방 비활성화 되었습니다.');
+          // 채팅방 퇴장 메시지 전송
+          stompClient.send(
+              `/app/v2/chat/exit/${chatRoomIdInput.value}/${senderId}`,
+              {'senderNickname': senderNicknameInput.value, 'receiverNickname': receiverNicknameInput.value}
+          );
+        } else {
+          console.error("채팅방 비활성화 실패:", data);
+          alert('해당 채팅방 비활성화 변경이 불가합니다. 다시 시도해주세요!');
+        }
+      })
+      .catch(error => {
+        handleValidationError("API 호출 실패: " + error, "채팅방 비활성화 API 호출 실패");
+      });
     }
 
     // 유효성 검증 실패 처리를 위한 공통 함수
