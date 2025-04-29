@@ -32,6 +32,9 @@ public class PostSearchResponseDto {
                 .postContent(postDocument.getPostContent())
                 .hashtags(postDocument.getHashtags())
                 .region(postDocument.getRegion())
+                .views(postDocument.getViews())
+                .commentCount(postDocument.getCommentCount())
+                .likeCount(postDocument.getLikeCount())
                 .createdAt(postDocument.getCreatedAt())
                 .build();
     }
