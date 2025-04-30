@@ -356,22 +356,36 @@ public class UserApplicationServiceImpl implements UserApplicationService {
 
     //internal - kafka
     @Override
+    @Transactional
     public void increaseFollowCount(Long followerId, Long followeeId) {
         log.info(
                 "[UserApplicationService-kafka] followerId={} followingCount +1, followeeId={} followerCount +1",
                 followerId, followeeId);
-        userRepository.incrementFollowingCount(followerId);
-        userRepository.incrementFollowerCount(followeeId);
+        int updatedFollowings = userRepository.incrementFollowingCount(followerId);
+        int updatedFollowers = userRepository.incrementFollowerCount(followeeId);
+
+        if (updatedFollowings == 0 || updatedFollowers == 0) {
+            throw new RuntimeException(
+                    "[Kafka-Follow] 유효하지 않은 유저 ID - followerId=" + followerId + ", followeeId="
+                            + followeeId);
+        }
     }
 
     //internal - kafka
     @Override
+    @Transactional
     public void decreaseFollowCount(Long followerId, Long followeeId) {
         log.info(
                 "[UserApplicationService-kafka] followerId={} followingCount -1, followeeId={} followerCount -1",
                 followerId, followeeId);
-        userRepository.decrementFollowingCount(followerId);
-        userRepository.decrementFollowerCount(followeeId);
+        int updatedFollowings = userRepository.decrementFollowingCount(followerId);
+        int updatedFollowers = userRepository.decrementFollowerCount(followeeId);
+
+        if (updatedFollowings == 0 || updatedFollowers == 0) {
+            throw new RuntimeException(
+                    "[Kafka-Follow] 유효하지 않은 유저 ID - followerId=" + followerId + ", followeeId="
+                            + followeeId);
+        }
     }
 
     //internal - redis scheduler 용
