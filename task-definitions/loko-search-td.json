@@ -52,6 +52,10 @@
         {
           "name": "ELASTIC_URL",
           "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko/ELASTIC_URL"
+        },
+        {
+          "name": "ELASTIC_IP",
+          "valueFrom": "arn:aws:ssm:ap-northeast-2:408891294463:parameter/config/loko/ELASTIC_IP"
         }
       ],
       "logConfiguration": {

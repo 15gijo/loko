@@ -17,7 +17,7 @@ spring:
         use_sql_comments: true
   data:
     elasticsearch:
-      host: ${EC2_MIDDLEWARE_IP}:9200
+      host: ${ELASTIC_IP}:9200
       username: ${ELASTIC_USERNAME}
       password: ${ELASTIC_PASSWORD} # 'ELK 도커 실행' 과정에서 설정한 .env 의 값과 일치해야 함
       repositories:
