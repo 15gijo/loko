@@ -20,15 +20,45 @@ public class KafkaProducerConfig {
     private String bootstrapServers;
 
     @Bean
-    public ProducerFactory<String, FollowEventDto> producerFactory() {
+    public ProducerFactory<String, FollowEventDto> internalProducerFactory() {
+        return new DefaultKafkaProducerFactory<>(internalProducerConfigs());
+    }
+
+    @Bean
+    public KafkaTemplate<String, FollowEventDto> internalKafkaTemplate() {
+        return new KafkaTemplate<>(internalProducerFactory());
+    }
+
+    private Map<String, Object> internalProducerConfigs() {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        configProps.put(JsonSerializer.TYPE_MAPPINGS,
-                "FollowEventDto:com.team15gijo.follow.infrastructure.kafka.dto.v2.FollowEventDto");
 
-        configProps.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false);
+        configProps.put(ProducerConfig.ACKS_CONFIG, "all");
+        configProps.put(ProducerConfig.RETRIES_CONFIG, 5);
+        configProps.put(ProducerConfig.LINGER_MS_CONFIG, 5);
+        configProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+        configProps.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
+        return configProps;
+    }
+
+    @Bean
+    public ProducerFactory<String, String> externalProducerFactory() {
+        return new DefaultKafkaProducerFactory<>(externalProducerConfigs());
+    }
+
+    @Bean
+    public KafkaTemplate<String, String> externalKafkaTemplate() {
+        return new KafkaTemplate<>(externalProducerFactory());
+    }
+
+    @Bean
+    public Map<String, Object> externalProducerConfigs() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
 
         configProps.put(ProducerConfig.ACKS_CONFIG, "all"); //모든 replica ack
         configProps.put(ProducerConfig.RETRIES_CONFIG, 5); //5회 재시도
@@ -37,12 +67,8 @@ public class KafkaProducerConfig {
         configProps.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION,
                 5); //요청 5개 묶어서 전송(idempotence 순서 깨짐 방지)
 
-        return new DefaultKafkaProducerFactory<>(configProps);
+        return configProps;
 
     }
 
-    @Bean
-    public KafkaTemplate<String, FollowEventDto> kafkaTemplate() {
-        return new KafkaTemplate<>(producerFactory());
-    }
 }

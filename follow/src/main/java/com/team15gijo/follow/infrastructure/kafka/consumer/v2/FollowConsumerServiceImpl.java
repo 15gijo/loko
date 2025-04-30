@@ -16,23 +16,34 @@ public class FollowConsumerServiceImpl implements FollowConsumerService {
 
     @Override
     public void handleFollowCreated(FollowEventDto followEventDto) {
-        log.info("팔로우 생성 처리: {}", followEventDto);
-        if (followEventDto.followType() == FollowType.FOLLOW) {
-            // 팔로워 수 +1
-            followRedisRepository.incrementFollowerCount(String.valueOf(followEventDto.followeeId()));
-            // 팔로잉 수 +1
-            followRedisRepository.incrementFollowingCount(String.valueOf(followEventDto.followerId()));
+        if (followEventDto.followType() != FollowType.FOLLOW) {
+            log.warn("[FollowConsumerService] 잘못된 FollowType (expected=FOLLOW) 수신: {}",
+                    followEventDto);
+            return;
         }
+        log.info("[FollowConsumerService] 팔로우 카운트 증가 처리 시작: {}", followEventDto);
+        // 팔로워 수 +1
+        followRedisRepository.incrementFollowerCount(String.valueOf(followEventDto.followeeId()));
+        // 팔로잉 수 +1
+        followRedisRepository.incrementFollowingCount(String.valueOf(followEventDto.followerId()));
     }
+
 
     @Override
     public void handleFollowDeleted(FollowEventDto followEventDto) {
-        log.info("언팔로우 생성 처리: {}", followEventDto);
-        if (followEventDto.followType() == FollowType.UNFOLLOW) {
-            // 팔로워 수 -1
-            followRedisRepository.decrementFollowerCount(String.valueOf(followEventDto.followeeId()));
-            // 팔로잉 수 -1
-            followRedisRepository.decrementFollowingCount(String.valueOf(followEventDto.followerId()));
+        if (followEventDto.followType() != FollowType.UNFOLLOW) {
+            log.warn("[FollowConsumerService] 잘못된 FollowType (expected=UNFOLLOW) 수신: {}",
+                    followEventDto);
+            return;
         }
+
+        log.info("[FollowConsumerService] 언팔로우 카운트 감소 처리 시작: {}", followEventDto);
+        // 팔로워 수 -1
+        followRedisRepository.decrementFollowerCount(
+                String.valueOf(followEventDto.followeeId()));
+        // 팔로잉 수 -1
+        followRedisRepository.decrementFollowingCount(
+                String.valueOf(followEventDto.followerId()));
+
     }
 }
