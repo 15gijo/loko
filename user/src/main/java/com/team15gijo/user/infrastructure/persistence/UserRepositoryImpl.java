@@ -101,26 +101,26 @@ public class UserRepositoryImpl implements UserRepository {
 
     //내부 통신 - 카프카
     @Override
-    public void incrementFollowingCount(Long followerId) {
-        userJpaRepository.incrementFollowingCount(followerId);
+    public int incrementFollowingCount(Long followerId) {
+        return userJpaRepository.incrementFollowingCount(followerId);
     }
 
     //내부 통신 - 카프카
     @Override
-    public void incrementFollowerCount(Long followeeId) {
-        userJpaRepository.incrementFollowerCount(followeeId);
+    public int incrementFollowerCount(Long followeeId) {
+        return userJpaRepository.incrementFollowerCount(followeeId);
     }
 
     //내부 통신 - 카프카
     @Override
-    public void decrementFollowingCount(Long followerId) {
-        userJpaRepository.decrementFollowingCount(followerId);
+    public int decrementFollowingCount(Long followerId) {
+        return userJpaRepository.decrementFollowingCount(followerId);
     }
 
     //내부 통신 - 카프카
     @Override
-    public void decrementFollowerCount(Long followeeId) {
-        userJpaRepository.decrementFollowerCount(followeeId);
+    public int decrementFollowerCount(Long followeeId) {
+        return userJpaRepository.decrementFollowerCount(followeeId);
     }
 
     //내부 통신 - 레디스 리프레쉬

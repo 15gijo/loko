@@ -1,25 +1,22 @@
 package com.team15gijo.user.infrastructure.kafka.dto;
 
 import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-public record FollowEventDto(
-        Long followerId,
-        Long followeeId,
-        FollowType followType,
-        LocalDateTime timeStamp
-) {
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+public class FollowEventDto {
 
-    public static FollowEventDto of(
-            Long followerId,
-            Long followeeId,
-            FollowType followType,
-            LocalDateTime timeStamp) {
-        return new FollowEventDto(followerId, followeeId, followType, timeStamp);
-    }
+    private Long followerId;
+    private Long followeeId;
+    private FollowType followType;
+    private LocalDateTime timeStamp;
 
     public enum FollowType {
-        FOLLOW,
-        UNFOLLOW
+        FOLLOW, UNFOLLOW
     }
 }
 

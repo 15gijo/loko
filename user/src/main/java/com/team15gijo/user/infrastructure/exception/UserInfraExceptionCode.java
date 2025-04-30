@@ -8,7 +8,8 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum UserInfraExceptionCode implements ExceptionCode {
-    ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "찾을 수 없는 주소입니다.");
+    ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "찾을 수 없는 주소입니다."),
+    KAFKA_JSON_DESERIALIZATION_FAILED(HttpStatus.BAD_REQUEST, "json 으로 역직렬화 실패입니다.");
 
 
     private final HttpStatus httpStatus;

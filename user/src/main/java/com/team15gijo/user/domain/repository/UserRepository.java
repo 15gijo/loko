@@ -40,13 +40,13 @@ public interface UserRepository {
 
     List<UserAndRegionInfoFollowResponseDto> findUserAndRegionInfos(Point location, List<Long> userIds);
 
-    void incrementFollowingCount(Long followerId);
+    int incrementFollowingCount(Long followerId);
 
-    void incrementFollowerCount(Long followeeId);
+    int incrementFollowerCount(Long followeeId);
 
-    void decrementFollowingCount(Long followerId);
+    int decrementFollowingCount(Long followerId);
 
-    void decrementFollowerCount(Long followeeId);
+    int decrementFollowerCount(Long followeeId);
 
     List<UserEntity> findAll();
 }
