@@ -7,6 +7,7 @@ import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.locationtech.jts.geom.Point;
 import org.springframework.data.domain.Page;
@@ -49,4 +50,8 @@ public interface UserRepository {
     int decrementFollowerCount(Long followeeId);
 
     List<UserEntity> findAll();
+
+    void bulkUpdateFollowerCounts(Map<Long, Long> followerMap);
+
+    void bulkUpdateFollowingCounts(Map<Long, Long> followingMap);
 }
