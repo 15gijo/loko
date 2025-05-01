@@ -1,6 +1,7 @@
 package com.team15gijo.follow.infrastructure.redis.repository;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public interface FollowRedisRepository<K> {
 
@@ -12,12 +13,16 @@ public interface FollowRedisRepository<K> {
 
     void decrementFollowingCount(K followerId);
 
-    Optional<Integer> getFollowerCount(K followeeId);
+    Optional<Long> getFollowerCount(K followeeId);
 
-    Optional<Integer> getFollowingCount(K followerId);
+    Optional<Long> getFollowingCount(K followerId);
 
-    void saveFollowerCount(K s, int i);
+    void saveFollowerCount(K userId, long i);
 
-    void saveFollowingCount(K s, int i);
+    void saveFollowingCount(K userId, long i);
+
+    Optional<Long> getFollowerCountWithFallback(K followeeId, Supplier<Long> fallback);
+
+    Optional<Long> getFollowingCountWithFallback(K followerId, Supplier<Long> fallback);
 }
 
