@@ -23,8 +23,7 @@ public class FollowCountRefreshScheduler {
     private static final String FOLLOWER_PREFIX = "followee:followerCount:";
     private static final String FOLLOWING_PREFIX = "follower:followingCount:";
 
-    //    @Scheduled(fixedDelay = 10 * 60 * 1000) // 10분마다
-    @Scheduled(fixedDelay = 10 * 1000) // 10분마다
+    @Scheduled(fixedDelay = 10 * 60 * 1000) // 10분마다
     public void refreshFollowCounts() {
         log.info("[Batch] Redis followerCount/followingCount 리프레시 시작");
 
