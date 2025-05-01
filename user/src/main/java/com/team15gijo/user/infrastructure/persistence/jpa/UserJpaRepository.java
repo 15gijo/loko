@@ -29,19 +29,19 @@ public interface UserJpaRepository extends JpaRepository<UserEntity, Long> {
 
     Optional<UserEntity> findByNickname(String nickname);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE UserEntity u SET u.followingCount = u.followingCount + 1 WHERE u.id = :userId")
     int incrementFollowingCount(@Param("userId") Long userId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE UserEntity u SET u.followerCount = u.followerCount + 1 WHERE u.id = :userId")
     int incrementFollowerCount(@Param("userId") Long userId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE UserEntity u SET u.followingCount = u.followingCount - 1 WHERE u.id = :userId")
     int decrementFollowingCount(@Param("userId") Long userId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE UserEntity u SET u.followerCount = u.followerCount - 1 WHERE u.id = :userId")
     int decrementFollowerCount(@Param("userId") Long userId);
 }

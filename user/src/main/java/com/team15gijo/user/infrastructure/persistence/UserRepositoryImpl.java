@@ -4,11 +4,13 @@ import com.team15gijo.user.application.dto.v1.AdminUserSearchCommand;
 import com.team15gijo.user.domain.model.UserEntity;
 import com.team15gijo.user.domain.repository.UserRepository;
 import com.team15gijo.user.infrastructure.persistence.jpa.UserJpaRepository;
+import com.team15gijo.user.infrastructure.persistence.nativequery.UserNativeRepository;
 import com.team15gijo.user.infrastructure.persistence.querydsl.UserQueryDslRepository;
 import com.team15gijo.user.presentation.dto.internal.response.v1.UserAndRegionInfoFollowResponseDto;
 import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Point;
@@ -22,6 +24,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     private final UserJpaRepository userJpaRepository;
     private final UserQueryDslRepository userQueryDslRepository;
+    private final UserNativeRepository userNativeRepository;
 
 
     @Override
@@ -69,7 +72,8 @@ public class UserRepositoryImpl implements UserRepository {
 
     //내부 통신
     @Override
-    public List<UserAndRegionInfoFollowResponseDto> findUserAndRegionInfos(Point location, List<Long> userIds) {
+    public List<UserAndRegionInfoFollowResponseDto> findUserAndRegionInfos(Point location,
+            List<Long> userIds) {
         return userQueryDslRepository.findUserAndRegionInfos(location, userIds);
     }
 
@@ -127,6 +131,18 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public List<UserEntity> findAll() {
         return userJpaRepository.findAll();
+    }
+
+    //내부 통신 스케줄러 - 벌크 업데이트
+    @Override
+    public void bulkUpdateFollowerCounts(Map<Long, Long> followerMap) {
+        userNativeRepository.bulkUpdateFollowerCounts(followerMap);
+    }
+
+    //내부 통신 스케줄러 - 벌크 업데이트
+    @Override
+    public void bulkUpdateFollowingCounts(Map<Long, Long> followingMap) {
+        userNativeRepository.bulkUpdateFollowingCounts(followingMap);
     }
 
 }
