@@ -1,12 +1,17 @@
 package com.team15gijo.notification.infrastructure.kafka.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.team15gijo.common.exception.CustomException;
+import com.team15gijo.notification.application.service.v1.EmitterService;
+import com.team15gijo.notification.domain.exception.NotificationDomainExceptionCode;
+import com.team15gijo.notification.domain.model.Notification;
+import com.team15gijo.notification.domain.model.NotificationDlq;
+import com.team15gijo.notification.domain.model.NotificationType;
+import com.team15gijo.notification.domain.repository.NotificationDlqRepository;
+import com.team15gijo.notification.domain.repository.NotificationRepository;
 import com.team15gijo.notification.infrastructure.kafka.dto.ChatNotificationEventDto;
 import com.team15gijo.notification.infrastructure.kafka.dto.CommentNotificationEventDto;
 import com.team15gijo.notification.infrastructure.kafka.dto.FollowNotificationEventDto;
-import com.team15gijo.notification.application.service.v1.EmitterService;
-import com.team15gijo.notification.domain.model.Notification;
-import com.team15gijo.notification.domain.model.NotificationType;
-import com.team15gijo.notification.domain.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -21,8 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NotificationConsumerService {
 
+    private final ObjectMapper objectMapper;
     private final NotificationRepository notificationRepository;
     private final EmitterService emitterService;
+    private final NotificationDlqRepository dlqRepository;
 
     @KafkaListener(topics = "COMMENT", groupId = "notification-service", containerFactory = "commentKafkaListenerContainerFactory")
     @Transactional
@@ -66,6 +73,19 @@ public class NotificationConsumerService {
     public void handleCommentEventDlt(CommentNotificationEventDto event) {
         log.error("🔥 DLQ로 이동된 메시지 수신: {}", event);
         // 여기서 Slack 알림 보내거나 Kibana/DB 저장 추가
+        try {
+            String payload = objectMapper.writeValueAsString(event);
+            NotificationDlq dlq = NotificationDlq.builder()
+                    .type("COMMENT")
+                    .payload(payload)
+                    .errorMessage("COMMENT DLT 수신")
+                    .resolved(false)
+                    .build();
+            dlqRepository.save(dlq);
+        } catch (Exception e) {
+            log.error("DLQ 저장 실패", e);
+            throw new CustomException(NotificationDomainExceptionCode.DLT_SAVE_FAIL);
+        }
     }
 
 
@@ -108,7 +128,19 @@ public class NotificationConsumerService {
     @KafkaListener(topics = "FOLLOW-dlt", groupId = "notification-service", containerFactory = "followKafkaListenerContainerFactory")
     public void handleFollowEventDlt(FollowNotificationEventDto event) {
         log.error("🔥 DLQ로 이동된 메시지 수신: {}", event);
-        // 여기서 Slack 알림 보내거나 Kibana/DB 저장 추가
+        try {
+            String payload = objectMapper.writeValueAsString(event);
+            NotificationDlq dlq = NotificationDlq.builder()
+                    .type("FOLLOW")
+                    .payload(payload)
+                    .errorMessage("FOLLOW DLT 수신")
+                    .resolved(false)
+                    .build();
+            dlqRepository.save(dlq);
+        } catch (Exception e) {
+            log.error("DLQ 저장 실패", e);
+            throw new CustomException(NotificationDomainExceptionCode.DLT_SAVE_FAIL);
+        }
     }
 
 
@@ -153,7 +185,19 @@ public class NotificationConsumerService {
     @KafkaListener(topics = "CHAT-dlt", groupId = "notification-service", containerFactory = "chatKafkaListenerContainerFactory")
     public void handleChatEventDlt(ChatNotificationEventDto event) {
         log.error("🔥 DLQ로 이동된 메시지 수신: {}", event);
-        // 여기서 Slack 알림 보내거나 Kibana/DB 저장 추가
+        try {
+            String payload = objectMapper.writeValueAsString(event);
+            NotificationDlq dlq = NotificationDlq.builder()
+                    .type("CHAT")
+                    .payload(payload)
+                    .errorMessage("CHAT DLT 수신")
+                    .resolved(false)
+                    .build();
+            dlqRepository.save(dlq);
+        } catch (Exception e) {
+            log.error("DLQ 저장 실패", e);
+            throw new CustomException(NotificationDomainExceptionCode.DLT_SAVE_FAIL);
+        }
     }
 
 }
