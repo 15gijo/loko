@@ -23,7 +23,7 @@ import org.hibernate.annotations.SQLRestriction;
 @Builder
 @SQLRestriction("deleted_at IS NULL")
 @SQLDelete(sql = "UPDATE p_search_dlq SET deleted_at = now(), deleted_by = updated_by WHERE id = ?")
-public class PostUpdateDlq extends BaseEntity {
+public class DlqEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,6 +32,7 @@ public class PostUpdateDlq extends BaseEntity {
 
     private String type;
 
+    @Column(columnDefinition = "TEXT")
     private String payload; // Kafka 메시지 JSON
 
     private String errorMessage;

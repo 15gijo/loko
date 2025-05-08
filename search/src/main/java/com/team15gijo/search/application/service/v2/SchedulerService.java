@@ -1,9 +1,9 @@
 package com.team15gijo.search.application.service.v2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.team15gijo.search.domain.model.PostUpdateDlq;
-import com.team15gijo.search.domain.repository.PostElasticsearchRepository;
-import com.team15gijo.search.domain.repository.PostUpdateDlqRepository;
+import com.team15gijo.search.domain.model.DlqEntity;
+import com.team15gijo.search.domain.repository.DlqRepository;
+import com.team15gijo.search.infrastructure.kafka.dto.v1.UserElasticsearchRequestDto;
 import com.team15gijo.search.infrastructure.kafka.dto.v2.CommentCreatedEventDto;
 import com.team15gijo.search.infrastructure.kafka.dto.v2.CommentDeletedEventDto;
 import com.team15gijo.search.infrastructure.kafka.dto.v2.PostCreatedEventDto;
@@ -26,18 +26,23 @@ public class SchedulerService {
 
     private final ObjectMapper objectMapper;
     private final PostService postService;
-    private final PostUpdateDlqRepository dlqRepository;
+    private final DlqRepository dlqRepository;
+    private final ElasticsearchService elasticsearchService;
 
     @Scheduled(fixedDelay = 60000) // 1분마다 실행
     @Transactional
     public void retryDlqMessages() {
         log.info("DLT 데이터 게시글 업데이트 스케줄러 동작");
-        List<PostUpdateDlq> failedMessages = dlqRepository.findByResolvedFalse();
+        List<DlqEntity> failedMessages = dlqRepository.findByResolvedFalse();
         log.info("DLT 데이터 Size : {}", failedMessages.size());
 
-        for (PostUpdateDlq dlq : failedMessages) {
+        for (DlqEntity dlq : failedMessages) {
             try {
                 switch (dlq.getType()) {
+                    case "USER_SAVE" -> {
+                        UserElasticsearchRequestDto dto = objectMapper.readValue(dlq.getPayload(), UserElasticsearchRequestDto.class);
+                        elasticsearchService.createElasticUser(dto);
+                    }
                     case "POST_CREATED" -> {
                         PostCreatedEventDto dto = objectMapper.readValue(dlq.getPayload(), PostCreatedEventDto.class);
                         postService.handlePostCreated(dto);

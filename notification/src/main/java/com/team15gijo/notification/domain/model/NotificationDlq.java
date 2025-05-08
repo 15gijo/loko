@@ -32,6 +32,7 @@ public class NotificationDlq extends BaseEntity {
 
     private String type; // "FOLLOW", "COMMENT", "CHAT"
 
+    @Column(columnDefinition = "TEXT")
     private String payload; // Kafka 메시지 JSON
 
     private String errorMessage;

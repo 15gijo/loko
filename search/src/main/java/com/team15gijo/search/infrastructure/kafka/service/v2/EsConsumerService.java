@@ -1,13 +1,12 @@
 package com.team15gijo.search.infrastructure.kafka.service.v2;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team15gijo.common.exception.CustomException;
 import com.team15gijo.search.application.service.v2.PostService;
 import com.team15gijo.search.domain.exception.SearchDomainExceptionCode;
-import com.team15gijo.search.domain.model.PostUpdateDlq;
-import com.team15gijo.search.domain.repository.PostUpdateDlqRepository;
+import com.team15gijo.search.domain.model.DlqEntity;
+import com.team15gijo.search.domain.repository.DlqRepository;
 import com.team15gijo.search.infrastructure.kafka.dto.v2.CommentCreatedEventDto;
 import com.team15gijo.search.infrastructure.kafka.dto.v2.CommentDeletedEventDto;
 import com.team15gijo.search.infrastructure.kafka.dto.v2.EventType;
@@ -33,7 +32,7 @@ public class EsConsumerService {
 
     private final ObjectMapper objectMapper;
     private final PostService postService;
-    private final PostUpdateDlqRepository dlqRepository;
+    private final DlqRepository dlqRepository;
 
     @RetryableTopic(
             attempts = "3",
@@ -117,7 +116,7 @@ public class EsConsumerService {
         EventType type = EventType.valueOf(rootNode.get("type").asText());
 
         try {
-            PostUpdateDlq dlq = PostUpdateDlq.builder()
+            DlqEntity dlq = DlqEntity.builder()
                     .type(String.valueOf(type))
                     .payload(message)
                     .errorMessage("Post 업데이트 DLT 수신")
