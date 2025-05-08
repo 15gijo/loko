@@ -1,5 +1,4 @@
-package com.team15gijo.notification.domain.model;
-
+package com.team15gijo.search.domain.model;
 
 import com.team15gijo.common.model.base.BaseEntity;
 import jakarta.persistence.Column;
@@ -17,20 +16,21 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
 @Entity
-@Table(name = "p_notification_dlq")
+@Table(name = "p_search_dlq")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 @SQLRestriction("deleted_at IS NULL")
-@SQLDelete(sql = "UPDATE p_notification_dlq SET deleted_at = now(), deleted_by = updated_by WHERE id = ?")
-public class NotificationDlq extends BaseEntity {
+@SQLDelete(sql = "UPDATE p_search_dlq SET deleted_at = now(), deleted_by = updated_by WHERE id = ?")
+public class PostUpdateDlq extends BaseEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 
-    private String type; // "FOLLOW", "COMMENT", "CHAT"
+    private String type;
 
     private String payload; // Kafka 메시지 JSON
 

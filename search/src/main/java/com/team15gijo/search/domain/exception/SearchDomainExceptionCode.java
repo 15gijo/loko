@@ -22,7 +22,8 @@ public enum SearchDomainExceptionCode implements ExceptionCode {
     COMMENT_COUNT_UP_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "댓글수 증가가 실패했습니다"),
     COMMENT_COUNT_DOWN_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "댓글수 감소가 실패했습니다"),
     LIKE_COUNT_UP_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "좋아요수 증가가 실패했습니다"),
-    LIKE_COUNT_DOWN_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "좋아요수 감소가 실패했습니다");
+    LIKE_COUNT_DOWN_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "좋아요수 감소가 실패했습니다"),
+    DLT_SAVE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "DLT 저장에 실패했습니다");
 
     private final HttpStatus httpStatus;
     private final String message;

@@ -1,8 +1,6 @@
 package com.team15gijo.notification.application.service.v2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.team15gijo.common.exception.CustomException;
-import com.team15gijo.notification.domain.exception.NotificationDomainExceptionCode;
 import com.team15gijo.notification.domain.model.Notification;
 import com.team15gijo.notification.domain.model.NotificationDlq;
 import com.team15gijo.notification.domain.model.NotificationType;
