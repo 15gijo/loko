@@ -1,5 +1,6 @@
 package com.team15gijo.auth.application.service;
 
+import com.team15gijo.auth.presentation.dto.internal.request.v1.OAuthAuthSignUpRequestDto;
 import com.team15gijo.auth.presentation.dto.request.v1.AdminAssignManagerRequestDto;
 import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthIdentifierUpdateRequestDto;
 import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthPasswordUpdateRequestDto;
@@ -29,4 +30,6 @@ public interface AuthApplicationService {
     AuthRefreshResponseDto refresh(HttpServletRequest request, HttpServletResponse response);
 
     void logout(String accessToken, Long userId);
+
+    UUID signUpOAuth(OAuthAuthSignUpRequestDto oAuthAuthSignUpRequestDto);
 }

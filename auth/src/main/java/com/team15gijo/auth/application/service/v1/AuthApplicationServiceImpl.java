@@ -19,6 +19,7 @@ import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthIdentifierUp
 import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthPasswordUpdateRequestDto;
 import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthSignUpRequestDto;
 import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthSignUpUpdateUserIdRequestDto;
+import com.team15gijo.auth.presentation.dto.internal.request.v1.OAuthAuthSignUpRequestDto;
 import com.team15gijo.auth.presentation.dto.request.v1.AdminAssignManagerRequestDto;
 import com.team15gijo.auth.presentation.dto.request.v1.AssignAdminRequestDto;
 import com.team15gijo.auth.presentation.dto.response.v2.AuthRefreshResponseDto;
@@ -55,6 +56,14 @@ public class AuthApplicationServiceImpl implements AuthApplicationService {
         AuthSignUpRequestCommand authSignUpRequestCommand = AuthSignUpRequestCommand.from(
                 authSignUpRequestDto);
         AuthEntity createdAuth = authDomainService.createAuth(authSignUpRequestCommand);
+        authRepository.save(createdAuth);
+        return createdAuth.getId();
+    }
+
+    @Override
+    @Transactional
+    public UUID signUpOAuth(OAuthAuthSignUpRequestDto oAuthAuthSignUpRequestDto) {
+        AuthEntity createdAuth = authDomainService.createAuthOAuth(oAuthAuthSignUpRequestDto);
         authRepository.save(createdAuth);
         return createdAuth.getId();
     }
@@ -218,4 +227,5 @@ public class AuthApplicationServiceImpl implements AuthApplicationService {
         //refresh 토큰 삭제
         refreshTokenRedisRepository.delete(userId);
     }
+
 }
