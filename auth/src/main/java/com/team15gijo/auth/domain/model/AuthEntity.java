@@ -50,6 +50,9 @@ public class AuthEntity extends BaseEntity {
     @Column(name = "role", nullable = false)
     private Role role;
 
+    @Column(name = "oauth_id", unique = true)
+    private String oauthId;
+
     @Builder
     public AuthEntity(
             Long userId,
@@ -57,13 +60,15 @@ public class AuthEntity extends BaseEntity {
             String password,
             String identifier,
             LoginType loginType,
-            Role role) {
+            Role role,
+            String oauthId) {
         this.userId = userId;
         this.nickname = nickname;
         this.password = password;
         this.identifier = identifier;
         this.loginType = loginType;
         this.role = role;
+        this.oauthId = oauthId;
     }
 
     public void updateRole(Role userRole) {
