@@ -5,6 +5,7 @@ import com.team15gijo.user.infrastructure.dto.request.v1.AuthSignUpRequestDto;
 import com.team15gijo.user.infrastructure.dto.request.v1.AuthSignUpUpdateUserIdRequestDto;
 import com.team15gijo.user.infrastructure.dto.request.v1.AuthIdentifierUpdateRequestDto;
 import com.team15gijo.user.infrastructure.dto.request.v1.AuthPasswordUpdateRequestDto;
+import com.team15gijo.user.infrastructure.dto.request.v1.OAuthAuthSignUpRequestDto;
 import java.util.UUID;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,4 +26,7 @@ public interface AuthServiceClient {
 
     @PostMapping("/password-update")
     void updatePassword(@RequestBody AuthPasswordUpdateRequestDto authPasswordUpdateRequestDto);
+
+    @PostMapping("/signup/oauth")
+    UUID signUpOAuth(@RequestBody OAuthAuthSignUpRequestDto oAuthAuthSignUpRequestDto);
 }
