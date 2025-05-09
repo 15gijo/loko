@@ -2,11 +2,11 @@ package com.team15gijo.chat.infrastructure.kafka.service;
 
 import com.mongodb.MongoQueryException;
 import com.mongodb.MongoSecurityException;
+import com.team15gijo.chat.application.filter.v2.ChatFilter;
 import com.team15gijo.chat.domain.model.v2.ChatMessageDocumentV2;
 import com.team15gijo.chat.domain.model.v2.ConnectionTypeV2;
 import com.team15gijo.chat.domain.repository.v2.ChatMessageRepositoryV2;
 import com.team15gijo.chat.infrastructure.client.FeignClientService;
-import com.team15gijo.chat.infrastructure.client.v2.ai.dto.MessageFilteringResponseDto;
 import com.team15gijo.chat.infrastructure.kafka.dto.ChatMessageEventDto;
 import com.team15gijo.chat.infrastructure.kafka.dto.ChatNotificationEventDto;
 import com.team15gijo.chat.infrastructure.slack.service.SlackNotificationService;
@@ -38,6 +38,8 @@ public class MessageKafkaConsumerService {
     private final SlackNotificationService slackNotificationService;
 
     private static final String MESSAGE_DLT_TOPIC = "chat_message_event-dlt";
+
+    private final ChatFilter chatFilter;
 
     // TODO: topic을 chatRoomId로 분리할까?
     // 토픽 - 채팅 메시지 내용 구독
@@ -88,24 +90,46 @@ public class MessageKafkaConsumerService {
                     .from(chatMessageEventDto.getReceiverId(), chatMessageEventDto.getSenderNickname(), chatMessageEventDto.getMessageContent()));
                 log.info("[MessageKafkaConsumerService] 채팅 메시지 전송 알림 처리");
 
-                // 5. AI 서비스의 feign client 호출로 메시지 유해성 판단 및 시스템 삭제 처리
-                log.info("[MessageKafkaConsumerService] ai API로 유해 메시지 필터링 전 - id:{}", savedMessage.get_id());
-                MessageFilteringResponseDto isHarmfulResponse = feignClientService.fetchIsHarmfulByMessage(savedMessage.getMessageContent());
-                log.info("[MessageKafkaConsumerService] ai API로 유해 메시지 필터링 후 - isHarmfulResponse:{}", isHarmfulResponse);
+                // 5-2. 유해 메시지 정적 필터링의 유해성 판단 및 시스템 삭제 처리
+                log.info("[MessageKafkaConsumerService] chat 정적 필터로 유해 메시지 필터링 전 - id:{}", savedMessage.get_id());
+                Boolean isHarmfulResponse = chatFilter.validateMessageContent(chatMessageEventDto.getMessageContent());
+                log.info("[MessageKafkaConsumerService] chat 정적 필터로 유해 메시지 필터링 후 - id:{}", savedMessage.get_id());
 
                 // 유해한 메시지로 필터링 적용 = true
-                if(isHarmfulResponse.getIsHarmful()) {
-                    log.info("[MessageKafkaConsumerService] 유해성 판단 결과={}", isHarmfulResponse.getIsHarmful());
+                if(isHarmfulResponse) {
+                    log.info("[MessageKafkaConsumerService] chatFilter의 유해성 판단 결과={}",
+                        isHarmfulResponse);
 
                     // mongoDB에서 채팅방의 메시지 소프트 삭제 처리
-                    softDeleteChatMessageById(savedMessage.get_id(), isHarmfulResponse.getDeleteBy());
+                    // 유해한 메시지 삭제로 시스템 ID=0L 지정
+                    softDeleteChatMessageById(savedMessage.get_id(),
+                        0L);
 
-                    // TODO: 삭제 후, 채팅방에서 실시간 숨김 처리
                     // 클라이언트에게 메시지 삭제 이벤트 전송
-                    messagingTemplate.convertAndSend("/topic/v2/chat/restriction/delete/" + savedMessage.getChatRoomId(),
-                            Map.of("cause", "유해하거나 불쾌감을 주는 단어나 불법적인 단어 또는 욕설이 포함되어 삭제 처리되었습니다.", "messageId", savedMessage.get_id(), "messageContent", savedMessage.getMessageContent()));
-                    log.info("[MessageKafkaConsumerService] 유해 메시지 삭제 알림 전송 완료 - chatRoomId:{}", savedMessage.getChatRoomId());
+                    messagingTemplate.convertAndSend(
+                        "/topic/v2/chat/restriction/delete/" + savedMessage.getChatRoomId(),
+                        Map.of("cause", "유해하거나 불쾌감을 주는 단어나 불법적인 단어 또는 욕설이 포함되어 삭제 처리되었습니다.",
+                            "messageId", savedMessage.get_id(), "messageContent",
+                            savedMessage.getMessageContent()));
                 }
+
+//                // 5-1. AI 서비스의 feign client 호출로 메시지 유해성 판단 및 시스템 삭제 처리
+//                log.info("[MessageKafkaConsumerService] ai API로 유해 메시지 필터링 전 - id:{}", savedMessage.get_id());
+//                MessageFilteringResponseDto isHarmfulResponse = feignClientService.fetchIsHarmfulByMessage(savedMessage.getMessageContent());
+//                log.info("[MessageKafkaConsumerService] ai API로 유해 메시지 필터링 후 - isHarmfulResponse:{}", isHarmfulResponse);
+//
+//                // 유해한 메시지로 필터링 적용 = true
+//                if(isHarmfulResponse.getIsHarmful()) {
+//                    log.info("[MessageKafkaConsumerService] 유해성 판단 결과={}", isHarmfulResponse.getIsHarmful());
+//
+//                    // mongoDB에서 채팅방의 메시지 소프트 삭제 처리
+//                    softDeleteChatMessageById(savedMessage.get_id(), isHarmfulResponse.getDeleteBy());
+//
+//                    // 클라이언트에게 메시지 삭제 이벤트 전송
+//                    messagingTemplate.convertAndSend("/topic/v2/chat/restriction/delete/" + savedMessage.getChatRoomId(),
+//                            Map.of("cause", "유해하거나 불쾌감을 주는 단어나 불법적인 단어 또는 욕설이 포함되어 삭제 처리되었습니다.", "messageId", savedMessage.get_id(), "messageContent", savedMessage.getMessageContent()));
+//                    log.info("[MessageKafkaConsumerService] 유해 메시지 삭제 알림 전송 완료 - chatRoomId:{}", savedMessage.getChatRoomId());
+//                }
             } else {
                 // 3-3. 퇴장 메시지
                 log.info("[webSocket '/topic/v2/chat/exit/{}' 연결] kafka 컨슈머가 '퇴장 메시지' 처리",
