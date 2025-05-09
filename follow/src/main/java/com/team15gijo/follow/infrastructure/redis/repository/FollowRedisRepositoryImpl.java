@@ -22,8 +22,7 @@ public class FollowRedisRepositoryImpl implements FollowRedisRepository<String> 
     private static final String FOLLOWER_LOCK_PREFIX = "lock:follower:";
     private static final String FOLLOWING_LOCK_PREFIX = "lock:following:";
 
-    //    private static final long TTL_SECONDS = 3 * 24 * 60 * 60; //3일
-    private static final long TTL_SECONDS = 30; //3일
+    private static final long TTL_SECONDS = 3 * 24 * 60 * 60; //3일
 
     private String makeFollowerKey(String userId) {
         return FOLLOWER_PREFIX + userId;
@@ -114,7 +113,8 @@ public class FollowRedisRepositoryImpl implements FollowRedisRepository<String> 
                 () -> getFollowerCount(userId),
                 () -> {
                     Long dbCount = dbFallback.get();
-                    log.info("[fallback-check] followerCount DB 조회 결과 - userId={}, dbCount={}", userId, dbCount);
+                    log.info("[fallback-check] followerCount DB 조회 결과 - userId={}, dbCount={}",
+                            userId, dbCount);
                     saveFollowerCount(userId, dbCount);
                     return dbCount;
                 }
@@ -128,7 +128,8 @@ public class FollowRedisRepositoryImpl implements FollowRedisRepository<String> 
                 () -> getFollowingCount(userId),
                 () -> {
                     Long dbCount = dbFallback.get();
-                    log.info("[fallback-check] followingCount DB 조회 결과 - userId={}, dbCount={}", userId, dbCount);
+                    log.info("[fallback-check] followingCount DB 조회 결과 - userId={}, dbCount={}",
+                            userId, dbCount);
                     saveFollowingCount(userId, dbCount);
                     return dbCount;
                 }

@@ -243,24 +243,6 @@ public class FollowApplicationServiceImpl implements FollowApplicationService {
 //        );
 //    }
 
-//    private FollowCountResponseDto getCountFollowsInternal(Long userId) {
-//        Integer followerCount = followRedisRepository.getFollowerCount(String.valueOf(userId))
-//                .orElseGet(() -> {
-//                    log.info("[/me/count] followerCount Redis miss 발생 - fallback 0 저장 (userId = {})", userId);
-//                    followRedisRepository.saveFollowerCount(String.valueOf(userId), 0);
-//                    return 0;
-//                });
-//
-//        Integer followingCount = followRedisRepository.getFollowingCount(String.valueOf(userId))
-//                .orElseGet(() -> {
-//                    log.info("[/me/count] followingCount Redis miss 발생 - fallback 0 저장 (userId = {})", userId);
-//                    followRedisRepository.saveFollowingCount(String.valueOf(userId), 0);
-//                    return 0;
-//                });
-//
-//        return FollowCountResponseDto.of(followerCount, followingCount);
-//    }
-
     private FollowCountResponseDto getCountFollowsInternal(Long userId) {
         Long followerCount = followRedisRepository.getFollowerCountWithFallback(
                 String.valueOf(userId),
