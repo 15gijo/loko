@@ -16,4 +16,6 @@ public interface AuthRepository {
     void updateUserMeta(Long userId, UUID authId);
 
     Optional<AuthEntity> findByUserId(Long userId);
+
+    Optional<AuthEntity> findByLoginTypeAndOauthId(LoginType loginType, String providerId);
 }

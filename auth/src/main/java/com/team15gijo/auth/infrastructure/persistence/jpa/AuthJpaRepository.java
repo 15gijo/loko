@@ -24,4 +24,6 @@ public interface AuthJpaRepository extends JpaRepository<AuthEntity, UUID> {
     void updateUserMeta(Long userId, UUID authId);
 
     Optional<AuthEntity> findByUserId(Long userId);
+
+    Optional<AuthEntity> findByLoginTypeAndOauthId(LoginType loginType, String oauthId);
 }
