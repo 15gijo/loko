@@ -5,16 +5,17 @@ import com.team15gijo.common.dto.ApiResponse;
 import com.team15gijo.common.utils.page.PageableUtils;
 import com.team15gijo.user.application.service.UserApplicationService;
 import com.team15gijo.user.domain.model.UserStatus;
-import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
-import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
 import com.team15gijo.user.presentation.dto.request.v1.AdminUserStatusUpdateRequestDto;
 import com.team15gijo.user.presentation.dto.request.v1.UserEmailUpdateRequestDto;
 import com.team15gijo.user.presentation.dto.request.v1.UserPasswordUpdateRequestDto;
 import com.team15gijo.user.presentation.dto.request.v1.UserSignUpRequestDto;
 import com.team15gijo.user.presentation.dto.request.v1.UserUpdateRequestDto;
+import com.team15gijo.user.presentation.dto.request.v1.UserOAuthSignUpRequestDto;
 import com.team15gijo.user.presentation.dto.response.v1.UserReadResponseDto;
 import com.team15gijo.user.presentation.dto.response.v1.UserSignUpResponseDto;
 import com.team15gijo.user.presentation.dto.response.v1.UserUpdateResponseDto;
+import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
+import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +51,17 @@ public class UserController {
         UserSignUpResponseDto userSignUpResponseDto = userApplicationService.createUser(
                 userSignUpRequestDto);
         return ResponseEntity.ok(ApiResponse.success("회원가입 성공", userSignUpResponseDto));
+    }
+
+    //OAuth 회원가입
+    @PostMapping("/signup/oauth")
+    public ResponseEntity<ApiResponse<UserSignUpResponseDto>> createUserOauth(
+            @RequestBody @Valid UserOAuthSignUpRequestDto userOAuthSignUpRequestDto
+    ) {
+        UserSignUpResponseDto userSignUpResponseDto = userApplicationService.createUserOauth(
+                userOAuthSignUpRequestDto
+        );
+        return ResponseEntity.ok(ApiResponse.success("OAuth 회원가입 성공", userSignUpResponseDto));
     }
 
     //유저 단건 조회 - 관리자
