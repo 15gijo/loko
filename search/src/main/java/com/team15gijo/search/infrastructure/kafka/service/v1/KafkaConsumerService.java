@@ -1,6 +1,12 @@
 package com.team15gijo.search.infrastructure.kafka.service.v1;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.team15gijo.common.exception.CustomException;
 import com.team15gijo.search.application.service.v2.ElasticsearchService;
+import com.team15gijo.search.domain.exception.SearchDomainExceptionCode;
+import com.team15gijo.search.domain.model.DlqEntity;
+import com.team15gijo.search.domain.repository.DlqRepository;
 import com.team15gijo.search.infrastructure.kafka.dto.v1.PostElasticsearchRequestDto;
 import com.team15gijo.search.infrastructure.kafka.dto.v1.UserElasticsearchRequestDto;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class KafkaConsumerService {
 
     private final ElasticsearchService elasticsearchService;
+    private final ObjectMapper objectMapper;
+    private final DlqRepository dlqRepository;
 
     @KafkaListener(topics = "POST_SAVE", groupId = "search-service", containerFactory = "postKafkaListenerContainerFactory")
     @Transactional
@@ -60,7 +68,21 @@ public class KafkaConsumerService {
     @KafkaListener(topics = "USER_SAVE-dlt", groupId = "search-service", containerFactory = "userKafkaListenerContainerFactory")
     public void handleUserEventDlt(UserElasticsearchRequestDto dto) {
         log.error("🔥 DLQ로 이동된 메시지 수신: {}", dto);
-        // Slack 알림 보내거나 Kibana/DB 저장 등 추가
+        try {
+            String payload = objectMapper.writeValueAsString(dto);
+
+            DlqEntity dlq = DlqEntity.builder()
+                    .type("USER_SAVE")
+                    .payload(payload)
+                    .errorMessage("유저 인덱싱 실패")
+                    .resolved(false)
+                    .build();
+
+            dlqRepository.save(dlq);
+        } catch (JsonProcessingException e) {
+            log.error("❌ 유저 DLQ 저장 중 직렬화 실패", e);
+            throw new CustomException(SearchDomainExceptionCode.DLT_SAVE_FAIL);
+        }
     }
 
 

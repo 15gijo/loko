@@ -2,7 +2,11 @@ package com.team15gijo.search.infrastructure.kafka.service.v2;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.team15gijo.common.exception.CustomException;
 import com.team15gijo.search.application.service.v2.PostService;
+import com.team15gijo.search.domain.exception.SearchDomainExceptionCode;
+import com.team15gijo.search.domain.model.DlqEntity;
+import com.team15gijo.search.domain.repository.DlqRepository;
 import com.team15gijo.search.infrastructure.kafka.dto.v2.CommentCreatedEventDto;
 import com.team15gijo.search.infrastructure.kafka.dto.v2.CommentDeletedEventDto;
 import com.team15gijo.search.infrastructure.kafka.dto.v2.EventType;
@@ -28,6 +32,7 @@ public class EsConsumerService {
 
     private final ObjectMapper objectMapper;
     private final PostService postService;
+    private final DlqRepository dlqRepository;
 
     @RetryableTopic(
             attempts = "3",
@@ -104,8 +109,24 @@ public class EsConsumerService {
 
     // 2. DLQ 처리용 Kafka Listener
     @KafkaListener(topics = "feed_events-search-dlt", groupId = "search-service", containerFactory = "postKafkaListenerContainerFactory")
-    public void handleEventDlt(String message) {
+    public void handleEventDlt(String message) throws IOException {
         log.error("🔥 DLQ로 이동된 메시지 수신: {}", message);
         // 여기서 Slack 알림 보내거나 Kibana/DB 저장 추가
+        JsonNode rootNode = objectMapper.readTree(message);
+        EventType type = EventType.valueOf(rootNode.get("type").asText());
+
+        try {
+            DlqEntity dlq = DlqEntity.builder()
+                    .type(String.valueOf(type))
+                    .payload(message)
+                    .errorMessage("Post 업데이트 DLT 수신")
+                    .resolved(false)
+                    .build();
+
+            dlqRepository.save(dlq);
+        } catch (Exception e) {
+            log.error("DLQ 저장 실패", e);
+            throw new CustomException(SearchDomainExceptionCode.DLT_SAVE_FAIL);
+        }
     }
 }
