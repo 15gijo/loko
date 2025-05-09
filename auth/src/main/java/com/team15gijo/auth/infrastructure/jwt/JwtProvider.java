@@ -2,6 +2,7 @@ package com.team15gijo.auth.infrastructure.jwt;
 
 import com.team15gijo.auth.infrastructure.dto.security.AuthLoginResponseCommand;
 import com.team15gijo.auth.infrastructure.exception.AuthInfraExceptionCode;
+import com.team15gijo.auth.infrastructure.security.dto.UserProfile;
 import com.team15gijo.common.exception.CustomException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -27,6 +28,9 @@ public class JwtProvider {
 
     @Value("${jwt.refresh-token.expiration}")
     private Long refreshTokenExpiration;
+
+    @Value("${jwt.oauth-signup-token.expiration}")
+    private Long oauthTempSignUpTokenExpiration;
 
     @PostConstruct
     public void init() {
@@ -58,12 +62,32 @@ public class JwtProvider {
                 .compact();
     }
 
+    public String generateOAuthTempSignUpToken(UserProfile userProfile) {
+        return Jwts.builder()
+                .setSubject(userProfile.getProvider() + ":" + userProfile.getProviderId())
+                .claim("provider", userProfile.getProvider())
+                .claim("providerId", userProfile.getProviderId())
+                .claim("email", userProfile.getEmail())
+                .claim("name", userProfile.getName())
+                .claim("nickname", userProfile.getNickname())
+                .claim("profileImage", userProfile.getProfileImageUrl())
+                .setIssuedAt(new Date())
+                .setExpiration(
+                        new Date(System.currentTimeMillis() + oauthTempSignUpTokenExpiration))
+                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
     public long getAccessTokenExpiration() {
         return accessTokenExpiration;
     }
 
     public long getRefreshTokenExpiration() {
         return refreshTokenExpiration;
+    }
+
+    public long getOauthTempSignUpTokenExpiration() {
+        return oauthTempSignUpTokenExpiration;
     }
 
     //access토큰 검증 메소드

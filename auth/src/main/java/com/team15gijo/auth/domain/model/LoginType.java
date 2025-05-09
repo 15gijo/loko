@@ -5,7 +5,9 @@ import com.team15gijo.common.exception.CustomException;
 
 public enum LoginType {
     PASSWORD("일반 로그인"),
-    SOCIAL("소셜 로그인"); //OAuth 구현시 세분화 필요
+    GOOGLE("구글 로그인"),
+    NAVER("네이버 로그인"),
+    KAKAO("카카오 로그인");
 
     private final String loginTypeName;
 
