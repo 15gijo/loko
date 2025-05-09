@@ -3,6 +3,7 @@ package com.team15gijo.user.application.service.v2;
 import com.team15gijo.common.exception.CustomException;
 import com.team15gijo.user.application.dto.v1.AdminUserSearchCommand;
 import com.team15gijo.user.application.dto.v2.KakaoMapRegionInfoCommand;
+import com.team15gijo.user.application.dto.v2.OAuthUserProfile;
 import com.team15gijo.user.application.exception.UserApplicationExceptionCode;
 import com.team15gijo.user.application.service.UserApplicationService;
 import com.team15gijo.user.domain.exception.UserDomainExceptionCode;
@@ -18,6 +19,8 @@ import com.team15gijo.user.infrastructure.dto.request.v1.AuthIdentifierUpdateReq
 import com.team15gijo.user.infrastructure.dto.request.v1.AuthPasswordUpdateRequestDto;
 import com.team15gijo.user.infrastructure.dto.request.v1.AuthSignUpRequestDto;
 import com.team15gijo.user.infrastructure.dto.request.v1.AuthSignUpUpdateUserIdRequestDto;
+import com.team15gijo.user.infrastructure.dto.request.v1.OAuthAuthSignUpRequestDto;
+import com.team15gijo.user.infrastructure.jwt.JwtProvider;
 import com.team15gijo.user.infrastructure.kafka.dto.UserElasticsearchRequestDto;
 import com.team15gijo.user.infrastructure.kafka.service.KafkaProducerService;
 import com.team15gijo.user.infrastructure.kakao.KakaoMapService;
@@ -25,6 +28,7 @@ import com.team15gijo.user.presentation.dto.internal.response.v1.UserAndRegionIn
 import com.team15gijo.user.presentation.dto.internal.response.v1.UserInfoFollowResponseDto;
 import com.team15gijo.user.presentation.dto.request.v1.AdminUserStatusUpdateRequestDto;
 import com.team15gijo.user.presentation.dto.request.v1.UserEmailUpdateRequestDto;
+import com.team15gijo.user.presentation.dto.request.v1.UserOAuthSignUpRequestDto;
 import com.team15gijo.user.presentation.dto.request.v1.UserPasswordUpdateRequestDto;
 import com.team15gijo.user.presentation.dto.request.v1.UserSignUpRequestDto;
 import com.team15gijo.user.presentation.dto.request.v1.UserUpdateRequestDto;
@@ -33,6 +37,7 @@ import com.team15gijo.user.presentation.dto.response.v1.UserSignUpResponseDto;
 import com.team15gijo.user.presentation.dto.response.v1.UserUpdateResponseDto;
 import com.team15gijo.user.presentation.dto.v1.AdminUserReadResponseDto;
 import com.team15gijo.user.presentation.dto.v1.UserReadsResponseDto;
+import io.jsonwebtoken.Claims;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -60,6 +65,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     private final KafkaProducerService producerService;
     private final KakaoMapService kakaoMapService;
     private final GeometryFactory geometryFactory;
+    private final JwtProvider jwtProvider;
 
     @Override
     @Transactional
@@ -98,6 +104,91 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                         .build();
 
         UUID authId = authServiceClient.signUp(authSignUpRequestDto);
+
+        //유저 DB save
+        UserEntity savedUser = userRepository.save(createdUser);
+
+        //유저 createdBy 업데이트
+        userRepository.updateCreatedBy(savedUser.getId());
+
+        //인증 서버로 userId 알림
+        AuthSignUpUpdateUserIdRequestDto authSignUpUpdateUserIdRequestDto = new AuthSignUpUpdateUserIdRequestDto(
+                authId, savedUser.getId());
+        authServiceClient.updateId(authSignUpUpdateUserIdRequestDto);
+
+        // kafka로 검색 서버에 유저 정보 전송
+        log.info("user 정보 검색서버로 kafka 전송 시작");
+        try {
+            producerService.sendUserCreate(UserElasticsearchRequestDto.from(savedUser));
+            log.info("user 정보 검색서버로 kafka 전송 완료");
+        } catch (Exception e) {
+            log.error("user 정보 검색서버로 kafka 전송 실패, userId: {}", savedUser.getId(), e);
+        }
+
+        return new UserSignUpResponseDto(
+                savedUser.getEmail(),
+                savedUser.getNickname(),
+                savedUser.getUsername(),
+                savedUser.getRegion(),
+                savedUser.getProfile(),
+                savedUser.getRegionId().getId());
+    }
+
+    @Override
+    @Transactional
+    public UserSignUpResponseDto createUserOauth(
+            UserOAuthSignUpRequestDto userOAuthSignUpRequestDto) {
+        //회원가입 토큰 받기, 레디스에서 꺼내기
+        String signupToken = userOAuthSignUpRequestDto.signUpToken();
+        Claims claims = jwtProvider.parseToken(signupToken);
+
+        //dto 변환
+        OAuthUserProfile oAuthUserProfile = OAuthUserProfile.builder()
+                .provider(claims.get("provider", String.class))
+                .providerId(claims.get("providerId", String.class))
+                .email(claims.get("email", String.class))
+                .name(claims.get("name", String.class))
+                .nickname(claims.get("nickname", String.class))
+                .profileImageUrl(claims.get("profileImageUrl", String.class))
+                .build();
+
+        //카카오맵 주소 받기
+        KakaoMapRegionInfoCommand kakaoMapRegionInfoCommand = kakaoMapService.getRegionInfo(
+                userOAuthSignUpRequestDto.region());
+
+        //좌표 받기
+        Point location = geometryFactory.createPoint(
+                new Coordinate(kakaoMapRegionInfoCommand.longitude(),
+                        kakaoMapRegionInfoCommand.latitude()));
+
+        //지역 디비 등록
+        UserRegionEntity userRegionEntity = userRegionRepository.save(
+                UserRegionEntity.builder()
+                        .regionCode(kakaoMapRegionInfoCommand.regionCode())
+                        .regionName(kakaoMapRegionInfoCommand.regionName())
+                        .location(location)
+                        .build()
+        );
+
+        //유저 생성
+        UserEntity createdUser = userDomainService.createUserOauth(
+                oAuthUserProfile,
+                userOAuthSignUpRequestDto.username(),
+                userRegionEntity.getRegionName(),
+                userRegionEntity
+        );
+
+        //인증 서버로 회원가입 알림
+        OAuthAuthSignUpRequestDto oAuthAuthSignUpRequestDto =
+                OAuthAuthSignUpRequestDto.builder()
+                        .nickname(createdUser.getNickname())
+                        .identifier(createdUser.getEmail())
+                        .password("OAUTH")
+                        .loginTypeName(oAuthUserProfile.getProvider().toUpperCase())
+                        .oauthId(oAuthUserProfile.getProviderId())
+                        .build();
+
+        UUID authId = authServiceClient.signUpOAuth(oAuthAuthSignUpRequestDto);
 
         //유저 DB save
         UserEntity savedUser = userRepository.save(createdUser);
@@ -393,6 +484,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     public List<UserEntity> getAllUsers() {
         return userRepository.findAll();
     }
+
 
     private static int getIndex(String kakaoMapRegion) {
         int indexGu = kakaoMapRegion.indexOf("구");

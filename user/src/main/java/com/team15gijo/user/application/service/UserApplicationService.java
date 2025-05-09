@@ -7,6 +7,7 @@ import com.team15gijo.user.presentation.dto.internal.response.v1.UserAndRegionIn
 import com.team15gijo.user.presentation.dto.internal.response.v1.UserInfoFollowResponseDto;
 import com.team15gijo.user.presentation.dto.request.v1.AdminUserStatusUpdateRequestDto;
 import com.team15gijo.user.presentation.dto.request.v1.UserEmailUpdateRequestDto;
+import com.team15gijo.user.presentation.dto.request.v1.UserOAuthSignUpRequestDto;
 import com.team15gijo.user.presentation.dto.request.v1.UserPasswordUpdateRequestDto;
 import com.team15gijo.user.presentation.dto.request.v1.UserSignUpRequestDto;
 import com.team15gijo.user.presentation.dto.request.v1.UserUpdateRequestDto;
@@ -65,4 +66,6 @@ public interface UserApplicationService {
     void decreaseFollowCount(Long followerId, Long followeeId);
 
     List<UserEntity> getAllUsers();
+
+    UserSignUpResponseDto createUserOauth(@Valid UserOAuthSignUpRequestDto userOAuthSignUpRequestDto);
 }

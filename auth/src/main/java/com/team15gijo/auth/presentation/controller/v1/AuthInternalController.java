@@ -5,6 +5,7 @@ import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthIdentifierUp
 import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthPasswordUpdateRequestDto;
 import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthSignUpRequestDto;
 import com.team15gijo.auth.presentation.dto.internal.request.v1.AuthSignUpUpdateUserIdRequestDto;
+import com.team15gijo.auth.presentation.dto.internal.request.v1.OAuthAuthSignUpRequestDto;
 import com.team15gijo.common.dto.ApiResponse;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,14 @@ public class AuthInternalController {
             @RequestBody AuthSignUpRequestDto authSignUpRequestDto) {
         log.info("signUp authSignUpRequestDto={}", authSignUpRequestDto);
         UUID authId = authApplicationService.signUp(authSignUpRequestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(authId);
+    }
+
+    @PostMapping("/signup/oauth")
+    public ResponseEntity<UUID> signUpOAuth(
+            @RequestBody OAuthAuthSignUpRequestDto oAuthAuthSignUpRequestDto) {
+        log.info("signUp authSignUpRequestDto={}", oAuthAuthSignUpRequestDto);
+        UUID authId = authApplicationService.signUpOAuth(oAuthAuthSignUpRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(authId);
     }
 
